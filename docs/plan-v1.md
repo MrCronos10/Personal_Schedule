@@ -89,9 +89,9 @@ The app has 2 tabs. Chinese text is shown first, with English in brackets.
 Each step ends with something you can see working on your iPhone.
 
 ### Step 0: Setup (week 1, about 2 h)
-- [ ] Update Xcode, and sign in with your Apple ID (Xcode → Settings → Accounts)
-- [ ] Create a new iOS App project: name `PersonalSchedule`, interface SwiftUI, storage SwiftData
-- [ ] `git init` in this folder and make the first commit
+- [x] Update Xcode, and sign in with your Apple ID (Xcode → Settings → Accounts)
+- [x] Create a new iOS App project: name `PersonalSchedule`, interface SwiftUI (SwiftData is added in Step 1)
+- [x] `git init` in this folder and make the first commit
 - [ ] Turn on Developer Mode on your iPhone, then run the empty app on it
 - [ ] **Done when:** the app opens on your iPhone
 
