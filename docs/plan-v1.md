@@ -25,6 +25,27 @@ Everything else waits for a later version (see the end of this file).
 - Minimum iOS version: **iOS 17** (SwiftData needs it).
 - iCloud is **off** in version 1, because a free Apple ID can't turn it on.
 
+## Look: 田字格 Practice book
+
+Chosen from the four looks in [docs/prototypes/schedule-looks.html](prototypes/schedule-looks.html) (option B). Open that file in a browser to see and click it.
+
+- **Feeling:** a Chinese character practice book. Paper-white ground, red ink rules, no cards or shadows.
+- **Colors:**
+
+  | Role | Hex |
+  | --- | --- |
+  | Paper (background) | `#FBFAF5` |
+  | Ink (text) | `#231F1C` |
+  | Muted text | `#7E756D` |
+  | Red ink (accent, seal, rules at 20% opacity) | `#B3312B` |
+  | Category inks | 中文 `#B3312B`, 学习 `#2E5A88`, 健康 `#3E7A4E`, 生活 `#946519`; new Categories get a color from a small fixed set |
+
+- **Type:** titles and Action titles in Noto Serif SC (Bold and Black), shipped inside the app because iPhones have no Song font built in (about 24 MB, SIL Open Font License); labels and meta text in the system sans; times in a monospaced face.
+- **Today header:** in 中文, each character of 今天 sits in its own 田字格 box (square with a dashed cross); in English, "Today" in heavy serif without boxes.
+- **Rows:** time on the left (— when there is none), title and 【Category】 meta in the middle, tick box on the right; a thin red rule under each row; section captions in small red letters with a heavier red underline.
+- **Tick:** an empty square with an ink border; when done it becomes a red seal with 完, rotated slightly, and the title gets a faint strike-through.
+- **Corners:** small (about 4 px) on buttons and fields; the tick sheet uses the same paper color.
+
 ## Database (version 1)
 
 Only 4 records. Class and No-class Day come in a later version.

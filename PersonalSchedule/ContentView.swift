@@ -1,19 +1,21 @@
+import SwiftData
 import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "checklist")
-                .font(.system(size: 56))
-                .foregroundStyle(.tint)
-            Text("你好！")
-                .font(.largeTitle)
-            Text("Personal Schedule")
-                .foregroundStyle(.secondary)
+        TabView {
+            TodayView()
+                .tabItem { Label("今天", systemImage: "calendar") }
+            SettingsView()
+                .tabItem { Label("设置", systemImage: "slider.horizontal.3") }
         }
+        .tint(Theme.red)
+        .toolbarBackground(Theme.paper, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
     }
 }
 
 #Preview {
     ContentView()
+        .modelContainer(try! ScheduleStore.makeContainer(inMemory: true))
 }
