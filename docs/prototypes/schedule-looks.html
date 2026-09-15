@@ -1,0 +1,442 @@
+<title>Personal Schedule Looks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;900&family=Nunito:wght@700;800;900&display=swap">
+<style>
+:root{
+  --bg:#E8EBEE;--ink:#15191D;--muted:#58606A;--line:#CFD5DB;--card:#F6F7F8;--accent:#0E7C60;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0F1215;--ink:#E6E9EC;--muted:#9AA3AC;--line:#2A3137;--card:#171B1F;--accent:#4CC49D;}
+}
+:root[data-theme="dark"]{--bg:#0F1215;--ink:#E6E9EC;--muted:#9AA3AC;--line:#2A3137;--card:#171B1F;--accent:#4CC49D;}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;padding-block:36px 56px;padding-inline:16px;line-height:1.5}
+.wrap{max-width:1420px;margin:0 auto}
+.intro{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:20px 32px}
+.intro h1{font-size:30px;line-height:1.15;margin:0 0 8px;text-wrap:balance;letter-spacing:-.01em}
+.intro p{margin:0;max-width:64ch;color:var(--muted);font-size:15px}
+.intro strong{color:var(--ink);font-weight:500}
+.shell-lang{display:flex;flex-direction:column;gap:6px}
+.shell-lang span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.seg-shell{display:inline-flex;border:1px solid var(--line);border-radius:10px;padding:3px;background:var(--card)}
+.seg-shell button{border:0;background:none;color:var(--muted);font:inherit;font-size:14px;padding:6px 14px;border-radius:7px;cursor:pointer}
+.seg-shell button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:44px 24px;margin-top:36px}
+.opt{display:flex;flex-direction:column;align-items:center;gap:16px}
+.info{width:320px;max-width:100%;display:flex;flex-direction:column;gap:6px}
+.info-head{display:flex;align-items:baseline;gap:10px}
+.letter{font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:600;font-size:13px;border:1.5px solid var(--ink);border-radius:6px;padding:0 7px;line-height:22px}
+.info h2{margin:0;font-size:18px;line-height:1.3}
+.info h2 small{font-weight:400;color:var(--muted);font-size:14px;margin-left:4px}
+.info p{margin:0;font-size:14px;color:var(--muted)}
+.effort{align-self:flex-start;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--ink);background:var(--card)}
+.effort b{font-weight:500}
+.outro{margin:48px auto 0;max-width:64ch;font-size:15px;color:var(--muted);border-top:1px solid var(--line);padding-top:20px}
+.outro code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:13px;color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- phone frame (shared) ---------- */
+.phone{width:320px;max-width:100%;height:672px;border-radius:48px;padding:10px;background:#0C0E10;box-shadow:0 24px 48px -24px rgba(8,16,24,.5)}
+.screen{position:relative;height:100%;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;background:var(--p-bg);color:var(--p-ink);font-family:var(--p-font)}
+.screen button{font:inherit;color:inherit;cursor:pointer}
+.status{display:flex;justify-content:space-between;align-items:center;padding:14px 26px 2px;font-size:13px;font-weight:700;font-family:-apple-system,"Noto Sans SC",system-ui,sans-serif}
+.status i{display:inline-block;width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;position:relative;opacity:.85}
+.status i::after{content:"";position:absolute;inset:1.5px 5px 1.5px 1.5px;background:currentColor;border-radius:1px}
+.content{flex:1;overflow-y:auto;padding:4px 16px 20px;scrollbar-width:none}
+.content::-webkit-scrollbar{display:none}
+.tabbar{display:flex;border-top:1px solid var(--p-line);background:var(--p-bar);padding:6px 0 20px}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:11px;color:var(--p-muted);background:none;border:0}
+.tabbar button[aria-current="page"]{color:var(--p-tab-on)}
+.tabbar svg{width:24px;height:24px}
+.toast{position:absolute;left:18px;right:18px;bottom:86px;background:var(--p-ink);color:var(--p-bg);font-size:12.5px;line-height:1.4;padding:10px 12px;border-radius:12px;z-index:5}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.38);border:0;z-index:6}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--p-sheet);border-radius:var(--p-sheet-r) var(--p-sheet-r) 0 0;padding:8px 18px 26px;display:flex;flex-direction:column;gap:8px;z-index:7}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--p-line);align-self:center;margin-bottom:4px}
+.sheet h3{margin:0;font-size:18px;line-height:1.3}
+.sheet .sub{margin:0 0 4px;font-size:12.5px;color:var(--p-muted)}
+.sheet label{font-size:12px;color:var(--p-muted)}
+.stepper{display:grid;grid-template-columns:44px 1fr 44px;gap:8px}
+.stepper button,.field{border:1px solid var(--p-line);background:var(--p-input);border-radius:var(--p-r);color:var(--p-ink)}
+.stepper button{font-size:20px;height:44px}
+.field{font:inherit;font-size:15px;padding:9px 12px;width:100%}
+.stepper .field{text-align:center;font-size:20px;font-variant-numeric:tabular-nums}
+textarea.field{resize:none}
+.btns{display:flex;gap:10px;margin-top:6px}
+.btn{flex:1;height:46px;border-radius:var(--p-r);border:1px solid var(--p-line);background:none;font-weight:700;font-size:15px}
+.btn.primary{background:var(--p-accent);border-color:transparent;color:var(--p-on-accent)}
+.btn.danger{background:var(--p-late);border-color:transparent;color:#fff}
+.sheet p.warn{margin:0;font-size:14px;color:var(--p-muted)}
+.late{color:var(--p-late);font-weight:700}
+
+/* settings (shared, themed by tokens) */
+.set-h{font-size:30px;margin:10px 0 6px;line-height:1.2}
+.set-sec{margin:0;font-size:12px;letter-spacing:.06em;color:var(--p-muted);padding:16px 4px 6px}
+.list{list-style:none;margin:0;padding:0;background:var(--p-card);border-radius:var(--p-card-r);overflow:hidden;border:var(--p-card-border)}
+.list li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--p-line);font-size:15px}
+.list li:last-child{border-bottom:0}
+.list .name{flex:1}
+.list .archived{color:var(--p-muted)}
+.swatch{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.mini{border:1px solid var(--p-line);background:none;border-radius:var(--p-r);padding:4px 10px;font-size:12.5px;color:var(--p-ink)}
+.add-row{display:flex;gap:8px;padding:10px 12px}
+.add-row .field{padding:7px 10px;font-size:14px}
+.mini.primary{background:var(--p-accent);color:var(--p-on-accent);border-color:transparent;white-space:nowrap}
+.seg{display:flex;background:var(--p-seg);border-radius:10px;padding:3px}
+.seg button{flex:1;border:0;background:none;padding:7px;border-radius:8px;font-size:14px;color:var(--p-muted)}
+.seg button[aria-pressed="true"]{background:var(--p-seg-on);color:var(--p-ink);font-weight:700}
+
+.cat-zh{--c:var(--c-zh)}.cat-study{--c:var(--c-study)}.cat-health{--c:var(--c-health)}.cat-life{--c:var(--c-life)}.cat-club{--c:var(--c-club)}.cat-new{--c:var(--c-new)}
+
+/* ---------- A · Native ---------- */
+.opt-a{--p-bg:#F2F3F5;--p-card:#FFFFFF;--p-ink:#14171B;--p-muted:#6B7079;--p-line:#E2E5E9;--p-accent:#0E8A6A;--p-on-accent:#fff;--p-tab-on:#0E8A6A;--p-bar:#F8F9FA;--p-sheet:#FFFFFF;--p-input:#F2F3F5;--p-late:#C2410C;--p-r:12px;--p-sheet-r:18px;--p-card-r:14px;--p-card-border:0;--p-seg:#E4E6EA;--p-seg-on:#fff;
+  --p-font:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC",system-ui,sans-serif;
+  --c-zh:#D8463E;--c-study:#2F6FDB;--c-health:#1E9E62;--c-life:#D98A0B;--c-club:#8E6BD8;--c-new:#5B8C99}
+.opt-a .a-top{display:flex;align-items:center;gap:6px;margin-top:6px}
+.opt-a .a-top .date{flex:1;text-align:center;font-size:13px;color:var(--p-muted)}
+.opt-a .nav{width:32px;height:32px;border-radius:50%;border:0;background:var(--p-card);font-size:17px;color:var(--p-accent)}
+.opt-a .plus{width:32px;height:32px;border-radius:50%;border:0;background:var(--p-accent);color:#fff;font-size:20px;line-height:1}
+.opt-a h1{font-size:32px;margin:10px 0 0;line-height:1.15}
+.opt-a .count{margin:2px 0 0;font-size:13px;color:var(--p-muted)}
+.opt-a .grp-h{font-size:12px;color:var(--p-muted);margin:18px 4px 6px;font-weight:500}
+.opt-a .group{background:var(--p-card);border-radius:14px;overflow:hidden}
+.opt-a .row{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--p-line)}
+.opt-a .row:last-child{border-bottom:0}
+.opt-a .check{width:26px;height:26px;border-radius:50%;border:2px solid #C4C9D0;background:none;display:grid;place-items:center;padding:0;color:transparent}
+.opt-a .check svg{width:15px;height:15px}
+.opt-a .done .check{background:var(--p-accent);border-color:var(--p-accent);color:#fff}
+.opt-a .title{font-size:15.5px;font-weight:500;line-height:1.3}
+.opt-a .done .title{color:var(--p-muted)}
+.opt-a .meta{font-size:12px;color:var(--p-muted);display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin-top:2px}
+.opt-a .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.opt-a .side{font-size:13px;color:var(--p-muted);font-variant-numeric:tabular-nums;text-align:right}
+.opt-a .done .side{color:var(--p-accent);font-weight:600}
+
+/* ---------- B · Practice book ---------- */
+.opt-b{--p-bg:#FBFAF5;--p-card:rgba(179,49,43,.035);--p-ink:#231F1C;--p-muted:#7E756D;--p-line:rgba(179,49,43,.2);--p-accent:#B3312B;--p-on-accent:#FBFAF5;--p-tab-on:#B3312B;--p-bar:#FBFAF5;--p-sheet:#FBFAF5;--p-input:#fff;--p-late:#B3312B;--p-r:4px;--p-sheet-r:6px;--p-card-r:4px;--p-card-border:1px solid rgba(179,49,43,.2);--p-seg:rgba(179,49,43,.1);--p-seg-on:#FBFAF5;
+  --p-font:"Noto Serif SC","Songti SC",serif;
+  --c-zh:#B3312B;--c-study:#2E5A88;--c-health:#3E7A4E;--c-life:#946519;--c-club:#6A4F8C;--c-new:#4F6F75}
+.opt-b .b-top{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-family:"Noto Sans SC",sans-serif}
+.opt-b .date{font-size:12.5px;letter-spacing:.08em;color:var(--p-muted)}
+.opt-b .navs{display:flex;gap:4px}
+.opt-b .nav,.opt-b .plus{width:30px;height:30px;border:1px solid var(--p-line);background:none;border-radius:4px;font-size:15px;color:var(--p-accent)}
+.opt-b .plus{background:var(--p-accent);color:#FBFAF5;border-color:var(--p-accent);font-size:18px}
+.opt-b .b-head{display:flex;justify-content:space-between;align-items:end;margin:14px 0 6px}
+.opt-b h1{margin:0;display:flex;line-height:1}
+.opt-b .tzg span{display:grid;place-items:center;width:62px;height:62px;border:1.5px solid var(--p-accent);font-size:42px;font-weight:900;margin-right:-1.5px;
+  background:
+   repeating-linear-gradient(90deg,var(--p-line) 0 4px,transparent 4px 8px) center/100% 1px no-repeat,
+   repeating-linear-gradient(0deg,var(--p-line) 0 4px,transparent 4px 8px) center/1px 100% no-repeat}
+.opt-b .b-en{font-size:38px;font-weight:900}
+.opt-b .count{font-size:13px;color:var(--p-muted);font-family:"Noto Sans SC",sans-serif}
+.opt-b .grp-h{font-family:"Noto Sans SC",sans-serif;font-size:11.5px;letter-spacing:.14em;color:var(--p-accent);margin:18px 0 0;padding-bottom:4px;border-bottom:1.5px solid var(--p-accent)}
+.opt-b .row{display:grid;grid-template-columns:44px 1fr 40px;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--p-line)}
+.opt-b .time{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--p-muted)}
+.opt-b .title{font-size:16px;font-weight:600;line-height:1.35}
+.opt-b .done .title{color:var(--p-muted);text-decoration:line-through;text-decoration-color:var(--p-line);text-decoration-thickness:1.5px}
+.opt-b .meta{font-family:"Noto Sans SC",sans-serif;font-size:12px;color:var(--p-muted);margin-top:2px}
+.opt-b .meta .cn{color:var(--c)}
+.opt-b .check{width:34px;height:34px;border:1.5px solid var(--p-ink);border-radius:3px;background:none;padding:0;justify-self:end;font-weight:900;font-size:19px;color:transparent}
+.opt-b .done .check{background:var(--p-accent);border:0;color:#FBFAF5;transform:rotate(-8deg);box-shadow:inset 0 0 0 2px var(--p-accent),inset 0 0 0 3.5px #FBFAF5;border-radius:6px}
+
+/* ---------- C · Metro line ---------- */
+.opt-c{--p-bg:#12171D;--p-card:#1B222A;--p-ink:#EDF1F4;--p-muted:#8D98A4;--p-line:#28313B;--p-accent:#EDF1F4;--p-on-accent:#12171D;--p-tab-on:#FFFFFF;--p-bar:#0E1217;--p-sheet:#1B222A;--p-input:#12171D;--p-late:#F5A524;--p-r:8px;--p-sheet-r:16px;--p-card-r:10px;--p-card-border:0;--p-seg:#12171D;--p-seg-on:#2A343E;
+  --p-font:"Noto Sans SC",-apple-system,system-ui,sans-serif;
+  --c-zh:#E4002B;--c-study:#2D8CFF;--c-health:#00A651;--c-life:#F7A800;--c-club:#A05EB5;--c-new:#26B5B5}
+.opt-c .status{color:#EDF1F4}
+.opt-c .c-top{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.opt-c .navs{display:flex;gap:6px}
+.opt-c .nav,.opt-c .plus{height:30px;min-width:30px;border-radius:8px;border:1px solid var(--p-line);background:none;color:var(--p-ink);font-size:15px}
+.opt-c .plus{background:#EDF1F4;color:#12171D;border:0;font-size:18px}
+.opt-c .sign{margin-top:12px;background:#1E2831;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:2px 10px;border-bottom:3px solid #E4002B}
+.opt-c .sign-zh{font-size:30px;font-weight:700;line-height:1.1}
+.opt-c .sign-en{font-size:10.5px;letter-spacing:.2em;color:var(--p-muted)}
+.opt-c .sign-date{font-family:"IBM Plex Mono",monospace;font-size:13px;text-align:right;grid-row:1/3;grid-column:2}
+.opt-c .sign-date small{display:block;color:var(--p-muted);font-size:11px}
+.opt-c .line{list-style:none;margin:14px 0 0;padding:0;position:relative}
+.opt-c .line::before{content:"";position:absolute;left:65px;top:12px;bottom:12px;width:4px;background:#2B3641;border-radius:2px}
+.opt-c .stop{display:grid;grid-template-columns:44px 26px 1fr;gap:10px;align-items:start;padding:7px 0}
+.opt-c .t{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--p-muted);padding-top:4px;text-align:right;font-variant-numeric:tabular-nums}
+.opt-c .check{position:relative;z-index:1;width:26px;height:26px;border-radius:50%;border:4px solid var(--c);background:var(--p-bg);display:grid;place-items:center;padding:0;color:transparent}
+.opt-c .check svg{width:13px;height:13px}
+.opt-c .done .check{background:var(--c);color:#fff}
+.opt-c .title{font-size:15px;font-weight:700;line-height:1.3;padding-top:2px}
+.opt-c .done .title{color:var(--p-muted);font-weight:500}
+.opt-c .meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:4px;font-size:11.5px;color:var(--p-muted)}
+.opt-c .lb{background:var(--c);color:#fff;font-weight:700;font-size:11px;padding:0 6px;border-radius:4px;line-height:18px}
+.opt-c .branch{padding:12px 0 2px 54px;font-size:10.5px;letter-spacing:.18em;color:var(--p-muted)}
+.opt-c .branch b{color:var(--p-ink);letter-spacing:.06em;font-size:12px;margin-right:6px}
+
+/* ---------- D · Check-in ---------- */
+.opt-d{--p-bg:#EDF2EE;--p-card:#FFFFFF;--p-ink:#13241C;--p-muted:#5C6D64;--p-line:#D9E3DC;--p-accent:#1F6F50;--p-on-accent:#fff;--p-tab-on:#1F6F50;--p-bar:#FFFFFF;--p-sheet:#FFFFFF;--p-input:#EDF2EE;--p-late:#B4530E;--p-r:16px;--p-sheet-r:26px;--p-card-r:18px;--p-card-border:0;--p-seg:#DCE6DF;--p-seg-on:#fff;
+  --p-font:"Nunito","Noto Sans SC",-apple-system,system-ui,sans-serif;
+  --c-zh:#E5484D;--c-study:#3E7BFA;--c-health:#1F9D6B;--c-life:#E3950F;--c-club:#9A6BE0;--c-new:#3C9AA8}
+.opt-d .d-top{display:flex;align-items:center;gap:6px;margin-top:6px}
+.opt-d .date{flex:1;font-size:13px;color:var(--p-muted);font-weight:700}
+.opt-d .nav{width:34px;height:34px;border-radius:50%;border:0;background:#fff;font-size:16px}
+.opt-d .plus{width:34px;height:34px;border-radius:50%;border:0;background:var(--p-ink);color:#fff;font-size:20px}
+.opt-d h1{font-size:28px;font-weight:900;margin:8px 0 12px;line-height:1.15}
+.opt-d .sum{background:#1F3B2F;color:#fff;border-radius:22px;padding:14px 16px;display:grid;grid-template-columns:84px 1fr;gap:14px;align-items:center}
+.opt-d .ring{position:relative;width:84px;height:84px}
+.opt-d .ring svg{width:84px;height:84px;transform:rotate(-90deg)}
+.opt-d .ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:20px;font-weight:900;font-variant-numeric:tabular-nums}
+.opt-d .sum-l{font-size:12px;opacity:.75;font-weight:700}
+.opt-d .sum-n{font-size:34px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.opt-d .sum-n small{font-size:14px;font-weight:700;opacity:.8}
+.opt-d .sum-note{font-size:11px;opacity:.6;margin-top:2px}
+.opt-d .card{background:#fff;border-radius:18px;padding:12px 10px 12px 12px;display:grid;grid-template-columns:6px 1fr auto;gap:12px;align-items:center;margin-top:10px}
+.opt-d .bar{align-self:stretch;border-radius:3px;background:var(--c)}
+.opt-d .title{font-size:15.5px;font-weight:800;line-height:1.3}
+.opt-d .done .title{color:var(--p-muted)}
+.opt-d .meta{font-size:12px;color:var(--p-muted);font-weight:700;margin-top:2px}
+.opt-d .check{min-width:72px;height:40px;border-radius:20px;border:0;background:#FFC53D;color:#13241C;font-weight:900;font-size:14px;padding:0 12px;display:flex;align-items:center;justify-content:center;gap:4px}
+.opt-d .check svg{width:14px;height:14px}
+.opt-d .done .check{background:#E0ECE4;color:#1F6F50}
+.opt-d .late-pill{display:inline-block;background:#FBE6D3;color:#9A4309;border-radius:999px;padding:0 7px;font-size:11px;margin-left:2px}
+
+@media (prefers-reduced-motion: no-preference){
+  .sheet{animation:up .22s ease-out}
+  @keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+}
+@media (max-width:420px){.intro h1{font-size:25px}}
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <div>
+      <h1>Personal Schedule Looks</h1>
+      <p>Your version 1 app in four looks, with the same features in each. <strong>Tap a circle to tick an Action</strong>, tap a ticked one to untick, and try the 设置 tab to add or archive Categories. The data is an example Monday.</p>
+    </div>
+    <div class="shell-lang">
+      <span>App language</span>
+      <div class="seg-shell" role="group" aria-label="App language">
+        <button type="button" id="shell-zh" data-lang="zh" aria-pressed="true">中文</button>
+        <button type="button" id="shell-en" data-lang="en" aria-pressed="false">English</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="opts">
+    <section class="opt">
+      <div class="phone opt-a" id="phone-a"></div>
+      <div class="info">
+        <div class="info-head"><span class="letter">A</span><h2>原生清爽 <small>Native</small></h2></div>
+        <p>Looks like Apple's own apps: grouped lists, round ticks and a jade green accent. Familiar from day one.</p>
+        <span class="effort"><b>Build effort:</b> easiest, mostly built-in SwiftUI lists</span>
+      </div>
+    </section>
+    <section class="opt">
+      <div class="phone opt-b" id="phone-b"></div>
+      <div class="info">
+        <div class="info-head"><span class="letter">B</span><h2>田字格 <small>Practice book</small></h2></div>
+        <p>Inspired by character practice paper. A finished Action gets a red 完 seal, like a teacher's stamp.</p>
+        <span class="effort"><b>Build effort:</b> medium, custom header boxes and seal</span>
+      </div>
+    </section>
+    <section class="opt">
+      <div class="phone opt-c" id="phone-c"></div>
+      <div class="info">
+        <div class="info-head"><span class="letter">C</span><h2>地铁线 <small>Metro line</small></h2></div>
+        <p>Your day as a metro line. Each Category is a line colour and each Action a station, with bilingual signs like the metro in China.</p>
+        <span class="effort"><b>Build effort:</b> harder, custom timeline drawing</span>
+      </div>
+    </section>
+    <section class="opt">
+      <div class="phone opt-d" id="phone-d"></div>
+      <div class="info">
+        <div class="info-head"><span class="letter">D</span><h2>打卡 <small>Check-in</small></h2></div>
+        <p>Big 打卡 buttons and a Chinese-minutes ring at the top, so today's practice is the first thing you see.</p>
+        <span class="effort"><b>Build effort:</b> medium, custom cards and a ring</span>
+      </div>
+    </section>
+  </main>
+
+  <p class="outro">To choose, reply in the terminal with <code>A</code>, <code>B</code>, <code>C</code> or <code>D</code>. You can also mix them, for example <code>B, but with D's summary ring</code>. The ring in D only adds up today's Chinese minutes; the full Progress Tracker comes in a later version.</p>
+</div>
+
+<script>
+const STR = {
+  zh:{today:"今天",settings:"设置",date:"9月14日 周一",count:(d,n)=>`已完成 ${d} / ${n}`,timed:"有时间",anytime:"任何时间",
+      rep_daily:"每天",rep_weekdays:"工作日",rep_mwf:"周一三五",once:"一次",late:"逾期 · 9月12日",
+      min:m=>`${m}分钟`,noMin:"不计时",minutes:"分钟",note:"笔记（可选）",notePh:"新词、难的地方…",save:"完成",cancel:"取消",
+      untickQ:"取消完成？",untickBody:t=>`“${t}”的分钟和笔记会被删除。`,keep:"保留",untick:"取消完成",
+      categories:"分类",archived:"已归档",archive:"归档",restore:"恢复",add:"添加",catPh:"新分类名称",language:"语言",
+      emptyName:"名称不能为空",navToast:"原型只有今天的示例数据",addToast:"添加 Action 的表单在第 04 个 ticket",
+      checkin:"打卡",zhToday:"中文 · 今天",zhNote:"已完成的中文分钟 / 计划分钟",tabToday:"今天",tabSettings:"设置"},
+  en:{today:"Today",settings:"Settings",date:"Mon, Sep 14",count:(d,n)=>`${d} of ${n} done`,timed:"With a time",anytime:"Anytime",
+      rep_daily:"Every day",rep_weekdays:"Weekdays",rep_mwf:"Mon Wed Fri",once:"One-time",late:"Late · Sep 12",
+      min:m=>`${m} min`,noMin:"No minutes",minutes:"Minutes",note:"Note (optional)",notePh:"New words, what was hard…",save:"Done",cancel:"Cancel",
+      untickQ:"Mark as not done?",untickBody:t=>`The minutes and note for “${t}” will be removed.`,keep:"Keep",untick:"Mark not done",
+      categories:"Categories",archived:"Archived",archive:"Archive",restore:"Restore",add:"Add",catPh:"New Category name",language:"Language",
+      emptyName:"Enter a name first",navToast:"This prototype only has example data for today",addToast:"The add-Action form comes in ticket 04",
+      checkin:"Check in",zhToday:"中文 · today",zhNote:"Chinese minutes done / planned",tabToday:"Today",tabSettings:"Settings"}
+};
+let LANG = "zh";
+const t = k => STR[LANG][k];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2 4.2L18.5 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_TODAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9h17M8 2.8v3.4M16 2.8v3.4M8.5 14.5l2.3 2.3 4.7-4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_SET = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="8" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+
+function freshState(){
+  return {
+    tab:"today", sheet:null, toast:"",
+    cats:[{k:"zh",name:"中文",arch:false},{k:"study",name:"学习",arch:false},{k:"health",name:"健康",arch:false},{k:"life",name:"生活",arch:false},{k:"club",name:"篮球社",arch:true}],
+    actions:[
+      {id:1,title:"学20个新词",cat:"zh",time:"07:00",def:20,repeat:"daily",done:true,min:20,note:"报销、来不及"},
+      {id:2,title:"和同学吃午饭聊天",cat:"zh",time:"12:00",def:30,repeat:"weekdays",done:false},
+      {id:3,title:"健身",cat:"health",time:"18:30",def:60,repeat:"mwf",done:false},
+      {id:4,title:"听力练习",cat:"zh",time:"21:00",def:15,repeat:"daily",done:false},
+      {id:5,title:"复习课堂笔记",cat:"study",time:null,def:30,repeat:"weekdays",done:false},
+      {id:6,title:"买SIM卡",cat:"life",time:null,def:null,once:true,late:true,done:false}
+    ]
+  };
+}
+const catName = (s,k) => (s.cats.find(c=>c.k===k)||{}).name || "";
+const repeatText = a => a.once ? (a.late ? `<span class="late">${t("late")}</span>` : t("once")) : t("rep_"+a.repeat);
+const minText = m => (m===null || m===undefined || m==="") ? t("noMin") : t("min")(m);
+const sorted = s => [...s.actions.filter(a=>a.time).sort((x,y)=>x.time.localeCompare(y.time)), ...s.actions.filter(a=>!a.time)];
+const checkLabel = a => `${a.title}: ${a.done ? t("untick") : t("save")}`;
+
+/* ---- Today screens per look ---- */
+function todayA(s){
+  const all = sorted(s), done = all.filter(a=>a.done).length;
+  const row = a => `<div class="row cat-${a.cat} ${a.done?"done":""}">
+      <button type="button" class="check" data-act="tick" data-id="${a.id}" aria-label="${esc(checkLabel(a))}">${CHECK}</button>
+      <div><div class="title">${esc(a.title)}</div><div class="meta"><i class="dot"></i>${esc(catName(s,a.cat))} · ${repeatText(a)}</div></div>
+      <div class="side">${a.done ? minText(a.min) : (a.time || "")}</div></div>`;
+  return `<div class="a-top"><button type="button" class="nav" data-act="nav" aria-label="Previous day">‹</button><span class="date">${t("date")}</span><button type="button" class="nav" data-act="nav" aria-label="Next day">›</button><button type="button" class="plus" data-act="addAction" aria-label="Add Action">+</button></div>
+    <h1>${t("today")}</h1><p class="count">${t("count")(done,all.length)}</p>
+    <div class="grp-h">${t("timed")}</div><div class="group">${all.filter(a=>a.time).map(row).join("")}</div>
+    <div class="grp-h">${t("anytime")}</div><div class="group">${all.filter(a=>!a.time).map(row).join("")}</div>`;
+}
+function todayB(s){
+  const all = sorted(s), done = all.filter(a=>a.done).length;
+  const row = a => `<div class="row cat-${a.cat} ${a.done?"done":""}">
+      <div class="time">${a.time || "—"}</div>
+      <div><div class="title">${esc(a.title)}</div><div class="meta"><span class="cn">【${esc(catName(s,a.cat))}】</span>${repeatText(a)}${a.done ? " · "+minText(a.min) : ""}</div></div>
+      <button type="button" class="check" data-act="tick" data-id="${a.id}" aria-label="${esc(checkLabel(a))}">完</button></div>`;
+  const head = LANG==="zh" ? `<h1 class="tzg"><span>今</span><span>天</span></h1>` : `<h1 class="b-en">Today</h1>`;
+  return `<div class="b-top"><span class="date">${t("date")}</span><div class="navs"><button type="button" class="nav" data-act="nav" aria-label="Previous day">‹</button><button type="button" class="nav" data-act="nav" aria-label="Next day">›</button><button type="button" class="plus" data-act="addAction" aria-label="Add Action">+</button></div></div>
+    <div class="b-head">${head}<span class="count">${t("count")(done,all.length)}</span></div>
+    <div class="grp-h">${t("timed")}</div>${all.filter(a=>a.time).map(row).join("")}
+    <div class="grp-h">${t("anytime")}</div>${all.filter(a=>!a.time).map(row).join("")}`;
+}
+function todayC(s){
+  const all = sorted(s), done = all.filter(a=>a.done).length;
+  const stop = a => `<li class="stop cat-${a.cat} ${a.done?"done":""}">
+      <span class="t">${a.time || ""}</span>
+      <button type="button" class="check" data-act="tick" data-id="${a.id}" aria-label="${esc(checkLabel(a))}">${CHECK}</button>
+      <div><div class="title">${esc(a.title)}</div><div class="meta"><span class="lb">${esc(catName(s,a.cat))}</span>${repeatText(a)}${a.done ? " · "+minText(a.min) : ""}</div></div></li>`;
+  return `<div class="c-top"><div class="navs"><button type="button" class="nav" data-act="nav" aria-label="Previous day">‹</button><button type="button" class="nav" data-act="nav" aria-label="Next day">›</button></div><button type="button" class="plus" data-act="addAction" aria-label="Add Action">+</button></div>
+    <div class="sign"><span class="sign-zh">今天</span><span class="sign-date">09·14<small>MON</small></span><span class="sign-en">TODAY · ${esc(t("count")(done,all.length)).toUpperCase()}</span></div>
+    <ol class="line">${all.filter(a=>a.time).map(stop).join("")}
+      <li class="branch"><b>任何时间</b>ANYTIME</li>
+      ${all.filter(a=>!a.time).map(stop).join("")}</ol>`;
+}
+function todayD(s){
+  const all = sorted(s), done = all.filter(a=>a.done).length;
+  const zh = all.filter(a=>a.cat==="zh");
+  const zhDone = zh.filter(a=>a.done).reduce((n,a)=>n+(Number(a.min)||0),0);
+  const zhPlan = zh.reduce((n,a)=>n+(a.def||0),0);
+  const C = 2*Math.PI*36, frac = all.length ? done/all.length : 0;
+  const card = a => `<div class="card cat-${a.cat} ${a.done?"done":""}">
+      <span class="bar"></span>
+      <div><div class="title">${esc(a.title)}</div><div class="meta">${a.time ? a.time+" · " : ""}${esc(catName(s,a.cat))} · ${a.once && a.late ? `<span class="late-pill">${t("late")}</span>` : repeatText(a)}</div></div>
+      <button type="button" class="check" data-act="tick" data-id="${a.id}" aria-label="${esc(checkLabel(a))}">${a.done ? CHECK + minText(a.min) : t("checkin")}</button></div>`;
+  return `<div class="d-top"><span class="date">${t("date")}</span><button type="button" class="nav" data-act="nav" aria-label="Previous day">‹</button><button type="button" class="nav" data-act="nav" aria-label="Next day">›</button><button type="button" class="plus" data-act="addAction" aria-label="Add Action">+</button></div>
+    <h1>${LANG==="zh" ? "今天打卡" : "Today's check-ins"}</h1>
+    <div class="sum"><div class="ring"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="9"/><circle cx="42" cy="42" r="36" fill="none" stroke="#FFC53D" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(C*frac).toFixed(1)} ${C.toFixed(1)}"/></svg><b>${done}/${all.length}</b></div>
+      <div><div class="sum-l">${t("zhToday")}</div><div class="sum-n">${zhDone}<small> / ${t("min")(zhPlan)}</small></div><div class="sum-note">${t("zhNote")}</div></div></div>
+    ${all.map(card).join("")}`;
+}
+const TODAY = {a:todayA,b:todayB,c:todayC,d:todayD};
+
+function settings(s, opt){
+  const active = s.cats.filter(c=>!c.arch), arch = s.cats.filter(c=>c.arch);
+  return `<h1 class="set-h">${t("settings")}</h1>
+    <h2 class="set-sec">${t("categories")}</h2>
+    <ul class="list">${active.map(c=>`<li class="cat-${c.k.startsWith("n")?"new":c.k}"><i class="swatch"></i><span class="name">${esc(c.name)}</span><button type="button" class="mini" data-act="archive" data-k="${c.k}">${t("archive")}</button></li>`).join("")}
+      <li class="add-row"><input class="field" id="cat-${opt}" placeholder="${t("catPh")}" aria-label="${t("catPh")}"><button type="button" class="mini primary" data-act="addCat">${t("add")}</button></li></ul>
+    <h2 class="set-sec">${t("archived")}</h2>
+    <ul class="list">${arch.length ? arch.map(c=>`<li class="cat-${c.k.startsWith("n")?"new":c.k}"><i class="swatch"></i><span class="name archived">${esc(c.name)}</span><button type="button" class="mini" data-act="restore" data-k="${c.k}">${t("restore")}</button></li>`).join("") : `<li class="archived">—</li>`}</ul>
+    <h2 class="set-sec">${t("language")}</h2>
+    <div class="seg" role="group" aria-label="${t("language")}"><button type="button" data-act="lang" data-lang="zh" aria-pressed="${LANG==="zh"}">中文</button><button type="button" data-act="lang" data-lang="en" aria-pressed="${LANG==="en"}">English</button></div>`;
+}
+
+function sheet(s, opt){
+  if(!s.sheet) return "";
+  const a = s.actions.find(x=>x.id===s.sheet.id);
+  if(s.sheet.type==="untick"){
+    return `<button type="button" class="scrim" data-act="close" aria-label="${t("cancel")}"></button>
+      <div class="sheet" role="dialog" aria-label="${t("untickQ")}"><span class="grab"></span><h3>${t("untickQ")}</h3>
+      <p class="warn">${esc(t("untickBody")(a.title))}</p>
+      <div class="btns"><button type="button" class="btn" data-act="close">${t("keep")}</button><button type="button" class="btn danger" data-act="untick">${t("untick")}</button></div></div>`;
+  }
+  return `<button type="button" class="scrim" data-act="close" aria-label="${t("cancel")}"></button>
+    <div class="sheet" role="dialog" aria-label="${esc(a.title)}"><span class="grab"></span>
+    <h3>${esc(a.title)}</h3><p class="sub">${esc(catName(s,a.cat))}${a.time ? " · "+a.time : ""}</p>
+    <label for="min-${opt}">${t("minutes")}</label>
+    <div class="stepper"><button type="button" data-act="minus" aria-label="−5">−</button><input class="field" id="min-${opt}" type="number" inputmode="numeric" min="0" step="5" value="${a.def ?? ""}" placeholder="—"><button type="button" data-act="plus" aria-label="+5">+</button></div>
+    <label for="note-${opt}">${t("note")}</label>
+    <textarea class="field" id="note-${opt}" rows="2" placeholder="${t("notePh")}"></textarea>
+    <div class="btns"><button type="button" class="btn" data-act="close">${t("cancel")}</button><button type="button" class="btn primary" data-act="save">${t("save")}</button></div></div>`;
+}
+
+const PHONES = {};
+function render(opt){
+  const p = PHONES[opt], s = p.state;
+  p.el.innerHTML = `<div class="screen">
+    <div class="status"><span>9:41</span><i aria-hidden="true"></i></div>
+    <div class="content">${s.tab==="today" ? TODAY[opt](s) : settings(s,opt)}</div>
+    <nav class="tabbar"><button type="button" data-act="tab" data-tab="today" ${s.tab==="today"?'aria-current="page"':""}>${ICON_TODAY}${t("tabToday")}</button><button type="button" data-act="tab" data-tab="settings" ${s.tab==="settings"?'aria-current="page"':""}>${ICON_SET}${t("tabSettings")}</button></nav>
+    ${s.toast ? `<div class="toast" role="status">${esc(s.toast)}</div>` : ""}
+    ${sheet(s,opt)}</div>`;
+}
+function renderAll(){
+  Object.keys(PHONES).forEach(render);
+  document.querySelectorAll(".seg-shell button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.lang===LANG));
+}
+function toast(opt,msg){
+  const p = PHONES[opt]; p.state.toast = msg; render(opt);
+  clearTimeout(p.tt); p.tt = setTimeout(()=>{ p.state.toast=""; render(opt); }, 1900);
+}
+
+function handle(opt, e){
+  const el = e.target.closest("[data-act]"); if(!el) return;
+  const p = PHONES[opt], s = p.state, act = el.dataset.act;
+  if(act==="tick"){ const a = s.actions.find(x=>x.id===+el.dataset.id); s.sheet = {type:a.done?"untick":"tick", id:a.id}; render(opt); }
+  else if(act==="close"){ s.sheet=null; render(opt); }
+  else if(act==="minus" || act==="plus"){
+    const inp = p.el.querySelector(`#min-${opt}`); const v = Number(inp.value)||0;
+    inp.value = Math.max(0, v + (act==="plus"?5:-5));
+  }
+  else if(act==="save"){
+    const a = s.actions.find(x=>x.id===s.sheet.id);
+    const v = p.el.querySelector(`#min-${opt}`).value.trim();
+    a.done = true; a.min = v==="" ? null : Number(v); a.note = p.el.querySelector(`#note-${opt}`).value;
+    s.sheet = null; render(opt);
+  }
+  else if(act==="untick"){ const a = s.actions.find(x=>x.id===s.sheet.id); a.done=false; a.min=null; a.note=""; s.sheet=null; render(opt); }
+  else if(act==="tab"){ s.tab = el.dataset.tab; s.sheet=null; render(opt); }
+  else if(act==="nav"){ toast(opt, t("navToast")); }
+  else if(act==="addAction"){ toast(opt, t("addToast")); }
+  else if(act==="archive" || act==="restore"){ const c = s.cats.find(x=>x.k===el.dataset.k); c.arch = act==="archive"; render(opt); }
+  else if(act==="addCat"){
+    const inp = p.el.querySelector(`#cat-${opt}`); const name = inp.value.trim();
+    if(!name){ toast(opt, t("emptyName")); return; }
+    s.cats.push({k:"n"+Date.now(), name, arch:false}); render(opt);
+  }
+  else if(act==="lang"){ LANG = el.dataset.lang; renderAll(); }
+}
+
+["a","b","c","d"].forEach(opt=>{
+  const el = document.getElementById("phone-"+opt);
+  PHONES[opt] = {el, state:freshState()};
+  el.addEventListener("click", e=>handle(opt,e));
+  el.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id===`cat-${opt}`){ handle(opt,{target:el.querySelector('[data-act="addCat"]')}); } });
+});
+document.querySelectorAll(".seg-shell button").forEach(b=>b.addEventListener("click",()=>{ LANG=b.dataset.lang; renderAll(); }));
+renderAll();
+</script>
