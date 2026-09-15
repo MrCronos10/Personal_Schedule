@@ -11,6 +11,11 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Today's plan" } }
       }
     },
+    "保存" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } }
+      }
+    },
     "保存失败：%@" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't save: %@" } }
@@ -21,14 +26,44 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Categories" } }
       }
     },
+    "分类名称" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Category name" } }
+      }
+    },
+    "取消" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } }
+      }
+    },
     "名称不能为空" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a name first" } }
       }
     },
+    "已归档" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Archived" } }
+      }
+    },
+    "归档" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Archive" } }
+      }
+    },
+    "恢复" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Restore" } }
+      }
+    },
     "新分类名称" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "New Category name" } }
+      }
+    },
+    "没有已归档的分类" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No archived Categories" } }
       }
     },
     "添加" : {
@@ -54,6 +89,16 @@
     "还没有计划" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Nothing planned yet" } }
+      }
+    },
+    "重命名" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename" } }
+      }
+    },
+    "重命名分类" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename Category" } }
       }
     }
   },

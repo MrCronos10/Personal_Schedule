@@ -56,6 +56,19 @@ struct SectionCaption: View {
     }
 }
 
+/// A small ink-outlined button for row actions such as 归档 and 恢复.
+struct MiniButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(Theme.ink)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Theme.red.opacity(configuration.isPressed ? 0.08 : 0))
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.rule))
+    }
+}
+
 /// The red "stamp" button used for primary actions.
 struct RedButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
