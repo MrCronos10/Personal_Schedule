@@ -1,6 +1,11 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "一次" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "One-time" } }
+      }
+    },
     "今天" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Today" } }
@@ -31,6 +36,16 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Category name" } }
       }
     },
+    "分钟不能是负数" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Minutes can't be negative" } }
+      }
+    },
+    "前一天" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Previous day" } }
+      }
+    },
     "取消" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } }
@@ -39,6 +54,11 @@
     "名称不能为空" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a name first" } }
+      }
+    },
+    "后一天" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Next day" } }
       }
     },
     "已归档" : {
@@ -61,6 +81,36 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "New Category name" } }
       }
     },
+    "新计划" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New Action" } }
+      }
+    },
+    "日期" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Date" } }
+      }
+    },
+    "时间" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Time" } }
+      }
+    },
+    "有时间" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Has a time" } }
+      }
+    },
+    "未选择" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "None" } }
+      }
+    },
+    "标题" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Title" } }
+      }
+    },
     "没有已归档的分类" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "No archived Categories" } }
@@ -71,9 +121,34 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Add" } }
       }
     },
+    "这一天的计划" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Plan for this day" } }
+      }
+    },
+    "这个分类已归档" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This Category is archived" } }
+      }
+    },
     "设置" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } }
+      }
+    },
+    "请先在设置里添加分类" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add a Category in Settings first" } }
+      }
+    },
+    "请输入标题" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a title first" } }
+      }
+    },
+    "请选择分类" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a Category first" } }
       }
     },
     "语言" : {
@@ -91,6 +166,11 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Nothing planned yet" } }
       }
     },
+    "选择分类" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Category" } }
+      }
+    },
     "重命名" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename" } }
@@ -99,6 +179,11 @@
     "重命名分类" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename Category" } }
+      }
+    },
+    "默认分钟（可选）" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Default minutes (optional)" } }
       }
     }
   },

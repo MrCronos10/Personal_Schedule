@@ -108,7 +108,7 @@ struct SettingsView: View {
     ) -> some View {
         HStack(spacing: 10) {
             RoundedRectangle(cornerRadius: 2)
-                .fill(Theme.categoryInk(at: inkIndex(of: category)))
+                .fill(Theme.categoryInk(for: category, among: allCategories))
                 .frame(width: 10, height: 10)
                 .opacity(isArchived ? 0.5 : 1)
             Button {
@@ -137,11 +137,6 @@ struct SettingsView: View {
             .font(Theme.serif(16))
             .foregroundStyle(Theme.muted)
             .padding(.vertical, 12)
-    }
-
-    /// Inks follow creation order across all Categories, so archiving one doesn't recolor the others.
-    private func inkIndex(of category: Category) -> Int {
-        allCategories.firstIndex { $0.id == category.id } ?? 0
     }
 
     private func addCategory() {

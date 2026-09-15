@@ -18,6 +18,14 @@ enum Theme {
         categoryInks[index % categoryInks.count]
     }
 
+    /// Inks follow creation order across all Categories, so archiving one doesn't recolor the others.
+    static func categoryInk(for category: Category?, among allCategories: [Category]) -> Color {
+        guard let category, let index = allCategories.firstIndex(where: { $0.id == category.id }) else {
+            return muted
+        }
+        return categoryInk(at: index)
+    }
+
     enum SerifWeight: String {
         case bold = "NotoSerifSC-Bold"
         case black = "NotoSerifSC-Black"

@@ -10,6 +10,9 @@ final class Category {
     var isArchived: Bool = false
     var createdAt: Date = Date()
 
+    @Relationship(deleteRule: .nullify, inverse: \Action.category)
+    var actions: [Action]? = []
+
     init(name: String, createdAt: Date = Date()) {
         self.name = name
         self.createdAt = createdAt
