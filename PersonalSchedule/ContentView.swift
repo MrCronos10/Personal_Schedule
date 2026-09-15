@@ -2,6 +2,8 @@ import SwiftData
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(LanguageSetting.self) private var language
+
     var body: some View {
         TabView {
             TodayView()
@@ -12,10 +14,12 @@ struct ContentView: View {
         .tint(Theme.red)
         .toolbarBackground(Theme.paper, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
+        .environment(\.locale, language.current.locale)
     }
 }
 
 #Preview {
     ContentView()
         .modelContainer(try! ScheduleStore.makeContainer(inMemory: true))
+        .environment(LanguageSetting(defaults: .standard))
 }

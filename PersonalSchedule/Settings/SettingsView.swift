@@ -1,15 +1,18 @@
 import SwiftData
 import SwiftUI
 
-/// The 设置 tab: the student's Categories.
+/// The 设置 tab: the student's Categories and the app language.
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
+    @Environment(LanguageSetting.self) private var language
     @Query(CategoryLibrary.activeDescriptor) private var categories: [Category]
 
     @State private var newName = ""
-    @State private var errorText: String?
+    @State private var errorMessage: LocalizedStringKey?
 
     var body: some View {
+        @Bindable var language = language
+
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 Text("设置")
@@ -24,7 +27,7 @@ struct SettingsView: View {
                         RoundedRectangle(cornerRadius: 2)
                             .fill(Theme.categoryInk(at: index))
                             .frame(width: 10, height: 10)
-                        Text(category.name)
+                        Text(verbatim: category.name)
                             .font(Theme.serif(17))
                             .foregroundStyle(Theme.ink)
                         Spacer()
@@ -57,14 +60,25 @@ struct SettingsView: View {
                 }
                 .padding(.top, 14)
 
-                if let errorText {
-                    Text(errorText)
+                if let errorMessage {
+                    Text(errorMessage)
                         .font(.footnote)
                         .foregroundStyle(Theme.red)
                         .padding(.top, 6)
                 }
+
+                SectionCaption(title: "语言")
+
+                Picker("语言", selection: $language.current) {
+                    ForEach(AppLanguage.allCases) { option in
+                        Text(verbatim: option.nativeName).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.top, 12)
             }
             .padding(.horizontal, 16)
+            .padding(.bottom, 24)
         }
         .background(Theme.paper)
     }
@@ -73,11 +87,11 @@ struct SettingsView: View {
         do {
             try CategoryLibrary(context: context).add(named: newName)
             newName = ""
-            errorText = nil
+            errorMessage = nil
         } catch CategoryError.emptyName {
-            errorText = "名称不能为空"
+            errorMessage = "名称不能为空"
         } catch {
-            errorText = "保存失败：\(error.localizedDescription)"
+            errorMessage = "保存失败：\(error.localizedDescription)"
         }
     }
 }
@@ -85,4 +99,5 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .modelContainer(try! ScheduleStore.makeContainer(inMemory: true))
+        .environment(LanguageSetting(defaults: .standard))
 }

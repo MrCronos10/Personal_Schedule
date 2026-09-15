@@ -40,7 +40,7 @@ extension Color {
 
 /// A small red caption with a heavier red rule under it.
 struct SectionCaption: View {
-    let title: String
+    let title: LocalizedStringKey
 
     var body: some View {
         Text(title)

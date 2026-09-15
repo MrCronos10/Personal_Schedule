@@ -4,6 +4,7 @@ import SwiftUI
 @main
 struct PersonalScheduleApp: App {
     private let container: ModelContainer
+    @State private var language = LanguageSetting(defaults: .standard)
 
     init() {
         FontRegistry.registerBundledFonts()
@@ -17,6 +18,7 @@ struct PersonalScheduleApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(language)
         }
         .modelContainer(container)
     }
