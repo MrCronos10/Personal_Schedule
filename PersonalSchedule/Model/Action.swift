@@ -13,6 +13,9 @@ final class Action {
     var defaultMinutes: Int?
     var createdAt: Date = Date()
 
+    @Relationship(deleteRule: .cascade, inverse: \Completion.action)
+    var completions: [Completion]? = []
+
     init(title: String, plannedDay: Day, time: TimeOfDay?, defaultMinutes: Int?, createdAt: Date = Date()) {
         self.title = title
         self.plannedDayNumber = plannedDay.number

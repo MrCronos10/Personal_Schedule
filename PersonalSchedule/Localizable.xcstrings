@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "%lld分钟" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld min" } }
+      }
+    },
+    "“%@”的分钟和笔记会被删除。" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The minutes and note for “%@” will be removed." } }
+      }
+    },
     "一次" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "One-time" } }
@@ -26,29 +36,24 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't save: %@" } }
       }
     },
-    "分类" : {
+    "保留" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Categories" } }
-      }
-    },
-    "分类名称" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Category name" } }
-      }
-    },
-    "分钟不能是负数" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Minutes can't be negative" } }
-      }
-    },
-    "前一天" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Previous day" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep" } }
       }
     },
     "取消" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } }
+      }
+    },
+    "取消完成" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mark not done" } }
+      }
+    },
+    "取消完成？" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mark as not done?" } }
       }
     },
     "名称不能为空" : {
@@ -59,6 +64,36 @@
     "后一天" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Next day" } }
+      }
+    },
+    "分钟" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Minutes" } }
+      }
+    },
+    "分钟不能是负数" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Minutes can't be negative" } }
+      }
+    },
+    "分类" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Categories" } }
+      }
+    },
+    "分类名称" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Category name" } }
+      }
+    },
+    "前一天" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Previous day" } }
+      }
+    },
+    "完成" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } }
       }
     },
     "已归档" : {
@@ -84,6 +119,11 @@
     "新计划" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "New Action" } }
+      }
+    },
+    "新词、难的地方…" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New words, what was hard…" } }
       }
     },
     "日期" : {
@@ -121,6 +161,11 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Add" } }
       }
     },
+    "笔记（可选）" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Note (optional)" } }
+      }
+    },
     "这一天的计划" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Plan for this day" } }
@@ -136,9 +181,19 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } }
       }
     },
+    "语言" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Language" } }
+      }
+    },
     "请先在设置里添加分类" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Add a Category in Settings first" } }
+      }
+    },
+    "请输入数字" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a number" } }
       }
     },
     "请输入标题" : {
@@ -149,11 +204,6 @@
     "请选择分类" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a Category first" } }
-      }
-    },
-    "语言" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Language" } }
       }
     },
     "还没有分类" : {

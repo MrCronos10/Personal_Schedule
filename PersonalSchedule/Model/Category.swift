@@ -13,6 +13,9 @@ final class Category {
     @Relationship(deleteRule: .nullify, inverse: \Action.category)
     var actions: [Action]? = []
 
+    @Relationship(deleteRule: .nullify, inverse: \Completion.category)
+    var completions: [Completion]? = []
+
     init(name: String, createdAt: Date = Date()) {
         self.name = name
         self.createdAt = createdAt
