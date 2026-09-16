@@ -5,9 +5,10 @@ enum ActionError: Error, Equatable {
     case emptyTitle
     case archivedCategory
     case negativeMinutes
+    case tickedAction
 }
 
-/// Creates the student's Actions.
+/// Creates and deletes the student's Actions.
 @MainActor
 struct ActionLibrary {
     let context: ModelContext
@@ -29,5 +30,13 @@ struct ActionLibrary {
         action.category = category
         try context.saveOrRollBack()
         return action
+    }
+
+    /// Deletes a One-time Action the student isn't going to do. A ticked Action is history and keeps its
+    /// Completion, so deleting it is refused (ADR 0002).
+    func delete(_ action: Action) throws {
+        guard (action.completions ?? []).isEmpty else { throw ActionError.tickedAction }
+        context.delete(action)
+        try context.saveOrRollBack()
     }
 }

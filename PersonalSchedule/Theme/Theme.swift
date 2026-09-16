@@ -7,6 +7,8 @@ enum Theme {
     static let muted = Color(hex: 0x7E756D)
     static let red = Color(hex: 0xB3312B)
     static let rule = red.opacity(0.2)
+    /// Late One-time Actions (and, later, Missed Routine days) are written in this ink.
+    static let late = Color(hex: 0xA8741A)
 
     /// Category inks, given out in the order Categories were created.
     private static let categoryInks: [Color] = [

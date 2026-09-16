@@ -101,7 +101,7 @@ struct CompletionLibraryTests {
         }
 
         let reopened = try ScheduleStore.makeContainer(url: storeURL)
-        let action = try #require(try DayPlan(context: reopened.mainContext).actions(on: monday).first)
+        let action = try #require(try DayPlan(context: reopened.mainContext).actions(on: monday, today: monday).first)
         let completion = try CompletionLibrary(context: reopened.mainContext).completion(for: action, on: monday)
         #expect(completion?.minutes == 25)
         #expect(completion?.note == "报销")

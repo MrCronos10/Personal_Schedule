@@ -6,6 +6,11 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld min" } }
       }
     },
+    "“%@”会被删除，不能恢复。" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "“%@” will be deleted and can't be brought back." } }
+      }
+    },
     "“%@”的分钟和笔记会被删除。" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "The minutes and note for “%@” will be removed." } }
@@ -84,6 +89,16 @@
     "分类名称" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Category name" } }
+      }
+    },
+    "删除" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } }
+      }
+    },
+    "删除这个计划？" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete this Action?" } }
       }
     },
     "前一天" : {
@@ -214,6 +229,11 @@
     "还没有计划" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Nothing planned yet" } }
+      }
+    },
+    "迟到" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Late" } }
       }
     },
     "选择分类" : {

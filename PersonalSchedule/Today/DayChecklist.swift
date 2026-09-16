@@ -1,27 +1,34 @@
 import SwiftData
 import SwiftUI
 
-/// The Actions planned for one day, in DayPlan order, with their tick boxes.
+/// The Actions that appear on one day, in DayPlan order, with their tick boxes.
 struct DayChecklist: View {
     let day: Day
+    let today: Day
 
     @Environment(\.modelContext) private var context
-    @Query private var plannedActions: [Action]
+    /// Everything planned for this day or earlier; `DayPlan.plan(_:on:today:)` picks out the day's Actions,
+    /// because a late Action's planned day has passed.
+    @Query private var candidateActions: [Action]
     @Query private var dayCompletions: [Completion]
     @Query(sort: \Category.createdAt) private var allCategories: [Category]
 
     @State private var tickTarget: Action?
     @State private var untickTarget: Action?
+    @State private var deleteTarget: Action?
+    /// Kept beside `deleteTarget` so the dialog's message never reads a title off a deleted Action.
+    @State private var deleteTitle = ""
 
-    init(day: Day) {
+    init(day: Day, today: Day = Day.today()) {
         self.day = day
-        _plannedActions = Query(DayPlan.descriptor(for: day))
+        self.today = today
+        _candidateActions = Query(DayPlan.descriptor(for: day, today: today))
         _dayCompletions = Query(CompletionLibrary.descriptor(for: day))
     }
 
     var body: some View {
-        let actions = DayPlan.ordered(plannedActions)
-        let completions = completionsByAction()
+        let actions: [Action] = DayPlan.plan(candidateActions, on: day, today: today)
+        let completions: [PersistentIdentifier: Completion] = completionsByAction()
 
         Group {
             if actions.isEmpty {
@@ -31,17 +38,7 @@ struct DayChecklist: View {
                     .padding(.vertical, 14)
             } else {
                 ForEach(actions) { action in
-                    ActionRow(
-                        action: action,
-                        completion: completions[action.persistentModelID],
-                        ink: Theme.categoryInk(for: action.category, among: allCategories)
-                    ) {
-                        if completions[action.persistentModelID] == nil {
-                            tickTarget = action
-                        } else {
-                            untickTarget = action
-                        }
-                    }
+                    row(for: action, completion: completions[action.persistentModelID])
                 }
             }
         }
@@ -64,6 +61,47 @@ struct DayChecklist: View {
         } message: { action in
             Text("“\(action.title)”的分钟和笔记会被删除。")
         }
+        .confirmationDialog(
+            Text("删除这个计划？"),
+            isPresented: Binding(
+                get: { deleteTarget != nil },
+                set: { isShowing in if !isShowing { deleteTarget = nil } }
+            ),
+            titleVisibility: .visible,
+            presenting: deleteTarget
+        ) { action in
+            Button("删除", role: .destructive) {
+                // Closed first: once the Action is gone, the dialog must not read it again.
+                deleteTarget = nil
+                try? ActionLibrary(context: context).delete(action)
+            }
+            Button("保留", role: .cancel) {}
+        } message: { _ in
+            Text("“\(deleteTitle)”会被删除，不能恢复。")
+        }
+    }
+
+    private func row(for action: Action, completion: Completion?) -> ActionRow {
+        let isDone: Bool = completion != nil
+        // A ticked Action keeps its Completion, so only an unticked one offers 删除.
+        let onDelete: (() -> Void)? = isDone ? nil : {
+            deleteTitle = action.title
+            deleteTarget = action
+        }
+        return ActionRow(
+            action: action,
+            completion: completion,
+            ink: Theme.categoryInk(for: action.category, among: allCategories),
+            isLate: DayPlan.isLate(action, on: day, today: today),
+            onTickBox: {
+                if isDone {
+                    untickTarget = action
+                } else {
+                    tickTarget = action
+                }
+            },
+            onDelete: onDelete
+        )
     }
 
     private func completionsByAction() -> [PersistentIdentifier: Completion] {
@@ -81,11 +119,26 @@ struct ActionRow: View {
     let action: Action
     let completion: Completion?
     let ink: Color
+    let isLate: Bool
     let onTickBox: () -> Void
+    /// Nothing to offer for a ticked Action, so it gets no long-press menu at all.
+    let onDelete: (() -> Void)?
+
+    @Environment(\.locale) private var locale
 
     private var isDone: Bool { completion != nil }
 
     var body: some View {
+        if let onDelete {
+            row.contextMenu {
+                Button("删除", role: .destructive, action: onDelete)
+            }
+        } else {
+            row
+        }
+    }
+
+    private var row: some View {
         HStack(alignment: .center, spacing: 10) {
             Text(verbatim: action.time?.clockText ?? "—")
                 .font(.system(size: 12, design: .monospaced))
@@ -95,51 +148,78 @@ struct ActionRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: action.title)
                     .font(Theme.serif(16))
-                    .foregroundStyle(isDone ? Theme.muted : Theme.ink)
+                    .foregroundStyle(titleInk)
                     .strikethrough(isDone, color: Theme.rule)
-                HStack(spacing: 0) {
-                    Text(verbatim: "【\(action.category?.name ?? "")】")
-                        .foregroundStyle(ink)
-                    Text("一次")
-                        .foregroundStyle(Theme.muted)
-                    if let minutes = completion?.minutes {
-                        Text(verbatim: " · ")
-                            .foregroundStyle(Theme.muted)
-                        Text("\(minutes)分钟")
-                            .foregroundStyle(Theme.muted)
-                    }
-                }
-                .font(.system(size: 12))
+                meta
             }
 
             Spacer(minLength: 0)
 
-            Button(action: onTickBox) {
-                if isDone {
-                    Text("完")
-                        .font(Theme.serif(19, .black))
-                        .foregroundStyle(Theme.paper)
-                        .frame(width: 36, height: 36)
-                        .background(Theme.red)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .inset(by: 2.5)
-                                .stroke(Theme.paper, lineWidth: 1.5)
-                        )
-                        .rotationEffect(.degrees(-8))
-                } else {
-                    RoundedRectangle(cornerRadius: 3)
-                        .stroke(Theme.ink, lineWidth: 1.5)
-                        .frame(width: 34, height: 34)
-                }
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(isDone ? Text("取消完成") : Text("完成"))
+            tickBox
         }
         .padding(.vertical, 11)
         .overlay(alignment: .bottom) {
             Rectangle().fill(Theme.rule).frame(height: 1)
         }
+        .contentShape(Rectangle())
+    }
+
+    private var meta: some View {
+        HStack(spacing: 0) {
+            Text(verbatim: "【\(action.category?.name ?? "")】")
+                .foregroundStyle(ink)
+            Text("一次")
+                .foregroundStyle(Theme.muted)
+            if isLate {
+                Text(verbatim: " · ")
+                    .foregroundStyle(Theme.muted)
+                Text("迟到")
+                    .foregroundStyle(Theme.late)
+                Text(verbatim: " \(plannedDayText)")
+                    .foregroundStyle(Theme.late)
+            }
+            if let minutes = completion?.minutes {
+                Text(verbatim: " · ")
+                    .foregroundStyle(Theme.muted)
+                Text("\(minutes)分钟")
+                    .foregroundStyle(Theme.muted)
+            }
+        }
+        .font(.system(size: 12))
+    }
+
+    private var tickBox: some View {
+        Button(action: onTickBox) {
+            if isDone {
+                Text("完")
+                    .font(Theme.serif(19, .black))
+                    .foregroundStyle(Theme.paper)
+                    .frame(width: 36, height: 36)
+                    .background(Theme.red)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .inset(by: 2.5)
+                            .stroke(Theme.paper, lineWidth: 1.5)
+                    )
+                    .rotationEffect(.degrees(-8))
+            } else {
+                RoundedRectangle(cornerRadius: 3)
+                    .stroke(isLate ? Theme.late : Theme.ink, lineWidth: 1.5)
+                    .frame(width: 34, height: 34)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isDone ? Text("取消完成") : Text("完成"))
+    }
+
+    private var titleInk: Color {
+        if isDone { return Theme.muted }
+        return isLate ? Theme.late : Theme.ink
+    }
+
+    /// The day it was planned for, so a late Action says how far behind it is.
+    private var plannedDayText: String {
+        action.plannedDay.date().formatted(.dateTime.month().day().locale(locale))
     }
 }
