@@ -6,17 +6,26 @@ import SwiftData
 struct DayPlan {
     let context: ModelContext
 
-    /// Every Action that could appear on a day: the ones planned for it, and the late ones planned earlier.
-    /// A late Action's planned day has passed, so the query can't pick the day on its own; `appears(_:on:today:)`
-    /// decides. Screens use this with `@Query`, then `plan(_:on:today:)`, so they match `actions(on:today:)`.
+    /// Every Action that could appear on a day: One-time Actions planned for it or earlier, and every Routine.
+    /// A late Action's planned day has passed and a Routine has no planned day at all, so the query can't pick
+    /// the day on its own; `appears(_:on:today:calendar:)` decides. Screens use this with `@Query`, then
+    /// `plan(_:on:today:calendar:)`, so they match `actions(on:today:calendar:)`.
     nonisolated static func descriptor(for day: Day, today: Day) -> FetchDescriptor<Action> {
         let latest = max(day.number, today.number)
-        return FetchDescriptor<Action>(predicate: #Predicate { $0.plannedDayNumber <= latest })
+        return FetchDescriptor<Action>(
+            predicate: #Predicate { $0.plannedDayNumber <= latest || $0.startDayNumber != nil }
+        )
     }
 
-    /// Whether a One-time Action belongs on a day: a ticked one stays on the day it was ticked; an unticked one
-    /// waits on its planned day while that day is still ahead, and moves to today once the day has passed.
-    static func appears(_ action: Action, on day: Day, today: Day) -> Bool {
+    /// Whether an Action belongs on a day.
+    ///
+    /// A Routine is on every one of its repeat days from its start day onwards. A ticked One-time Action stays
+    /// on the day it was ticked; an unticked one waits on its planned day while that day is still ahead, and
+    /// moves to today once the day has passed.
+    static func appears(_ action: Action, on day: Day, today: Day, calendar: Calendar = .current) -> Bool {
+        if let repeatDays = action.repeatDays, let startDay = action.startDay {
+            return day >= startDay && repeatDays.contains(day, calendar: calendar)
+        }
         let completions = action.completions ?? []
         if !completions.isEmpty {
             return completions.contains { $0.dayNumber == day.number }
@@ -27,10 +36,11 @@ struct DayPlan {
         return day == today
     }
 
-    /// An Action that is on this day only because its planned day passed without a tick. It agrees with
-    /// `appears(_:on:today:)`, so a day the Action isn't on at all is never late.
-    static func isLate(_ action: Action, on day: Day, today: Day) -> Bool {
-        guard appears(action, on: day, today: today) else { return false }
+    /// A One-time Action that is on this day only because its planned day passed without a tick. It agrees
+    /// with `appears(_:on:today:calendar:)`, so a day the Action isn't on at all is never late. A Routine is
+    /// never late: a repeat day it missed is Missed on that day, which ticket 08 builds.
+    static func isLate(_ action: Action, on day: Day, today: Day, calendar: Calendar = .current) -> Bool {
+        guard !action.isRoutine, appears(action, on: day, today: today, calendar: calendar) else { return false }
         return (action.completions ?? []).isEmpty && action.plannedDay < day
     }
 
@@ -52,11 +62,16 @@ struct DayPlan {
 
     /// The day's Actions, in the order they belong on screen, out of Actions already fetched with
     /// `descriptor(for:today:)`. Screens use this with `@Query`, so there is one copy of the rule.
-    static func plan(_ candidates: [Action], on day: Day, today: Day) -> [Action] {
-        ordered(candidates.filter { appears($0, on: day, today: today) })
+    static func plan(_ candidates: [Action], on day: Day, today: Day, calendar: Calendar = .current) -> [Action] {
+        ordered(candidates.filter { appears($0, on: day, today: today, calendar: calendar) })
     }
 
-    func actions(on day: Day, today: Day) throws -> [Action] {
-        Self.plan(try context.fetch(Self.descriptor(for: day, today: today)), on: day, today: today)
+    func actions(on day: Day, today: Day, calendar: Calendar = .current) throws -> [Action] {
+        Self.plan(
+            try context.fetch(Self.descriptor(for: day, today: today)),
+            on: day,
+            today: today,
+            calendar: calendar
+        )
     }
 }

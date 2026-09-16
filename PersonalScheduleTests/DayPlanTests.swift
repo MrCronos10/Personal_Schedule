@@ -6,6 +6,8 @@ import Testing
 @MainActor
 struct DayPlanTests {
     private let monday = Day(year: 2026, month: 9, day: 14)
+    /// Weekday rules are tested in the Gregorian calendar, so "Monday" means Monday on any Mac.
+    private let gregorian = Calendar(identifier: .gregorian)
 
     @Test func oneTimeActionAppearsOnItsDayWithItsDetails() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
@@ -78,6 +80,28 @@ struct DayPlanTests {
         #expect(try plan.actions(on: Day(year: 2026, month: 9, day: 16), today: monday).isEmpty)
     }
 
+    /// 每天 matches every day, 工作日 only Monday to Friday, and chosen days only those days.
+    ///
+    /// The days are read in the Gregorian calendar, because this Mac's calendar is the Thai Buddhist one,
+    /// where year 2026 is 1483 in the Gregorian calendar and falls on other weekdays.
+    @Test func repeatDaysMatchEveryDayWeekdaysAndChosenDays() throws {
+        let sunday = Day(year: 2026, month: 9, day: 13)
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+        let thursday = Day(year: 2026, month: 9, day: 17)
+        let saturday = Day(year: 2026, month: 9, day: 19)
+
+        #expect(RepeatDays.everyDay.contains(monday, calendar: gregorian))
+        #expect(RepeatDays.everyDay.contains(sunday, calendar: gregorian))
+        #expect(RepeatDays.weekdays.contains(monday, calendar: gregorian))
+        #expect(!RepeatDays.weekdays.contains(sunday, calendar: gregorian))
+        #expect(!RepeatDays.weekdays.contains(saturday, calendar: gregorian))
+
+        let tuesdaysAndThursdays = RepeatDays([.tuesday, .thursday])
+        #expect(tuesdaysAndThursdays.contains(tuesday, calendar: gregorian))
+        #expect(tuesdaysAndThursdays.contains(thursday, calendar: gregorian))
+        #expect(!tuesdaysAndThursdays.contains(monday, calendar: gregorian))
+    }
+
     @Test func lateOneTimeActionMovesToTodayAndNotToTheDaysBetween() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
         let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
@@ -127,6 +151,26 @@ struct DayPlanTests {
         #expect(!DayPlan.isLate(late, on: tuesday, today: wednesday))
     }
 
+    /// Routines are paused, never deleted (CONTEXT.md), so the library refuses to delete one even on a day
+    /// it hasn't been ticked. Pausing is ticket 10.
+    @Test func routineCantBeDeleted() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let actions = ActionLibrary(context: container.mainContext)
+        let routine = try actions.addRoutine(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday
+        )
+
+        #expect(throws: ActionError.routineCantBeDeleted) {
+            try actions.delete(routine)
+        }
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: monday, today: monday) == ["学20个新词"])
+    }
+
     @Test func untickedOneTimeActionCanBeDeleted() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
         let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
@@ -153,6 +197,94 @@ struct DayPlanTests {
         #expect(plan.map(\.title) == ["买SIM卡"])
     }
 
+    /// A 每天 Routine is on every day from its start day onwards, and on no day before it.
+    @Test func routineAppearsEveryDayFromItsStartDayAndNotBefore() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        try ActionLibrary(context: container.mainContext).addRoutine(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            time: TimeOfDay(hour: 7, minute: 0),
+            defaultMinutes: 20
+        )
+        let plan = DayPlan(context: container.mainContext)
+        let sunday = Day(year: 2026, month: 9, day: 13)
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+        let nextSunday = Day(year: 2026, month: 9, day: 20)
+
+        #expect(try plan.actions(on: monday, today: monday, calendar: gregorian).map(\.title) == ["学20个新词"])
+        #expect(try plan.actions(on: tuesday, today: monday, calendar: gregorian).map(\.title) == ["学20个新词"])
+        #expect(try plan.actions(on: nextSunday, today: monday, calendar: gregorian).map(\.title) == ["学20个新词"])
+        #expect(try plan.actions(on: sunday, today: monday, calendar: gregorian).isEmpty)
+
+        let routine = try #require(try plan.actions(on: monday, today: monday, calendar: gregorian).first)
+        #expect(routine.category?.name == "中文")
+        #expect(routine.time == TimeOfDay(hour: 7, minute: 0))
+        #expect(routine.defaultMinutes == 20)
+        #expect(routine.repeatDays == .everyDay)
+        #expect(routine.startDay == monday)
+    }
+
+    /// 工作日 is Monday to Friday only, and chosen days repeat on just those weekdays.
+    @Test func weekdayRoutineSkipsTheWeekendAndAChosenDaysRoutineOnlyRepeatsOnThoseDays() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let categories = CategoryLibrary(context: container.mainContext)
+        let study = try categories.add(named: "学习")
+        let health = try categories.add(named: "健康")
+        let actions = ActionLibrary(context: container.mainContext)
+        try actions.addRoutine(title: "上课", category: study, repeatDays: .weekdays, startDay: monday)
+        try actions.addRoutine(
+            title: "健身",
+            category: health,
+            repeatDays: RepeatDays([.tuesday, .thursday]),
+            startDay: monday
+        )
+        let plan = DayPlan(context: container.mainContext)
+
+        #expect(try plannedTitles(plan, on: monday, today: monday) == ["上课"])
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 15), today: monday) == ["上课", "健身"])
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 16), today: monday) == ["上课"])
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 17), today: monday) == ["上课", "健身"])
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 19), today: monday).isEmpty)
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 20), today: monday).isEmpty)
+    }
+
+    /// Each day a Routine appears is ticked separately, with its own Completion.
+    @Test func tickingARoutineOnOneDayLeavesItsOtherDaysUnticked() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let routine = try ActionLibrary(context: container.mainContext).addRoutine(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            defaultMinutes: 20
+        )
+        let completions = CompletionLibrary(context: container.mainContext)
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+
+        try completions.tick(routine, on: monday, minutes: 20, note: nil)
+
+        #expect(try completions.completion(for: routine, on: monday)?.minutes == 20)
+        #expect(try completions.completion(for: routine, on: tuesday) == nil)
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: tuesday, today: monday) == ["学20个新词"])
+    }
+
+    @Test func routineWithNoRepeatDaysIsRefusedAndNothingIsSaved() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let health = try CategoryLibrary(context: container.mainContext).add(named: "健康")
+        let actions = ActionLibrary(context: container.mainContext)
+
+        #expect(throws: ActionError.noRepeatDays) {
+            try actions.addRoutine(title: "健身", category: health, repeatDays: RepeatDays([]), startDay: monday)
+        }
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: monday, today: monday).isEmpty)
+    }
+
     @Test func timedActionsComeFirstEarliestFirstThenUntimedInTheOrderAdded() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
         let categories = CategoryLibrary(context: container.mainContext)
@@ -167,5 +299,10 @@ struct DayPlanTests {
 
         let titles = try DayPlan(context: container.mainContext).actions(on: monday, today: monday).map(\.title)
         #expect(titles == ["学20个新词", "健身", "洗衣服", "买SIM卡"])
+    }
+
+    /// The day's Actions by title, read in the Gregorian calendar so weekdays mean what they say.
+    private func plannedTitles(_ plan: DayPlan, on day: Day, today: Day) throws -> [String] {
+        try plan.actions(on: day, today: today, calendar: gregorian).map(\.title)
     }
 }

@@ -111,9 +111,19 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } }
       }
     },
+    "工作日" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Weekdays" } }
+      }
+    },
     "已归档" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Archived" } }
+      }
+    },
+    "开始日期" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start date" } }
       }
     },
     "归档" : {
@@ -166,6 +176,11 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Title" } }
       }
     },
+    "每天" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Every day" } }
+      }
+    },
     "没有已归档的分类" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "No archived Categories" } }
@@ -189,6 +204,11 @@
     "这个分类已归档" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "This Category is archived" } }
+      }
+    },
+    "类型" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Kind" } }
       }
     },
     "设置" : {
@@ -221,6 +241,11 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a Category first" } }
       }
     },
+    "请选择重复的日子" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose which days first" } }
+      }
+    },
     "还没有分类" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "No Categories yet" } }
@@ -241,6 +266,11 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Category" } }
       }
     },
+    "选择日子" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose days" } }
+      }
+    },
     "重命名" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename" } }
@@ -249,6 +279,11 @@
     "重命名分类" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Rename Category" } }
+      }
+    },
+    "重复" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Repeating" } }
       }
     },
     "默认分钟（可选）" : {

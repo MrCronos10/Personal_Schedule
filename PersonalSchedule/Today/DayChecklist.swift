@@ -83,11 +83,13 @@ struct DayChecklist: View {
 
     private func row(for action: Action, completion: Completion?) -> ActionRow {
         let isDone: Bool = completion != nil
-        // A ticked Action keeps its Completion, so only an unticked one offers 删除.
-        let onDelete: (() -> Void)? = isDone ? nil : {
+        // A ticked Action keeps its Completion, and a Routine is paused rather than deleted (CONTEXT.md),
+        // so only an unticked One-time Action offers 删除.
+        let canDelete: Bool = !isDone && !action.isRoutine
+        let onDelete: (() -> Void)? = canDelete ? {
             deleteTitle = action.title
             deleteTarget = action
-        }
+        } : nil
         return ActionRow(
             action: action,
             completion: completion,
@@ -168,7 +170,7 @@ struct ActionRow: View {
         HStack(spacing: 0) {
             Text(verbatim: "【\(action.category?.name ?? "")】")
                 .foregroundStyle(ink)
-            Text("一次")
+            Text(kindLabel)
                 .foregroundStyle(Theme.muted)
             if isLate {
                 Text(verbatim: " · ")
@@ -211,6 +213,14 @@ struct ActionRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isDone ? Text("取消完成") : Text("完成"))
+    }
+
+    /// 一次 for a One-time Action; for a Routine, how often it repeats.
+    private var kindLabel: LocalizedStringKey {
+        guard let repeatDays = action.repeatDays else { return "一次" }
+        if repeatDays == .everyDay { return "每天" }
+        if repeatDays == .weekdays { return "工作日" }
+        return "重复"
     }
 
     private var titleInk: Color {
