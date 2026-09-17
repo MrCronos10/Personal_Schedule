@@ -75,7 +75,13 @@ The project is already set up for signing: automatic signing, team `T24MZN88XQ`,
 
 ## Still undecided, and worth knowing while you test
 
-Two things are written down in the tickets as your decision, not bugs:
+### The calendar, now settled
 
-- **Unticking a One-time Action on a past day** makes it leave that day and reappear on today as 迟到. That follows the rule as written, but it means a mis-tick on Sunday can't be corrected in place on Sunday. Ticket 06 has the details.
-- **Days are stored using the phone's calendar**, which in Thailand is the Buddhist one, so today is stored as 25690918 rather than 20260918. Everything is consistent as long as the phone's region stays the same. If it ever changes to a Gregorian calendar, Routines would stop appearing and history would look empty. Fixing it means changing data already on the phone, so it is better decided before there is a lot of history. Ticket 08 has the details.
+Days are stored in one calendar whatever region the phone is set to, and any day already written with the phone's own year is moved once when the app starts. Dates on screen are still shown in your own calendar, so nothing should look different. See [ADR 0003](adr/0003-days-are-stored-in-one-calendar.md).
+
+- [ ] The date at the top of 今天 reads the way your phone normally writes dates, and the weekday next to it is right.
+- [ ] ◀ and ▶ land on the days either side, and 今天 comes back to today.
+
+### Still your decision
+
+- **Unticking a One-time Action on a past day** makes it leave that day and reappear on today as 迟到. That follows the rule as written, but it means a mis-tick on Sunday can't be corrected in place on Sunday. Ticket 06 has the details, and it is the last thing in version 1 still waiting on you.

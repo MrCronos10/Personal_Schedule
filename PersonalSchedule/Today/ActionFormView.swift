@@ -248,7 +248,7 @@ struct ActionFormView: View {
         let calendar = Calendar.current
         let clock = calendar.dateComponents([.hour, .minute], from: time)
         let chosenTime = hasTime ? TimeOfDay(hour: clock.hour ?? 0, minute: clock.minute ?? 0) : nil
-        let day = Day(date, calendar: calendar)
+        let day = Day(date)
         do {
             try write(category: category, day: day, time: chosenTime)
             dismiss()

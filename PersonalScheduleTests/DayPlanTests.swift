@@ -6,8 +6,6 @@ import Testing
 @MainActor
 struct DayPlanTests {
     private let monday = Day(year: 2026, month: 9, day: 14)
-    /// Weekday rules are tested in the Gregorian calendar, so "Monday" means Monday on any Mac.
-    private let gregorian = Calendar(identifier: .gregorian)
 
     @Test func oneTimeActionAppearsOnItsDayWithItsDetails() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
@@ -82,24 +80,23 @@ struct DayPlanTests {
 
     /// 每天 matches every day, 工作日 only Monday to Friday, and chosen days only those days.
     ///
-    /// The days are read in the Gregorian calendar, because this Mac's calendar is the Thai Buddhist one,
-    /// where year 2026 is 1483 in the Gregorian calendar and falls on other weekdays.
+    /// A Day carries its own calendar, so 2026-09-14 is Monday here whatever the machine is set to.
     @Test func repeatDaysMatchEveryDayWeekdaysAndChosenDays() throws {
         let sunday = Day(year: 2026, month: 9, day: 13)
         let tuesday = Day(year: 2026, month: 9, day: 15)
         let thursday = Day(year: 2026, month: 9, day: 17)
         let saturday = Day(year: 2026, month: 9, day: 19)
 
-        #expect(RepeatDays.everyDay.contains(monday, calendar: gregorian))
-        #expect(RepeatDays.everyDay.contains(sunday, calendar: gregorian))
-        #expect(RepeatDays.weekdays.contains(monday, calendar: gregorian))
-        #expect(!RepeatDays.weekdays.contains(sunday, calendar: gregorian))
-        #expect(!RepeatDays.weekdays.contains(saturday, calendar: gregorian))
+        #expect(RepeatDays.everyDay.contains(monday))
+        #expect(RepeatDays.everyDay.contains(sunday))
+        #expect(RepeatDays.weekdays.contains(monday))
+        #expect(!RepeatDays.weekdays.contains(sunday))
+        #expect(!RepeatDays.weekdays.contains(saturday))
 
         let tuesdaysAndThursdays = RepeatDays([.tuesday, .thursday])
-        #expect(tuesdaysAndThursdays.contains(tuesday, calendar: gregorian))
-        #expect(tuesdaysAndThursdays.contains(thursday, calendar: gregorian))
-        #expect(!tuesdaysAndThursdays.contains(monday, calendar: gregorian))
+        #expect(tuesdaysAndThursdays.contains(tuesday))
+        #expect(tuesdaysAndThursdays.contains(thursday))
+        #expect(!tuesdaysAndThursdays.contains(monday))
     }
 
     @Test func lateOneTimeActionMovesToTodayAndNotToTheDaysBetween() throws {
@@ -236,12 +233,12 @@ struct DayPlanTests {
         let tuesday = Day(year: 2026, month: 9, day: 15)
         let nextSunday = Day(year: 2026, month: 9, day: 20)
 
-        #expect(try plan.actions(on: monday, today: monday, calendar: gregorian).map(\.title) == ["学20个新词"])
-        #expect(try plan.actions(on: tuesday, today: monday, calendar: gregorian).map(\.title) == ["学20个新词"])
-        #expect(try plan.actions(on: nextSunday, today: monday, calendar: gregorian).map(\.title) == ["学20个新词"])
-        #expect(try plan.actions(on: sunday, today: monday, calendar: gregorian).isEmpty)
+        #expect(try plan.actions(on: monday, today: monday).map(\.title) == ["学20个新词"])
+        #expect(try plan.actions(on: tuesday, today: monday).map(\.title) == ["学20个新词"])
+        #expect(try plan.actions(on: nextSunday, today: monday).map(\.title) == ["学20个新词"])
+        #expect(try plan.actions(on: sunday, today: monday).isEmpty)
 
-        let routine = try #require(try plan.actions(on: monday, today: monday, calendar: gregorian).first)
+        let routine = try #require(try plan.actions(on: monday, today: monday).first)
         #expect(routine.category?.name == "中文")
         #expect(routine.time == TimeOfDay(hour: 7, minute: 0))
         #expect(routine.defaultMinutes == 20)
@@ -332,18 +329,18 @@ struct DayPlanTests {
         let oneTime = try actions.addOneTime(title: "买SIM卡", category: chinese, day: monday)
         let today = Day(year: 2026, month: 9, day: 21)
 
-        #expect(DayPlan.isMissed(daily, on: monday, today: today, calendar: gregorian))
-        #expect(DayPlan.isMissed(daily, on: Day(year: 2026, month: 9, day: 20), today: today, calendar: gregorian))
-        #expect(!DayPlan.isMissed(daily, on: today, today: today, calendar: gregorian))
-        #expect(!DayPlan.isMissed(daily, on: Day(year: 2026, month: 9, day: 22), today: today, calendar: gregorian))
-        #expect(!DayPlan.isMissed(daily, on: Day(year: 2026, month: 9, day: 13), today: today, calendar: gregorian))
+        #expect(DayPlan.isMissed(daily, on: monday, today: today))
+        #expect(DayPlan.isMissed(daily, on: Day(year: 2026, month: 9, day: 20), today: today))
+        #expect(!DayPlan.isMissed(daily, on: today, today: today))
+        #expect(!DayPlan.isMissed(daily, on: Day(year: 2026, month: 9, day: 22), today: today))
+        #expect(!DayPlan.isMissed(daily, on: Day(year: 2026, month: 9, day: 13), today: today))
 
         // Saturday is not one of 工作日, so it was never a day this Routine was on.
-        #expect(DayPlan.isMissed(onWeekdays, on: Day(year: 2026, month: 9, day: 18), today: today, calendar: gregorian))
-        #expect(!DayPlan.isMissed(onWeekdays, on: Day(year: 2026, month: 9, day: 19), today: today, calendar: gregorian))
+        #expect(DayPlan.isMissed(onWeekdays, on: Day(year: 2026, month: 9, day: 18), today: today))
+        #expect(!DayPlan.isMissed(onWeekdays, on: Day(year: 2026, month: 9, day: 19), today: today))
 
         // A One-time Action is never Missed: it moves to today as 迟到 instead.
-        #expect(!DayPlan.isMissed(oneTime, on: monday, today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(oneTime, on: monday, today: today))
     }
 
     /// A Routine can't have missed a day it didn't exist for, even when its start day is earlier. Those days
@@ -358,14 +355,14 @@ struct DayPlanTests {
             startDay: monday
         )
         let wednesday = Day(year: 2026, month: 9, day: 16)
-        routine.createdAt = wednesday.date(calendar: gregorian)
+        routine.createdAt = wednesday.date()
         try container.mainContext.saveOrRollBack()
         let today = Day(year: 2026, month: 9, day: 21)
 
-        #expect(!DayPlan.isMissed(routine, on: monday, today: today, calendar: gregorian))
-        #expect(!DayPlan.isMissed(routine, on: Day(year: 2026, month: 9, day: 15), today: today, calendar: gregorian))
-        #expect(DayPlan.isMissed(routine, on: wednesday, today: today, calendar: gregorian))
-        #expect(DayPlan.isMissed(routine, on: Day(year: 2026, month: 9, day: 20), today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(routine, on: monday, today: today))
+        #expect(!DayPlan.isMissed(routine, on: Day(year: 2026, month: 9, day: 15), today: today))
+        #expect(DayPlan.isMissed(routine, on: wednesday, today: today))
+        #expect(DayPlan.isMissed(routine, on: Day(year: 2026, month: 9, day: 20), today: today))
 
         let plan = DayPlan(context: container.mainContext)
         #expect(try plannedTitles(plan, on: monday, today: today) == ["学20个新词"])
@@ -386,13 +383,13 @@ struct DayPlanTests {
         let completions = CompletionLibrary(context: container.mainContext)
         let tuesday = Day(year: 2026, month: 9, day: 15)
         let today = Day(year: 2026, month: 9, day: 21)
-        #expect(DayPlan.isMissed(routine, on: monday, today: today, calendar: gregorian))
+        #expect(DayPlan.isMissed(routine, on: monday, today: today))
 
         try completions.tick(routine, on: monday, minutes: 20, note: nil)
 
-        #expect(!DayPlan.isMissed(routine, on: monday, today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(routine, on: monday, today: today))
         #expect(try completions.completion(for: routine, on: monday)?.minutes == 20)
-        #expect(DayPlan.isMissed(routine, on: tuesday, today: today, calendar: gregorian))
+        #expect(DayPlan.isMissed(routine, on: tuesday, today: today))
     }
 
     /// Missing a day changes nothing about the other days: the Routine is on each repeat day once, no more.
@@ -778,10 +775,10 @@ struct DayPlanTests {
         try actions.pause(routine, from: wednesday)
         try actions.resume(routine, on: friday)
 
-        #expect(DayPlan.isMissed(routine, on: monday, today: today, calendar: gregorian))
-        #expect(!DayPlan.isMissed(routine, on: wednesday, today: today, calendar: gregorian))
-        #expect(!DayPlan.isMissed(routine, on: thursday, today: today, calendar: gregorian))
-        #expect(DayPlan.isMissed(routine, on: friday, today: today, calendar: gregorian))
+        #expect(DayPlan.isMissed(routine, on: monday, today: today))
+        #expect(!DayPlan.isMissed(routine, on: wednesday, today: today))
+        #expect(!DayPlan.isMissed(routine, on: thursday, today: today))
+        #expect(DayPlan.isMissed(routine, on: friday, today: today))
     }
 
     /// An Action keeps its kind. Only the form was stopping an edit from turning a One-time Action into a
@@ -844,7 +841,7 @@ struct DayPlanTests {
 
     /// The day's Actions by title, read in the Gregorian calendar so weekdays mean what they say.
     private func plannedTitles(_ plan: DayPlan, on day: Day, today: Day) throws -> [String] {
-        try plan.actions(on: day, today: today, calendar: gregorian).map(\.title)
+        try plan.actions(on: day, today: today).map(\.title)
     }
 
     /// A Routine the student created on the day it starts, so every repeat day since could be Missed.
@@ -863,7 +860,7 @@ struct DayPlanTests {
             startDay: startDay,
             defaultMinutes: defaultMinutes
         )
-        routine.createdAt = startDay.date(calendar: gregorian)
+        routine.createdAt = startDay.date()
         try context.saveOrRollBack()
         return routine
     }

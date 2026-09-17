@@ -1,7 +1,24 @@
 import Foundation
 
-/// A calendar day, independent of time zone. Stored as yyyymmdd (20260914), so days compare and sort as numbers.
+/// A calendar day. Stored as yyyymmdd (20260914), so days compare and sort as numbers.
 struct Day: Hashable, Comparable {
+    /// The calendar every Day is measured in. See docs/adr/0003-days-are-stored-in-one-calendar.md.
+    ///
+    /// Fixed to the Gregorian calendar on purpose. The phone's own calendar can be another one — in
+    /// Thailand it is the Buddhist calendar, whose year runs 543 ahead — so a day numbered with whatever
+    /// the phone happens to use would mean a different day after a change of region. Days on screen are
+    /// still shown in the student's own calendar, because that formats a real moment instead of reading
+    /// this number.
+    ///
+    /// The time zone is the phone's, read every time, because which day a moment falls on really is local
+    /// and the screens format dates in that same live time zone. Holding on to one would let the day a
+    /// student sees drift a day away from the day being stored after they travel.
+    static var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        return calendar
+    }
+
     let number: Int
 
     init(number: Int) {
@@ -12,14 +29,14 @@ struct Day: Hashable, Comparable {
         number = year * 10_000 + month * 100 + day
     }
 
-    /// The day a moment falls on, in the phone's calendar and time zone.
-    init(_ date: Date, calendar: Calendar = .current) {
-        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+    /// The day a moment falls on.
+    init(_ date: Date) {
+        let parts = Self.calendar.dateComponents([.year, .month, .day], from: date)
         self.init(year: parts.year ?? 0, month: parts.month ?? 0, day: parts.day ?? 0)
     }
 
-    static func today(calendar: Calendar = .current) -> Day {
-        Day(Date(), calendar: calendar)
+    static func today() -> Day {
+        Day(Date())
     }
 
     var year: Int { number / 10_000 }
@@ -27,18 +44,27 @@ struct Day: Hashable, Comparable {
     var dayOfMonth: Int { number % 100 }
 
     /// Midnight at the start of this day.
-    func date(calendar: Calendar = .current) -> Date {
-        calendar.date(from: DateComponents(year: year, month: month, day: dayOfMonth)) ?? Date()
+    func date() -> Date {
+        date(in: Self.calendar)
     }
 
-    /// The day of the week this day falls on, in the phone's calendar.
-    func weekday(calendar: Calendar = .current) -> Weekday {
-        let number = calendar.component(.weekday, from: date(calendar: calendar))
+    /// The day of the week this day falls on.
+    func weekday() -> Weekday {
+        let calendar = Self.calendar
+        let number = calendar.component(.weekday, from: date(in: calendar))
         return Weekday(rawValue: number) ?? .sunday
     }
 
-    func adding(days: Int, calendar: Calendar = .current) -> Day {
-        Day(calendar.date(byAdding: .day, value: days, to: date(calendar: calendar)) ?? date(calendar: calendar), calendar: calendar)
+    func adding(days: Int) -> Day {
+        let calendar = Self.calendar
+        let moment = date(in: calendar)
+        return Day(calendar.date(byAdding: .day, value: days, to: moment) ?? moment)
+    }
+
+    /// One operation reads the time zone once, so a day can't be worked out half in one zone and half in
+    /// another if the phone changes zone in the middle of it.
+    private func date(in calendar: Calendar) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: dayOfMonth)) ?? Date()
     }
 
     static func < (lhs: Day, rhs: Day) -> Bool {
@@ -79,8 +105,8 @@ struct RepeatDays: Hashable {
     var isEmpty: Bool { days.isEmpty }
 
     /// Whether a Routine with these repeat days repeats on that day.
-    func contains(_ day: Day, calendar: Calendar = .current) -> Bool {
-        days.contains(day.weekday(calendar: calendar))
+    func contains(_ day: Day) -> Bool {
+        days.contains(day.weekday())
     }
 }
 
