@@ -48,9 +48,14 @@ struct DayPlan {
     /// moves forward. Today is not over yet, so today is never Missed, and a day the Routine was never on
     /// can't be Missed. A One-time Action is never Missed: it moves to today as 迟到 instead.
     ///
+    /// A Routine can't have missed a day it didn't exist for, so days before it was created are never
+    /// Missed however far back its start day reaches. Those days still show the Routine, so a day the
+    /// student really did can be ticked in afterwards.
+    ///
     /// Ticket 10 adds the last part of this rule: days inside a Pause are never Missed.
     static func isMissed(_ action: Action, on day: Day, today: Day, calendar: Calendar = .current) -> Bool {
         guard action.isRoutine, day < today else { return false }
+        guard day >= Day(action.createdAt, calendar: calendar) else { return false }
         guard appears(action, on: day, today: today, calendar: calendar) else { return false }
         return !(action.completions ?? []).contains { $0.dayNumber == day.number }
     }

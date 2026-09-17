@@ -307,17 +307,19 @@ struct DayPlanTests {
         let chinese = try categories.add(named: "中文")
         let study = try categories.add(named: "学习")
         let actions = ActionLibrary(context: container.mainContext)
-        let daily = try actions.addRoutine(
+        let daily = try addRoutineCreatedOnItsStartDay(
             title: "学20个新词",
             category: chinese,
             repeatDays: .everyDay,
-            startDay: monday
+            startDay: monday,
+            context: container.mainContext
         )
-        let onWeekdays = try actions.addRoutine(
+        let onWeekdays = try addRoutineCreatedOnItsStartDay(
             title: "上课",
             category: study,
             repeatDays: .weekdays,
-            startDay: monday
+            startDay: monday,
+            context: container.mainContext
         )
         let oneTime = try actions.addOneTime(title: "买SIM卡", category: chinese, day: monday)
         let today = Day(year: 2026, month: 9, day: 21)
@@ -336,16 +338,42 @@ struct DayPlanTests {
         #expect(!DayPlan.isMissed(oneTime, on: monday, today: today, calendar: gregorian))
     }
 
-    /// A past day can still be ticked, and that day is then no longer Missed. Other days keep their own state.
-    @Test func tickingARoutineOnAPastDayRemovesMissedForThatDayOnly() throws {
+    /// A Routine can't have missed a day it didn't exist for, even when its start day is earlier. Those days
+    /// still show the Routine, so a day the student really did can be ticked in afterwards.
+    @Test func daysBeforeARoutineWasCreatedAreNotMissed() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
         let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
         let routine = try ActionLibrary(context: container.mainContext).addRoutine(
             title: "学20个新词",
             category: chinese,
             repeatDays: .everyDay,
+            startDay: monday
+        )
+        let wednesday = Day(year: 2026, month: 9, day: 16)
+        routine.createdAt = wednesday.date(calendar: gregorian)
+        try container.mainContext.saveOrRollBack()
+        let today = Day(year: 2026, month: 9, day: 21)
+
+        #expect(!DayPlan.isMissed(routine, on: monday, today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(routine, on: Day(year: 2026, month: 9, day: 15), today: today, calendar: gregorian))
+        #expect(DayPlan.isMissed(routine, on: wednesday, today: today, calendar: gregorian))
+        #expect(DayPlan.isMissed(routine, on: Day(year: 2026, month: 9, day: 20), today: today, calendar: gregorian))
+
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: monday, today: today) == ["学20个新词"])
+    }
+
+    /// A past day can still be ticked, and that day is then no longer Missed. Other days keep their own state.
+    @Test func tickingARoutineOnAPastDayRemovesMissedForThatDayOnly() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let routine = try addRoutineCreatedOnItsStartDay(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
             startDay: monday,
-            defaultMinutes: 20
+            defaultMinutes: 20,
+            context: container.mainContext
         )
         let completions = CompletionLibrary(context: container.mainContext)
         let tuesday = Day(year: 2026, month: 9, day: 15)
@@ -396,5 +424,26 @@ struct DayPlanTests {
     /// The day's Actions by title, read in the Gregorian calendar so weekdays mean what they say.
     private func plannedTitles(_ plan: DayPlan, on day: Day, today: Day) throws -> [String] {
         try plan.actions(on: day, today: today, calendar: gregorian).map(\.title)
+    }
+
+    /// A Routine the student created on the day it starts, so every repeat day since could be Missed.
+    private func addRoutineCreatedOnItsStartDay(
+        title: String,
+        category: PersonalSchedule.Category,
+        repeatDays: RepeatDays,
+        startDay: Day,
+        defaultMinutes: Int? = nil,
+        context: ModelContext
+    ) throws -> Action {
+        let routine = try ActionLibrary(context: context).addRoutine(
+            title: title,
+            category: category,
+            repeatDays: repeatDays,
+            startDay: startDay,
+            defaultMinutes: defaultMinutes
+        )
+        routine.createdAt = startDay.date(calendar: gregorian)
+        try context.saveOrRollBack()
+        return routine
     }
 }

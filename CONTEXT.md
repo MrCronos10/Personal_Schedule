@@ -37,7 +37,7 @@ An Action that happens once. If not ticked by the end of its day, it moves to th
 _Avoid_: Single task, one-off
 
 **Missed**:
-A Routine day, outside any pause, that ended without a Completion. It stays on that day and never moves forward. A Completion can still be added to any past day later, and the day is then no longer Missed.
+A Routine day, outside any pause, that ended without a Completion, on or after the day the Routine was created. It stays on that day and never moves forward. A Completion can still be added to any past day later, and the day is then no longer Missed. Days before the Routine existed are never Missed, even when its start date reaches further back: the Routine still shows on those days, so a day the student really did can be ticked in, but a day they never planned is not held against them.
 _Avoid_: Skipped, failed, overdue
 
 **Timetable**:
