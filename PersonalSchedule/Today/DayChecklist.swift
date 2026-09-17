@@ -95,6 +95,7 @@ struct DayChecklist: View {
             completion: completion,
             ink: Theme.categoryInk(for: action.category, among: allCategories),
             isLate: DayPlan.isLate(action, on: day, today: today),
+            isMissed: DayPlan.isMissed(action, on: day, today: today),
             onTickBox: {
                 if isDone {
                     untickTarget = action
@@ -122,6 +123,7 @@ struct ActionRow: View {
     let completion: Completion?
     let ink: Color
     let isLate: Bool
+    let isMissed: Bool
     let onTickBox: () -> Void
     /// Nothing to offer for a ticked Action, so it gets no long-press menu at all.
     let onDelete: (() -> Void)?
@@ -180,6 +182,12 @@ struct ActionRow: View {
                 Text(verbatim: " \(plannedDayText)")
                     .foregroundStyle(Theme.late)
             }
+            if isMissed {
+                Text(verbatim: " · ")
+                    .foregroundStyle(Theme.muted)
+                Text("错过")
+                    .foregroundStyle(Theme.late)
+            }
             if let minutes = completion?.minutes {
                 Text(verbatim: " · ")
                     .foregroundStyle(Theme.muted)
@@ -207,7 +215,7 @@ struct ActionRow: View {
                     .rotationEffect(.degrees(-8))
             } else {
                 RoundedRectangle(cornerRadius: 3)
-                    .stroke(isLate ? Theme.late : Theme.ink, lineWidth: 1.5)
+                    .stroke(isBehind ? Theme.late : Theme.ink, lineWidth: 1.5)
                     .frame(width: 34, height: 34)
             }
         }
@@ -220,12 +228,15 @@ struct ActionRow: View {
         guard let repeatDays = action.repeatDays else { return "一次" }
         if repeatDays == .everyDay { return "每天" }
         if repeatDays == .weekdays { return "工作日" }
-        return "重复"
+        return "自选日子"
     }
+
+    /// 迟到 and 错过 are both "behind", and share one ink. See "Look" in docs/plan-v1.md.
+    private var isBehind: Bool { isLate || isMissed }
 
     private var titleInk: Color {
         if isDone { return Theme.muted }
-        return isLate ? Theme.late : Theme.ink
+        return isBehind ? Theme.late : Theme.ink
     }
 
     /// The day it was planned for, so a late Action says how far behind it is.

@@ -171,6 +171,20 @@ struct DayPlanTests {
         #expect(try plannedTitles(plan, on: monday, today: monday) == ["学20个新词"])
     }
 
+    /// A Routine is repeat days *and* a start day. An Action with neither in place is not a Routine, so it
+    /// can't become a row that appears on no day at all and still refuses to be deleted.
+    @Test func anActionWithNoRepeatDaysLeftIsNotTreatedAsARoutine() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let action = Action(title: "空的", repeatDays: RepeatDays([]), startDay: monday, time: nil, defaultMinutes: nil)
+        container.mainContext.insert(action)
+        try container.mainContext.saveOrRollBack()
+
+        #expect(action.repeatDays == nil)
+        #expect(!action.isRoutine)
+        // It isn't a Routine, so the 删除 rule for Routines doesn't trap it.
+        try ActionLibrary(context: container.mainContext).delete(action)
+    }
+
     @Test func untickedOneTimeActionCanBeDeleted() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
         let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
@@ -283,6 +297,84 @@ struct DayPlanTests {
         }
         let plan = DayPlan(context: container.mainContext)
         #expect(try plannedTitles(plan, on: monday, today: monday).isEmpty)
+    }
+
+    /// A repeat day that ended without a Completion is Missed on that day. Today is not over yet, so it is
+    /// never Missed, and a day the Routine was never on can't be Missed either.
+    @Test func untickedRoutineIsMissedOnAPastDayButNotTodayOrLater() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let categories = CategoryLibrary(context: container.mainContext)
+        let chinese = try categories.add(named: "中文")
+        let study = try categories.add(named: "学习")
+        let actions = ActionLibrary(context: container.mainContext)
+        let daily = try actions.addRoutine(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday
+        )
+        let onWeekdays = try actions.addRoutine(
+            title: "上课",
+            category: study,
+            repeatDays: .weekdays,
+            startDay: monday
+        )
+        let oneTime = try actions.addOneTime(title: "买SIM卡", category: chinese, day: monday)
+        let today = Day(year: 2026, month: 9, day: 21)
+
+        #expect(DayPlan.isMissed(daily, on: monday, today: today, calendar: gregorian))
+        #expect(DayPlan.isMissed(daily, on: Day(year: 2026, month: 9, day: 20), today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(daily, on: today, today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(daily, on: Day(year: 2026, month: 9, day: 22), today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(daily, on: Day(year: 2026, month: 9, day: 13), today: today, calendar: gregorian))
+
+        // Saturday is not one of 工作日, so it was never a day this Routine was on.
+        #expect(DayPlan.isMissed(onWeekdays, on: Day(year: 2026, month: 9, day: 18), today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(onWeekdays, on: Day(year: 2026, month: 9, day: 19), today: today, calendar: gregorian))
+
+        // A One-time Action is never Missed: it moves to today as 迟到 instead.
+        #expect(!DayPlan.isMissed(oneTime, on: monday, today: today, calendar: gregorian))
+    }
+
+    /// A past day can still be ticked, and that day is then no longer Missed. Other days keep their own state.
+    @Test func tickingARoutineOnAPastDayRemovesMissedForThatDayOnly() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let routine = try ActionLibrary(context: container.mainContext).addRoutine(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            defaultMinutes: 20
+        )
+        let completions = CompletionLibrary(context: container.mainContext)
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+        let today = Day(year: 2026, month: 9, day: 21)
+        #expect(DayPlan.isMissed(routine, on: monday, today: today, calendar: gregorian))
+
+        try completions.tick(routine, on: monday, minutes: 20, note: nil)
+
+        #expect(!DayPlan.isMissed(routine, on: monday, today: today, calendar: gregorian))
+        #expect(try completions.completion(for: routine, on: monday)?.minutes == 20)
+        #expect(DayPlan.isMissed(routine, on: tuesday, today: today, calendar: gregorian))
+    }
+
+    /// Missing a day changes nothing about the other days: the Routine is on each repeat day once, no more.
+    @Test func aMissedRoutineDayAddsNothingToLaterDays() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        try ActionLibrary(context: container.mainContext).addRoutine(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday
+        )
+        let plan = DayPlan(context: container.mainContext)
+        let today = Day(year: 2026, month: 9, day: 21)
+
+        #expect(try plannedTitles(plan, on: monday, today: today) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 15), today: today) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: today, today: today) == ["学20个新词"])
     }
 
     @Test func timedActionsComeFirstEarliestFirstThenUntimedInTheOrderAdded() throws {

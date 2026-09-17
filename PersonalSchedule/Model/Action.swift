@@ -49,10 +49,17 @@ final class Action {
 
     var time: TimeOfDay? { timeMinutes.map(TimeOfDay.init(minutesSinceMidnight:)) }
 
-    /// A Routine repeats on set days; a One-time Action happens once. See CONTEXT.md.
-    var isRoutine: Bool { repeatDays != nil }
+    /// A Routine repeats on set days from a start day; a One-time Action happens once. See CONTEXT.md.
+    ///
+    /// Both halves are required, the same two the day rule asks for, so an Action can never be a Routine
+    /// that appears on no day at all while still refusing to be deleted.
+    var isRoutine: Bool { repeatDays != nil && startDay != nil }
 
-    var repeatDays: RepeatDays? { repeatWeekdayMask.map(RepeatDays.init(mask:)) }
+    /// No repeat days left means no Routine, so an empty set of days reads as nothing at all.
+    var repeatDays: RepeatDays? {
+        guard let mask = repeatWeekdayMask, mask != 0 else { return nil }
+        return RepeatDays(mask: mask)
+    }
 
     var startDay: Day? { startDayNumber.map(Day.init(number:)) }
 }

@@ -216,6 +216,11 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } }
       }
     },
+    "自选日子" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Chosen days" } }
+      }
+    },
     "语言" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Language" } }
@@ -283,7 +288,12 @@
     },
     "重复" : {
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Repeating" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Repeat" } }
+      }
+    },
+    "错过" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Missed" } }
       }
     },
     "默认分钟（可选）" : {

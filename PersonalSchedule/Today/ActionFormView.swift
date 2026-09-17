@@ -106,6 +106,13 @@ struct ActionFormView: View {
             Text("重复").tag(Kind.routine)
         }
         .pickerStyle(.segmented)
+        .onChange(of: kind) { _, newKind in
+            // A Routine started on a day already gone would report every day since as 错过, so a new one
+            // starts today. The student can still pick an earlier day on purpose.
+            if newKind == .routine, Day(date) < Day.today() {
+                date = Date()
+            }
+        }
     }
 
     private var repeatPicker: some View {
@@ -126,12 +133,26 @@ struct ActionFormView: View {
         .padding(.vertical, 4)
     }
 
-    /// The week as the student's language starts it: Monday first in 中文, Sunday first in English.
+    /// The week in the order the student's language starts it.
+    ///
+    /// The first day comes from the locale itself: a `Calendar` keeps the `firstWeekday` it was made with,
+    /// so assigning a locale to `Calendar.current` never changes where its week starts.
     private var weekdaysInWeekOrder: [Weekday] {
-        var calendar = Calendar.current
-        calendar.locale = locale
-        let first = calendar.firstWeekday
+        let first = firstWeekdayNumber
         return (0..<7).compactMap { Weekday(rawValue: (first - 1 + $0) % 7 + 1) }
+    }
+
+    private var firstWeekdayNumber: Int {
+        switch locale.firstDayOfWeek {
+        case .sunday: return 1
+        case .monday: return 2
+        case .tuesday: return 3
+        case .wednesday: return 4
+        case .thursday: return 5
+        case .friday: return 6
+        case .saturday: return 7
+        default: return 1
+        }
     }
 
     private func weekdayButton(_ weekday: Weekday) -> some View {
