@@ -7,22 +7,36 @@ struct DayChecklist: View {
     let today: Day
 
     @Environment(\.modelContext) private var context
-    /// Everything planned for this day or earlier; `DayPlan.plan(_:on:today:)` picks out the day's Actions,
-    /// because a late Action's planned day has passed.
+    /// Every Action; `DayPlan.plan(_:on:today:)` picks out the ones this day shows, because a day's Actions
+    /// can't be found by their stored day numbers alone.
     @Query private var candidateActions: [Action]
     @Query private var dayCompletions: [Completion]
     @Query(sort: \Category.createdAt) private var allCategories: [Category]
 
-    @State private var tickTarget: Action?
+    @State private var sheet: Sheet?
     @State private var untickTarget: Action?
     @State private var deleteTarget: Action?
     /// Kept beside `deleteTarget` so the dialog's message never reads a title off a deleted Action.
     @State private var deleteTitle = ""
 
+    /// What the checklist shows over itself: the Tick sheet, or the form for changing an Action. One sheet
+    /// holding both, because two `sheet` modifiers on the same view get in each other's way.
+    private enum Sheet: Identifiable {
+        case tick(Action)
+        case edit(Action)
+
+        var id: String {
+            switch self {
+            case .tick(let action): return "tick-\(String(describing: action.persistentModelID))"
+            case .edit(let action): return "edit-\(String(describing: action.persistentModelID))"
+            }
+        }
+    }
+
     init(day: Day, today: Day = Day.today()) {
         self.day = day
         self.today = today
-        _candidateActions = Query(DayPlan.descriptor(for: day, today: today))
+        _candidateActions = Query(DayPlan.descriptor)
         _dayCompletions = Query(CompletionLibrary.descriptor(for: day))
     }
 
@@ -42,8 +56,13 @@ struct DayChecklist: View {
                 }
             }
         }
-        .sheet(item: $tickTarget) { action in
-            TickSheetView(action: action, day: day)
+        .sheet(item: $sheet) { showing in
+            switch showing {
+            case .tick(let action):
+                TickSheetView(action: action, day: day)
+            case .edit(let action):
+                ActionFormView(editing: action)
+            }
         }
         .confirmationDialog(
             Text("取消完成？"),
@@ -100,9 +119,10 @@ struct DayChecklist: View {
                 if isDone {
                     untickTarget = action
                 } else {
-                    tickTarget = action
+                    sheet = .tick(action)
                 }
             },
+            onOpen: { sheet = .edit(action) },
             onDelete: onDelete
         )
     }
@@ -125,6 +145,8 @@ struct ActionRow: View {
     let isLate: Bool
     let isMissed: Bool
     let onTickBox: () -> Void
+    /// Tapping the title opens the Action for changing; the tick box keeps its own tap.
+    let onOpen: () -> Void
     /// Nothing to offer for a ticked Action, so it gets no long-press menu at all.
     let onDelete: (() -> Void)?
 
@@ -149,15 +171,19 @@ struct ActionRow: View {
                 .foregroundStyle(Theme.muted)
                 .frame(width: 44, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: action.title)
-                    .font(Theme.serif(16))
-                    .foregroundStyle(titleInk)
-                    .strikethrough(isDone, color: Theme.rule)
-                meta
+            Button(action: onOpen) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: action.title)
+                        .font(Theme.serif(16))
+                        .foregroundStyle(titleInk)
+                        .strikethrough(isDone, color: Theme.rule)
+                    meta
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-
-            Spacer(minLength: 0)
+            .buttonStyle(.plain)
+            .accessibilityHint(Text("修改"))
 
             tickBox
         }

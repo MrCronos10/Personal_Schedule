@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// The form for planning a new One-time Action or Routine.
+/// The form for planning a new One-time Action or Routine, and for changing one that already exists.
 struct ActionFormView: View {
     /// A One-time Action happens once; a Routine repeats on set days. See CONTEXT.md.
     private enum Kind: Hashable {
@@ -18,6 +18,9 @@ struct ActionFormView: View {
     @Environment(\.locale) private var locale
     @Query(CategoryLibrary.activeDescriptor) private var categories: [Category]
 
+    /// The Action being changed, or nothing when planning a new one.
+    private let editing: Action?
+
     @State private var title = ""
     @State private var category: Category?
     @State private var kind: Kind = .oneTime
@@ -30,7 +33,45 @@ struct ActionFormView: View {
     @State private var errorMessage: LocalizedStringKey?
 
     init(day: Day) {
+        editing = nil
         _date = State(initialValue: day.date())
+    }
+
+    /// Opens an Action for changing. An Action keeps its kind, so 类型 isn't offered here.
+    init(editing action: Action) {
+        editing = action
+        _title = State(initialValue: action.title)
+        // An Action keeps the Category it has, even one archived since: nothing is deleted in this app, so
+        // changing an Action's time shouldn't force it out of a Category the student has retired.
+        _category = State(initialValue: action.category)
+        _defaultMinutes = State(initialValue: action.defaultMinutes)
+
+        if let repeatDays = action.repeatDays, let startDay = action.startDay {
+            _kind = State(initialValue: .routine)
+            _date = State(initialValue: startDay.date())
+            if repeatDays == .everyDay {
+                _repeatChoice = State(initialValue: .everyDay)
+            } else if repeatDays == .weekdays {
+                _repeatChoice = State(initialValue: .weekdays)
+            } else {
+                _repeatChoice = State(initialValue: .chosen)
+                _chosenDays = State(initialValue: repeatDays.days)
+            }
+        } else {
+            _kind = State(initialValue: .oneTime)
+            _date = State(initialValue: action.plannedDay.date())
+        }
+
+        if let clock = action.time {
+            _hasTime = State(initialValue: true)
+            let onTheClock = Calendar.current.date(
+                bySettingHour: clock.hour,
+                minute: clock.minute,
+                second: 0,
+                of: Date()
+            )
+            _time = State(initialValue: onTheClock ?? Date())
+        }
     }
 
     var body: some View {
@@ -42,7 +83,9 @@ struct ActionFormView: View {
                 }
 
                 Section {
-                    kindPicker
+                    if editing == nil {
+                        kindPicker
+                    }
                     if kind == .routine {
                         repeatPicker
                         if repeatChoice == .chosen {
@@ -72,7 +115,7 @@ struct ActionFormView: View {
             .scrollContentBackground(.hidden)
             .background(Theme.paper)
             .tint(Theme.red)
-            .navigationTitle(Text("新计划"))
+            .navigationTitle(Text(editing == nil ? "新计划" : "改计划"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -87,17 +130,25 @@ struct ActionFormView: View {
 
     @ViewBuilder
     private var categoryPicker: some View {
-        if categories.isEmpty {
+        let options = pickableCategories
+        if options.isEmpty {
             Text("请先在设置里添加分类")
                 .foregroundStyle(Theme.muted)
         } else {
             Picker("选择分类", selection: $category) {
                 Text("未选择").tag(Category?.none)
-                ForEach(categories) { option in
+                ForEach(options) { option in
                     Text(verbatim: option.name).tag(Optional(option))
                 }
             }
         }
+    }
+
+    /// The active Categories, plus the one this Action already has when that has since been archived, so it
+    /// can be kept. A new Action only ever offers active Categories.
+    private var pickableCategories: [Category] {
+        guard let current = editing?.category, current.isArchived else { return categories }
+        return categories + [current]
     }
 
     private var kindPicker: some View {
@@ -126,6 +177,27 @@ struct ActionFormView: View {
         .padding(.vertical, 4)
     }
 
+    private func weekdayButton(_ weekday: Weekday) -> some View {
+        let isChosen: Bool = chosenDays.contains(weekday)
+        return Button {
+            if isChosen {
+                chosenDays.remove(weekday)
+            } else {
+                chosenDays.insert(weekday)
+            }
+        } label: {
+            Text(verbatim: shortName(for: weekday))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(isChosen ? Theme.paper : Theme.ink)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 7)
+                .background(isChosen ? Theme.red : Color.clear, in: RoundedRectangle(cornerRadius: 4))
+                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.rule))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isChosen ? [.isButton, .isSelected] : .isButton)
+    }
+
     /// The week in the order the student's language starts it.
     ///
     /// The first day comes from the locale itself: a `Calendar` keeps the `firstWeekday` it was made with,
@@ -146,27 +218,6 @@ struct ActionFormView: View {
         case .saturday: return 7
         default: return 1
         }
-    }
-
-    private func weekdayButton(_ weekday: Weekday) -> some View {
-        let isChosen: Bool = chosenDays.contains(weekday)
-        return Button {
-            if isChosen {
-                chosenDays.remove(weekday)
-            } else {
-                chosenDays.insert(weekday)
-            }
-        } label: {
-            Text(verbatim: shortName(for: weekday))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(isChosen ? Theme.paper : Theme.ink)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 7)
-                .background(isChosen ? Theme.red : Color.clear, in: RoundedRectangle(cornerRadius: 4))
-                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.rule))
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isChosen ? [.isButton, .isSelected] : .isButton)
     }
 
     /// 日, 一, 二… in Chinese; Sun, Mon, Tue… in English. The student's own language, never translated by us.
@@ -199,26 +250,7 @@ struct ActionFormView: View {
         let chosenTime = hasTime ? TimeOfDay(hour: clock.hour ?? 0, minute: clock.minute ?? 0) : nil
         let day = Day(date, calendar: calendar)
         do {
-            let library = ActionLibrary(context: context)
-            switch kind {
-            case .oneTime:
-                try library.addOneTime(
-                    title: title,
-                    category: category,
-                    day: day,
-                    time: chosenTime,
-                    defaultMinutes: defaultMinutes
-                )
-            case .routine:
-                try library.addRoutine(
-                    title: title,
-                    category: category,
-                    repeatDays: repeatDays,
-                    startDay: day,
-                    time: chosenTime,
-                    defaultMinutes: defaultMinutes
-                )
-            }
+            try write(category: category, day: day, time: chosenTime)
             dismiss()
         } catch ActionError.emptyTitle {
             errorMessage = "请输入标题"
@@ -230,6 +262,48 @@ struct ActionFormView: View {
             errorMessage = "分钟不能是负数"
         } catch {
             errorMessage = "保存失败：\(error.localizedDescription)"
+        }
+    }
+
+    private func write(category: Category, day: Day, time: TimeOfDay?) throws {
+        let library = ActionLibrary(context: context)
+        switch (editing, kind) {
+        case (let action?, .routine):
+            try library.updateRoutine(
+                action,
+                title: title,
+                category: category,
+                repeatDays: repeatDays,
+                startDay: day,
+                time: time,
+                defaultMinutes: defaultMinutes
+            )
+        case (let action?, .oneTime):
+            try library.updateOneTime(
+                action,
+                title: title,
+                category: category,
+                day: day,
+                time: time,
+                defaultMinutes: defaultMinutes
+            )
+        case (nil, .routine):
+            try library.addRoutine(
+                title: title,
+                category: category,
+                repeatDays: repeatDays,
+                startDay: day,
+                time: time,
+                defaultMinutes: defaultMinutes
+            )
+        case (nil, .oneTime):
+            try library.addOneTime(
+                title: title,
+                category: category,
+                day: day,
+                time: time,
+                defaultMinutes: defaultMinutes
+            )
         }
     }
 }

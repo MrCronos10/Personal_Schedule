@@ -413,6 +413,248 @@ struct DayPlanTests {
         #expect(try plannedTitles(plan, on: today, today: today) == ["学20个新词"])
     }
 
+    /// Editing an Action changes the days that aren't ticked. A day already ticked keeps the title and
+    /// Category it copied when it was ticked (ADR 0002), so finished days never change under the student.
+    @Test func editingARoutineLeavesTickedDaysWithTheirOwnCopy() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let categories = CategoryLibrary(context: container.mainContext)
+        let chinese = try categories.add(named: "中文")
+        let study = try categories.add(named: "学习")
+        let routine = try addRoutineCreatedOnItsStartDay(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            defaultMinutes: 20,
+            context: container.mainContext
+        )
+        let completions = CompletionLibrary(context: container.mainContext)
+        try completions.tick(routine, on: monday, minutes: 20, note: nil)
+
+        try ActionLibrary(context: container.mainContext).updateRoutine(
+            routine,
+            title: "学30个新词",
+            category: study,
+            repeatDays: .everyDay,
+            startDay: monday,
+            time: TimeOfDay(hour: 7, minute: 0),
+            defaultMinutes: 30
+        )
+
+        let ticked = try #require(try completions.completion(for: routine, on: monday))
+        #expect(ticked.titleWhenTicked == "学20个新词")
+        #expect(ticked.category?.name == "中文")
+        #expect(ticked.minutes == 20)
+
+        #expect(routine.title == "学30个新词")
+        #expect(routine.category?.name == "学习")
+        #expect(routine.defaultMinutes == 30)
+        #expect(routine.time == TimeOfDay(hour: 7, minute: 0))
+
+        let plan = DayPlan(context: container.mainContext)
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+        #expect(try plannedTitles(plan, on: tuesday, today: monday) == ["学30个新词"])
+    }
+
+    /// Editing a One-time Action that isn't ticked moves it to the day it now says, and off the old one.
+    @Test func editingAOneTimeActionMovesItToItsNewDayWithItsNewDetails() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let categories = CategoryLibrary(context: container.mainContext)
+        let life = try categories.add(named: "生活")
+        let study = try categories.add(named: "学习")
+        let actions = ActionLibrary(context: container.mainContext)
+        let action = try actions.addOneTime(title: "买SIM卡", category: life, day: monday)
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+
+        try actions.updateOneTime(
+            action,
+            title: "买电话卡",
+            category: study,
+            day: tuesday,
+            time: TimeOfDay(hour: 9, minute: 30),
+            defaultMinutes: 15
+        )
+
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: monday, today: monday).isEmpty)
+        #expect(try plannedTitles(plan, on: tuesday, today: monday) == ["买电话卡"])
+        #expect(action.category?.name == "学习")
+        #expect(action.time == TimeOfDay(hour: 9, minute: 30))
+        #expect(action.defaultMinutes == 15)
+    }
+
+    @Test(arguments: ["", "   "])
+    func anEditWithABlankTitleIsRefusedAndTheActionKeepsWhatItHad(title: String) throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
+        let actions = ActionLibrary(context: container.mainContext)
+        let action = try actions.addOneTime(title: "买SIM卡", category: life, day: monday)
+
+        #expect(throws: ActionError.emptyTitle) {
+            try actions.updateOneTime(
+                action,
+                title: title,
+                category: life,
+                day: monday,
+                time: nil,
+                defaultMinutes: nil
+            )
+        }
+        #expect(action.title == "买SIM卡")
+    }
+
+    @Test func anEditIntoAnArchivedCategoryIsRefusedAndTheActionKeepsItsCategory() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let categories = CategoryLibrary(context: container.mainContext)
+        let life = try categories.add(named: "生活")
+        let club = try categories.add(named: "篮球社")
+        try categories.archive(club)
+        let actions = ActionLibrary(context: container.mainContext)
+        let action = try actions.addOneTime(title: "买SIM卡", category: life, day: monday)
+
+        #expect(throws: ActionError.archivedCategory) {
+            try actions.updateOneTime(
+                action,
+                title: "打篮球",
+                category: club,
+                day: monday,
+                time: nil,
+                defaultMinutes: nil
+            )
+        }
+        #expect(action.title == "买SIM卡")
+        #expect(action.category?.name == "生活")
+    }
+
+    /// Editing is the one way a Routine could lose every repeat day, which would leave it on no day at all.
+    @Test func editingARoutineDownToNoRepeatDaysIsRefusedAndItKeepsItsDays() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let actions = ActionLibrary(context: container.mainContext)
+        let routine = try actions.addRoutine(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday
+        )
+
+        #expect(throws: ActionError.noRepeatDays) {
+            try actions.updateRoutine(
+                routine,
+                title: "学20个新词",
+                category: chinese,
+                repeatDays: RepeatDays([]),
+                startDay: monday,
+                time: nil,
+                defaultMinutes: nil
+            )
+        }
+        #expect(routine.repeatDays == .everyDay)
+        #expect(routine.isRoutine)
+    }
+
+    /// A ticked day is where the Action was done, so moving its date afterwards doesn't move the record.
+    @Test func aTickedOneTimeActionStaysOnItsTickDayWhenItsDateIsEdited() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
+        let actions = ActionLibrary(context: container.mainContext)
+        let action = try actions.addOneTime(title: "买SIM卡", category: life, day: monday)
+        try CompletionLibrary(context: container.mainContext).tick(action, on: monday, minutes: 15, note: nil)
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+
+        try actions.updateOneTime(
+            action,
+            title: "买SIM卡",
+            category: life,
+            day: tuesday,
+            time: nil,
+            defaultMinutes: nil
+        )
+
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: monday, today: monday) == ["买SIM卡"])
+        #expect(try plannedTitles(plan, on: tuesday, today: monday).isEmpty)
+    }
+
+    /// A day that was ticked keeps showing what was ticked on it, even after the Routine stops repeating on
+    /// that day. Otherwise its Completion stays in the database with no way to see it or undo it.
+    @Test func daysAlreadyTickedStayVisibleAfterARoutineStopsRepeatingOnThem() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let actions = ActionLibrary(context: container.mainContext)
+        let routine = try addRoutineCreatedOnItsStartDay(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            context: container.mainContext
+        )
+        let completions = CompletionLibrary(context: container.mainContext)
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+        let wednesday = Day(year: 2026, month: 9, day: 16)
+        try completions.tick(routine, on: monday, minutes: 20, note: nil)
+        try completions.tick(routine, on: tuesday, minutes: 20, note: nil)
+
+        try actions.updateRoutine(
+            routine,
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: RepeatDays([.wednesday]),
+            startDay: wednesday,
+            time: nil,
+            defaultMinutes: nil
+        )
+
+        let plan = DayPlan(context: container.mainContext)
+        let today = Day(year: 2026, month: 9, day: 21)
+        #expect(try plannedTitles(plan, on: monday, today: today) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: tuesday, today: today) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: wednesday, today: today) == ["学20个新词"])
+        // A day it never repeated on and was never ticked on stays empty.
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 17), today: today).isEmpty)
+        // The Completions are still reachable, so they can still be undone.
+        #expect(try completions.completion(for: routine, on: monday)?.minutes == 20)
+    }
+
+    /// Nothing is deleted in this app, so an Action outlives its Category's active life. Changing such an
+    /// Action must not force the student to move it out of the Category it belongs to.
+    @Test func anActionCanKeepACategoryThatHasSinceBeenArchived() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let categories = CategoryLibrary(context: container.mainContext)
+        let club = try categories.add(named: "篮球社")
+        let actions = ActionLibrary(context: container.mainContext)
+        let action = try actions.addOneTime(title: "打篮球", category: club, day: monday)
+        try categories.archive(club)
+
+        try actions.updateOneTime(
+            action,
+            title: "打篮球",
+            category: club,
+            day: monday,
+            time: TimeOfDay(hour: 18, minute: 0),
+            defaultMinutes: 60
+        )
+
+        #expect(action.time == TimeOfDay(hour: 18, minute: 0))
+        #expect(action.defaultMinutes == 60)
+        #expect(action.category?.name == "篮球社")
+
+        // Moving it into a different archived Category is still refused.
+        let old = try categories.add(named: "旧的")
+        try categories.archive(old)
+        #expect(throws: ActionError.archivedCategory) {
+            try actions.updateOneTime(
+                action,
+                title: "打篮球",
+                category: old,
+                day: monday,
+                time: nil,
+                defaultMinutes: nil
+            )
+        }
+        #expect(action.category?.name == "篮球社")
+    }
+
     @Test func timedActionsComeFirstEarliestFirstThenUntimedInTheOrderAdded() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
         let categories = CategoryLibrary(context: container.mainContext)

@@ -136,6 +136,16 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Restore" } }
       }
     },
+    "改计划" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit Action" } }
+      }
+    },
+    "修改" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit" } }
+      }
+    },
     "新分类名称" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "New Category name" } }
