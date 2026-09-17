@@ -32,6 +32,7 @@ struct DayPlan {
             return true
         }
         if let repeatDays = action.repeatDays, let startDay = action.startDay {
+            guard !action.isPaused(on: day) else { return false }
             return day >= startDay && repeatDays.contains(day, calendar: calendar)
         }
         if !completions.isEmpty {
@@ -59,7 +60,8 @@ struct DayPlan {
     /// Missed however far back its start day reaches. Those days still show the Routine, so a day the
     /// student really did can be ticked in afterwards.
     ///
-    /// Ticket 10 adds the last part of this rule: days inside a Pause are never Missed.
+    /// A day inside a Pause is never Missed either. That falls out of `appears`, which leaves a paused day
+    /// empty, rather than being a second copy of the pause rule here.
     static func isMissed(_ action: Action, on day: Day, today: Day, calendar: Calendar = .current) -> Bool {
         guard action.isRoutine, day < today else { return false }
         guard day >= Day(action.createdAt, calendar: calendar) else { return false }

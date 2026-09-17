@@ -11,7 +11,7 @@ Known limitation, accepted: changing a Routine's repeat days also changes which 
 - [x] Tapping an Action (not its circle) opens it in the Action form for editing
 - [x] Title, Category, time, Default Minutes, date (One-time) and repeat days (Routine) can be changed and saved
 - [x] Only active Categories can be chosen when editing
-- [x] A day ticked before the edit still shows the old title and still counts toward the old Category
+- [x] A day ticked before the edit still shows the old title and still counts toward the old Category (ticked wrongly here; the screen only started doing this in ticket 10, see below)
 - [x] Days not ticked, and future days, show the new values
 - [x] Tests cover: renaming an Action keeps ticked days' copy; changing Category keeps ticked days in the old Category
 - [x] All new screen text exists in 中文 and English
@@ -39,6 +39,10 @@ Known limitation, accepted: changing a Routine's repeat days also changes which 
 
 - The fetch now reads every Action on every day shown, and the day rule touches each one's Completions. That is fine at one student's scale and it is the price of having a single rule. If it ever matters, a filter that is a strict superset of the rule (planned day, or a start day, or any Completion at all) would keep one rule and fetch less.
 - Moving a Routine's 开始日期 backwards gives days that show the Routine but never say 错过, because Missed still counts only from the day the Routine was created. That follows the decision taken in ticket 08: moving the start date doesn't change when the Routine existed.
+
+### Corrected in ticket 10
+
+The box for "a day ticked before the edit still shows the old title" was ticked on the strength of a library test showing the Completion kept its copy. The copy was kept, but no screen ever read it: the row showed the Action's current title and Category, so renaming an Action rewrote every finished day on screen. The criterion was about the screen, and the screen only started honouring it in ticket 10, where `/code-review` caught it. Worth remembering that a passing library test can sit next to a screen that contradicts it.
 
 ### For the iPhone check
 

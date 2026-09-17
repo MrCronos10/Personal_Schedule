@@ -26,10 +26,15 @@ struct TickSheetView: View {
                     HStack(spacing: 10) {
                         TextField("分钟", text: $minutesText)
                             .keyboardType(.numberPad)
-                        Button("−5") { changeMinutes(by: -5) }
-                            .buttonStyle(MiniButtonStyle())
-                        Button("+5") { changeMinutes(by: 5) }
-                            .buttonStyle(MiniButtonStyle())
+                        // Symbols, the same in both languages, so they are never translated.
+                        Button { changeMinutes(by: -5) } label: {
+                            Text(verbatim: "−5")
+                        }
+                        .buttonStyle(MiniButtonStyle())
+                        Button { changeMinutes(by: 5) } label: {
+                            Text(verbatim: "+5")
+                        }
+                        .buttonStyle(MiniButtonStyle())
                     }
                 }
 

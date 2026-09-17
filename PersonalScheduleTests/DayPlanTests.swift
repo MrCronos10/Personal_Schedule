@@ -655,6 +655,177 @@ struct DayPlanTests {
         #expect(action.category?.name == "篮球社")
     }
 
+    /// A paused Routine stops appearing from the day it was paused. The days before it are untouched.
+    @Test func aPausedRoutineStopsAppearingFromTheDayItWasPaused() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let actions = ActionLibrary(context: container.mainContext)
+        let routine = try addRoutineCreatedOnItsStartDay(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            context: container.mainContext
+        )
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+        let wednesday = Day(year: 2026, month: 9, day: 16)
+
+        try actions.pause(routine, from: wednesday)
+
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: monday, today: wednesday) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: tuesday, today: wednesday) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: wednesday, today: wednesday).isEmpty)
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 17), today: wednesday).isEmpty)
+        #expect(routine.isPaused)
+    }
+
+    /// Resuming brings the Routine back from the day it was resumed. The days it was stopped for stay empty.
+    @Test func aResumedRoutineComesBackFromTheDayItWasResumed() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let actions = ActionLibrary(context: container.mainContext)
+        let routine = try addRoutineCreatedOnItsStartDay(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            context: container.mainContext
+        )
+        let tuesday = Day(year: 2026, month: 9, day: 15)
+        let wednesday = Day(year: 2026, month: 9, day: 16)
+        let thursday = Day(year: 2026, month: 9, day: 17)
+        let friday = Day(year: 2026, month: 9, day: 18)
+
+        try actions.pause(routine, from: wednesday)
+        try actions.resume(routine, on: friday)
+
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: tuesday, today: friday) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: wednesday, today: friday).isEmpty)
+        #expect(try plannedTitles(plan, on: thursday, today: friday).isEmpty)
+        #expect(try plannedTitles(plan, on: friday, today: friday) == ["学20个新词"])
+        #expect(!routine.isPaused)
+    }
+
+    /// Each pause is remembered on its own, so stopping and starting again as often as the student likes
+    /// leaves every stretch of days where it was.
+    @Test func aRoutineCanBePausedAndResumedMoreThanOnce() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let actions = ActionLibrary(context: container.mainContext)
+        let routine = try addRoutineCreatedOnItsStartDay(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            context: container.mainContext
+        )
+        let today = Day(year: 2026, month: 9, day: 25)
+
+        try actions.pause(routine, from: Day(year: 2026, month: 9, day: 16))
+        try actions.resume(routine, on: Day(year: 2026, month: 9, day: 18))
+        try actions.pause(routine, from: Day(year: 2026, month: 9, day: 21))
+        try actions.resume(routine, on: Day(year: 2026, month: 9, day: 23))
+
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 15), today: today) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 16), today: today).isEmpty)
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 17), today: today).isEmpty)
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 18), today: today) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 20), today: today) == ["学20个新词"])
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 21), today: today).isEmpty)
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 22), today: today).isEmpty)
+        #expect(try plannedTitles(plan, on: Day(year: 2026, month: 9, day: 23), today: today) == ["学20个新词"])
+        #expect((routine.pauses ?? []).count == 2)
+        #expect(!routine.isPaused)
+    }
+
+    /// Only a Routine is paused; a One-time Action is deleted instead. The guard went in with `pause`, so
+    /// this test came after it rather than driving it.
+    @Test func aOneTimeActionCantBePaused() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
+        let actions = ActionLibrary(context: container.mainContext)
+        let action = try actions.addOneTime(title: "买SIM卡", category: life, day: monday)
+
+        #expect(throws: ActionError.notARoutine) {
+            try actions.pause(action, from: monday)
+        }
+        #expect(!action.isPaused)
+        let plan = DayPlan(context: container.mainContext)
+        #expect(try plannedTitles(plan, on: monday, today: monday) == ["买SIM卡"])
+    }
+
+    /// Days inside a pause are never Missed, and stay that way once the Routine is going again. The days on
+    /// either side keep their own state.
+    @Test func daysInsideAPauseAreNeverMissedEvenAfterResuming() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let actions = ActionLibrary(context: container.mainContext)
+        let routine = try addRoutineCreatedOnItsStartDay(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            context: container.mainContext
+        )
+        let wednesday = Day(year: 2026, month: 9, day: 16)
+        let thursday = Day(year: 2026, month: 9, day: 17)
+        let friday = Day(year: 2026, month: 9, day: 18)
+        let today = Day(year: 2026, month: 9, day: 21)
+
+        try actions.pause(routine, from: wednesday)
+        try actions.resume(routine, on: friday)
+
+        #expect(DayPlan.isMissed(routine, on: monday, today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(routine, on: wednesday, today: today, calendar: gregorian))
+        #expect(!DayPlan.isMissed(routine, on: thursday, today: today, calendar: gregorian))
+        #expect(DayPlan.isMissed(routine, on: friday, today: today, calendar: gregorian))
+    }
+
+    /// An Action keeps its kind. Only the form was stopping an edit from turning a One-time Action into a
+    /// Routine, which would also have left it undeletable.
+    @Test func editingCantChangeWhetherAnActionIsARoutine() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let categories = CategoryLibrary(context: container.mainContext)
+        let life = try categories.add(named: "生活")
+        let chinese = try categories.add(named: "中文")
+        let actions = ActionLibrary(context: container.mainContext)
+        let oneTime = try actions.addOneTime(title: "买SIM卡", category: life, day: monday)
+        let routine = try actions.addRoutine(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday
+        )
+
+        #expect(throws: ActionError.notARoutine) {
+            try actions.updateRoutine(
+                oneTime,
+                title: "买SIM卡",
+                category: life,
+                repeatDays: .everyDay,
+                startDay: monday,
+                time: nil,
+                defaultMinutes: nil
+            )
+        }
+        #expect(!oneTime.isRoutine)
+
+        #expect(throws: ActionError.notAOneTimeAction) {
+            try actions.updateOneTime(
+                routine,
+                title: "学20个新词",
+                category: chinese,
+                day: monday,
+                time: nil,
+                defaultMinutes: nil
+            )
+        }
+        #expect(routine.isRoutine)
+    }
+
     @Test func timedActionsComeFirstEarliestFirstThenUntimedInTheOrderAdded() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
         let categories = CategoryLibrary(context: container.mainContext)

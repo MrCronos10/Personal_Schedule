@@ -8,6 +8,8 @@ enum ActionError: Error, Equatable {
     case tickedAction
     case noRepeatDays
     case routineCantBeDeleted
+    case notARoutine
+    case notAOneTimeAction
 }
 
 /// Creates and deletes the student's Actions.
@@ -69,6 +71,7 @@ struct ActionLibrary {
         time: TimeOfDay?,
         defaultMinutes: Int?
     ) throws {
+        guard !action.isRoutine else { throw ActionError.notAOneTimeAction }
         let trimmed = try checked(
             title: title,
             category: category,
@@ -94,6 +97,7 @@ struct ActionLibrary {
         time: TimeOfDay?,
         defaultMinutes: Int?
     ) throws {
+        guard action.isRoutine else { throw ActionError.notARoutine }
         let trimmed = try checked(
             title: title,
             category: category,
@@ -125,11 +129,49 @@ struct ActionLibrary {
     ) throws -> String {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw ActionError.emptyTitle }
-        if category !== existing {
+        if category.persistentModelID != existing?.persistentModelID {
             guard !category.isArchived else { throw ActionError.archivedCategory }
         }
         if let defaultMinutes, defaultMinutes < 0 { throw ActionError.negativeMinutes }
         return trimmed
+    }
+
+    /// Every Action, oldest first. Screens use this with `@Query` and then `routines(_:)`, so the list they
+    /// show is the one `isRoutine` defines rather than a second idea of what a Routine is.
+    nonisolated static var oldestFirstDescriptor: FetchDescriptor<Action> {
+        FetchDescriptor<Action>(sortBy: [SortDescriptor(\.createdAt)])
+    }
+
+    /// The Routines among some Actions, in the order they were given.
+    static func routines(_ actions: [Action]) -> [Action] {
+        actions.filter(\.isRoutine)
+    }
+
+    /// Stops a Routine from a day onwards. Routines are paused, never deleted (CONTEXT.md): its earlier days
+    /// and their Completions stay exactly as they were, and it can be resumed later as the same Routine.
+    ///
+    /// Pausing one that is already paused changes nothing, so a second tap can't open a second pause.
+    @discardableResult
+    func pause(_ action: Action, from day: Day) throws -> Pause {
+        guard action.isRoutine else { throw ActionError.notARoutine }
+        if let open = (action.pauses ?? []).first(where: { !$0.hasEnded }) {
+            return open
+        }
+        let pause = Pause(startDay: day)
+        context.insert(pause)
+        pause.action = action
+        try context.saveOrRollBack()
+        return pause
+    }
+
+    /// Starts a paused Routine again from a day onwards, as the same Routine. The days it was stopped for
+    /// keep their place: they show nothing and are never Missed.
+    ///
+    /// Resuming one that isn't paused changes nothing.
+    func resume(_ action: Action, on day: Day) throws {
+        guard let open = (action.pauses ?? []).first(where: { !$0.hasEnded }) else { return }
+        open.endDayNumber = day.number
+        try context.saveOrRollBack()
     }
 
     /// Deletes a One-time Action the student isn't going to do.

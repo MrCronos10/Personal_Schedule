@@ -8,12 +8,14 @@ struct SettingsView: View {
     @Query(CategoryLibrary.activeDescriptor) private var categories: [Category]
     @Query(CategoryLibrary.archivedDescriptor) private var archivedCategories: [Category]
     @Query(sort: \Category.createdAt) private var allCategories: [Category]
+    @Query(ActionLibrary.oldestFirstDescriptor) private var allActions: [Action]
 
     @State private var newName = ""
     @State private var errorMessage: LocalizedStringKey?
     @State private var renaming: Category?
     @State private var isRenaming = false
     @State private var renameText = ""
+    @State private var routineError: LocalizedStringKey?
 
     var body: some View {
         @Bindable var language = language
@@ -77,6 +79,24 @@ struct SettingsView: View {
                     emptyText("没有已归档的分类")
                 }
 
+                SectionCaption(title: "重复计划")
+
+                let routines = ActionLibrary.routines(allActions)
+                ForEach(routines) { routine in
+                    routineRow(routine)
+                }
+
+                if routines.isEmpty {
+                    emptyText("还没有重复计划")
+                }
+
+                if let routineError {
+                    Text(routineError)
+                        .font(.footnote)
+                        .foregroundStyle(Theme.red)
+                        .padding(.top, 6)
+                }
+
                 SectionCaption(title: "语言")
 
                 Picker("语言", selection: $language.current) {
@@ -129,6 +149,54 @@ struct SettingsView: View {
         .padding(.vertical, 10)
         .overlay(alignment: .bottom) {
             Rectangle().fill(Theme.rule).frame(height: 1)
+        }
+    }
+
+    /// A Routine row: its title, whether it is paused, and the button that stops or starts it again.
+    /// Routines are paused, never deleted (CONTEXT.md), so there is no delete here.
+    private func routineRow(_ routine: Action) -> some View {
+        let isPaused: Bool = routine.isPaused
+        return HStack(spacing: 10) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Theme.categoryInk(for: routine.category, among: allCategories))
+                .frame(width: 10, height: 10)
+                .opacity(isPaused ? 0.5 : 1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: routine.title)
+                    .font(Theme.serif(17))
+                    .foregroundStyle(isPaused ? Theme.muted : Theme.ink)
+                if isPaused {
+                    Text("已暂停")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.late)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Button(isPaused ? "继续" : "暂停") {
+                changeRoutine { library in
+                    if isPaused {
+                        try library.resume(routine, on: Day.today())
+                    } else {
+                        try library.pause(routine, from: Day.today())
+                    }
+                }
+            }
+            .buttonStyle(MiniButtonStyle())
+        }
+        .padding(.vertical, 10)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Theme.rule).frame(height: 1)
+        }
+    }
+
+    /// Routine errors have their own place, under the Routines they belong to, so a failed 暂停 isn't
+    /// reported somewhere the student has already scrolled past.
+    private func changeRoutine(_ change: (ActionLibrary) throws -> Void) {
+        do {
+            try change(ActionLibrary(context: context))
+            routineError = nil
+        } catch {
+            routineError = "保存失败：\(error.localizedDescription)"
         }
     }
 

@@ -21,6 +21,9 @@ final class Action {
     @Relationship(deleteRule: .cascade, inverse: \Completion.action)
     var completions: [Completion]? = []
 
+    @Relationship(deleteRule: .cascade, inverse: \Pause.action)
+    var pauses: [Pause]? = []
+
     init(title: String, plannedDay: Day, time: TimeOfDay?, defaultMinutes: Int?, createdAt: Date = Date()) {
         self.title = title
         self.plannedDayNumber = plannedDay.number
@@ -67,4 +70,12 @@ final class Action {
     }
 
     var startDay: Day? { startDayNumber.map(Day.init(number:)) }
+
+    /// Whether the Routine is stopped right now, which is a pause that hasn't ended.
+    var isPaused: Bool { (pauses ?? []).contains { !$0.hasEnded } }
+
+    /// Whether a day falls inside any pause, including pauses that have already ended.
+    func isPaused(on day: Day) -> Bool {
+        (pauses ?? []).contains { $0.contains(day) }
+    }
 }

@@ -112,7 +112,9 @@ struct DayChecklist: View {
         return ActionRow(
             action: action,
             completion: completion,
-            ink: Theme.categoryInk(for: action.category, among: allCategories),
+            // A ticked day is shown as it was ticked, so its ink comes from the Category its Completion
+            // copied, not from wherever the Action has been moved since (ADR 0002).
+            ink: Theme.categoryInk(for: completion?.category ?? action.category, among: allCategories),
             isLate: DayPlan.isLate(action, on: day, today: today),
             isMissed: DayPlan.isMissed(action, on: day, today: today),
             onTickBox: {
@@ -173,7 +175,7 @@ struct ActionRow: View {
 
             Button(action: onOpen) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: action.title)
+                    Text(verbatim: shownTitle)
                         .font(Theme.serif(16))
                         .foregroundStyle(titleInk)
                         .strikethrough(isDone, color: Theme.rule)
@@ -196,7 +198,7 @@ struct ActionRow: View {
 
     private var meta: some View {
         HStack(spacing: 0) {
-            Text(verbatim: "【\(action.category?.name ?? "")】")
+            Text(verbatim: "【\(shownCategoryName)】")
                 .foregroundStyle(ink)
             Text(kindLabel)
                 .foregroundStyle(Theme.muted)
@@ -227,7 +229,8 @@ struct ActionRow: View {
     private var tickBox: some View {
         Button(action: onTickBox) {
             if isDone {
-                Text("完")
+                // The seal on a finished day. It is the same character in both languages.
+                Text(verbatim: "完")
                     .font(Theme.serif(19, .black))
                     .foregroundStyle(Theme.paper)
                     .frame(width: 36, height: 36)
@@ -247,6 +250,20 @@ struct ActionRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isDone ? Text("取消完成") : Text("完成"))
+    }
+
+    /// A ticked day shows the title its Completion copied when it was ticked, so changing an Action later
+    /// never rewrites a finished day (ADR 0002). Days that aren't ticked show the Action as it is now.
+    private var shownTitle: String {
+        if let ticked = completion?.titleWhenTicked, !ticked.isEmpty {
+            return ticked
+        }
+        return action.title
+    }
+
+    /// The Category a ticked day counted towards, which is the one its Completion copied.
+    private var shownCategoryName: String {
+        (completion?.category ?? action.category)?.name ?? ""
     }
 
     /// 一次 for a One-time Action; for a Routine, how often it repeats.
