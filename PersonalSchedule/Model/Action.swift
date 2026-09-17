@@ -40,11 +40,16 @@ final class Action {
         self.title = title
         self.repeatWeekdayMask = repeatDays.mask
         self.startDayNumber = startDay.number
+        // A Routine is found by its repeat days, not this, but it is kept as a real day so that an Action
+        // left without repeat days falls back to a One-time Action on a real day instead of day zero.
+        self.plannedDayNumber = startDay.number
         self.timeMinutes = time?.minutesSinceMidnight
         self.defaultMinutes = defaultMinutes
         self.createdAt = createdAt
     }
 
+    /// The day a One-time Action is planned for. A Routine keeps its start day here as well, so this is
+    /// never day zero.
     var plannedDay: Day { Day(number: plannedDayNumber) }
 
     var time: TimeOfDay? { timeMinutes.map(TimeOfDay.init(minutesSinceMidnight:)) }

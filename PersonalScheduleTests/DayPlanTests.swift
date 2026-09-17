@@ -181,8 +181,16 @@ struct DayPlanTests {
 
         #expect(action.repeatDays == nil)
         #expect(!action.isRoutine)
+        // It falls back to a One-time Action, so its planned day has to be a real day, not day zero.
+        #expect(action.plannedDay == monday)
+
+        let plan = DayPlan(context: container.mainContext)
+        let today = Day(year: 2026, month: 9, day: 21)
+        #expect(try plannedTitles(plan, on: today, today: today) == ["空的"])
+
         // It isn't a Routine, so the 删除 rule for Routines doesn't trap it.
         try ActionLibrary(context: container.mainContext).delete(action)
+        #expect(try plannedTitles(plan, on: today, today: today).isEmpty)
     }
 
     @Test func untickedOneTimeActionCanBeDeleted() throws {

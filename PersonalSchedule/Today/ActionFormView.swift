@@ -106,13 +106,6 @@ struct ActionFormView: View {
             Text("重复").tag(Kind.routine)
         }
         .pickerStyle(.segmented)
-        .onChange(of: kind) { _, newKind in
-            // A Routine started on a day already gone would report every day since as 错过, so a new one
-            // starts today. The student can still pick an earlier day on purpose.
-            if newKind == .routine, Day(date) < Day.today() {
-                date = Date()
-            }
-        }
     }
 
     private var repeatPicker: some View {
