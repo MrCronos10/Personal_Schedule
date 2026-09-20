@@ -78,6 +78,40 @@ struct CategoryLibraryTests {
         #expect(try library.archived().map(\.name) == ["生活"])
     }
 
+    @Test func weeklyTargetIsSavedAndReadBack() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let library = CategoryLibrary(context: container.mainContext)
+        let chinese = try library.add(named: "中文")
+
+        try library.setWeeklyTarget(420, on: chinese)
+
+        #expect(try library.active().map(\.weeklyTargetMinutes) == [420])
+    }
+
+    @Test(arguments: [0, -30])
+    func weeklyTargetOfZeroOrLessIsRefusedAndTheOldTargetStays(minutes: Int) throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let library = CategoryLibrary(context: container.mainContext)
+        let chinese = try library.add(named: "中文")
+        try library.setWeeklyTarget(420, on: chinese)
+
+        #expect(throws: CategoryError.targetNotPositive) {
+            try library.setWeeklyTarget(minutes, on: chinese)
+        }
+        #expect(try library.active().map(\.weeklyTargetMinutes) == [420])
+    }
+
+    @Test func clearingTheWeeklyTargetLeavesTheCategoryOnACompletionCount() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let library = CategoryLibrary(context: container.mainContext)
+        let chinese = try library.add(named: "中文")
+        try library.setWeeklyTarget(420, on: chinese)
+
+        try library.setWeeklyTarget(nil, on: chinese)
+
+        #expect(try library.active().map(\.weeklyTargetMinutes) == [nil])
+    }
+
     @Test func restoredCategoryReturnsToActiveInItsOriginalPlace() throws {
         let container = try ScheduleStore.makeContainer(inMemory: true)
         let library = CategoryLibrary(context: container.mainContext)

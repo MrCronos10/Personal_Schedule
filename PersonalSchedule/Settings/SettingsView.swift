@@ -16,6 +16,7 @@ struct SettingsView: View {
     @State private var isRenaming = false
     @State private var renameText = ""
     @State private var routineError: LocalizedStringKey?
+    @State private var settingTargetFor: Category?
 
     var body: some View {
         @Bindable var language = language
@@ -111,6 +112,9 @@ struct SettingsView: View {
             .padding(.bottom, 24)
         }
         .background(Theme.paper)
+        .sheet(item: $settingTargetFor) { category in
+            CategoryTargetSheet(category: category)
+        }
         .alert("重命名分类", isPresented: $isRenaming, presenting: renaming) { category in
             TextField("分类名称", text: $renameText)
             Button("取消", role: .cancel) {}
@@ -131,19 +135,48 @@ struct SettingsView: View {
                 .fill(Theme.categoryInk(for: category, among: allCategories))
                 .frame(width: 10, height: 10)
                 .opacity(isArchived ? 0.5 : 1)
-            Button {
-                renameText = category.name
-                renaming = category
-                isRenaming = true
-            } label: {
-                Text(verbatim: category.name)
-                    .font(Theme.serif(17))
-                    .foregroundStyle(isArchived ? Theme.muted : Theme.ink)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
+            VStack(alignment: .leading, spacing: 3) {
+                Button {
+                    renameText = category.name
+                    renaming = category
+                    isRenaming = true
+                } label: {
+                    Text(verbatim: category.name)
+                        .font(Theme.serif(17))
+                        .foregroundStyle(isArchived ? Theme.muted : Theme.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint(Text("重命名"))
+
+                // An Archived Category shows the Weekly Target it kept, but can't be given a new one: it
+                // can't be chosen for new Actions, so nothing could ever be worked toward it.
+                if isArchived {
+                    if let target = category.weeklyTargetMinutes {
+                        Text("每周 \(target) 分钟")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.muted)
+                    }
+                } else {
+                    Button {
+                        settingTargetFor = category
+                    } label: {
+                        Group {
+                            if let target = category.weeklyTargetMinutes {
+                                Text("每周 \(target) 分钟")
+                            } else {
+                                Text("未设每周目标")
+                            }
+                        }
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.muted)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .buttonStyle(.plain)
-            .accessibilityHint(Text("重命名"))
+            .frame(maxWidth: .infinity, alignment: .leading)
             action()
         }
         .padding(.vertical, 10)

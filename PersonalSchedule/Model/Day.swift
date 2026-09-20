@@ -72,6 +72,26 @@ struct Day: Hashable, Comparable {
     }
 }
 
+/// One week, Monday to Sunday, which is the stretch a Weekly Target is measured over. See CONTEXT.md.
+///
+/// Monday is written in rather than read from the phone's locale: a locale whose week starts on Sunday
+/// would cut a Weekly Target in the wrong place, and the same Completions would total differently after a
+/// change of region.
+struct Week: Hashable {
+    let monday: Day
+
+    init(containing day: Day) {
+        let stepsBackToMonday = (day.weekday().rawValue + 5) % 7
+        monday = day.adding(days: -stepsBackToMonday)
+    }
+
+    var sunday: Day { monday.adding(days: 6) }
+
+    func contains(_ day: Day) -> Bool {
+        day >= monday && day <= sunday
+    }
+}
+
 /// A day of the week, numbered the way calendars number them, so Sunday is 1.
 enum Weekday: Int, CaseIterable, Identifiable, Hashable {
     case sunday = 1, monday, tuesday, wednesday, thursday, friday, saturday

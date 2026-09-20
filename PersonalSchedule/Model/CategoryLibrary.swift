@@ -3,6 +3,7 @@ import SwiftData
 
 enum CategoryError: Error, Equatable {
     case emptyName
+    case targetNotPositive
 }
 
 /// Adds, renames, archives and lists the student's Categories.
@@ -16,6 +17,12 @@ struct CategoryLibrary {
             predicate: #Predicate { !$0.isArchived },
             sortBy: [SortDescriptor(\.createdAt)]
         )
+    }
+
+    /// Every Category, active and archived, oldest first. This is the order the inks are handed out in,
+    /// so the Progress Tracker lists Categories in it too and the colours run in a steady sequence.
+    nonisolated static var allDescriptor: FetchDescriptor<Category> {
+        FetchDescriptor<Category>(sortBy: [SortDescriptor(\.createdAt)])
     }
 
     /// Archived Categories, oldest first. Screens use this with `@Query` so they list the same Categories as `archived()`.
@@ -40,6 +47,13 @@ struct CategoryLibrary {
         let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw CategoryError.emptyName }
         category.name = trimmed
+        try context.saveOrRollBack()
+    }
+
+    /// Sets the Weekly Target, in minutes. Passing nil clears it, leaving the Category on a Completion Count.
+    func setWeeklyTarget(_ minutes: Int?, on category: Category) throws {
+        if let minutes, minutes <= 0 { throw CategoryError.targetNotPositive }
+        category.weeklyTargetMinutes = minutes
         try context.saveOrRollBack()
     }
 

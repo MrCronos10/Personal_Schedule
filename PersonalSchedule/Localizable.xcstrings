@@ -291,6 +291,16 @@
         }
       }
     },
+    "所有分类都已归档" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every Category is archived"
+          }
+        }
+      }
+    },
     "改计划" : {
       "localizations" : {
         "en" : {
@@ -371,6 +381,16 @@
         }
       }
     },
+    "未设每周目标" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Weekly Target"
+          }
+        }
+      }
+    },
     "未选择" : {
       "localizations" : {
         "en" : {
@@ -381,12 +401,82 @@
         }
       }
     },
+    "本周" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This week"
+          }
+        }
+      }
+    },
+    "本周 %lld 分钟，目标 %lld 分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld minutes this week, Weekly Target %2$lld minutes"
+          }
+        }
+      }
+    },
+    "本周%lld次" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completions: %lld"
+          }
+        }
+      }
+    },
+    "本周的进度" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This week's progress"
+          }
+        }
+      }
+    },
     "标题" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Title"
+          }
+        }
+      }
+    },
+    "每周 %lld 分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld min per week"
+          }
+        }
+      }
+    },
+    "每周目标" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly Target"
+          }
+        }
+      }
+    },
+    "每周目标（分钟）" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly Target (minutes)"
           }
         }
       }
@@ -421,6 +511,16 @@
         }
       }
     },
+    "目标要大于零" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter more than zero"
+          }
+        }
+      }
+    },
     "笔记（可选）" : {
       "localizations" : {
         "en" : {
@@ -437,6 +537,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kind"
+          }
+        }
+      }
+    },
+    "约 %@ 小时" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "about %@ h"
           }
         }
       }
@@ -497,6 +607,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enter a number"
+          }
+        }
+      }
+    },
+    "请输入整分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter whole minutes"
           }
         }
       }
@@ -577,6 +697,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This Category is archived"
+          }
+        }
+      }
+    },
+    "进度" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progress"
           }
         }
       }

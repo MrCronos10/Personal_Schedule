@@ -8,6 +8,8 @@ struct ContentView: View {
         TabView {
             TodayView()
                 .tabItem { Label("今天", systemImage: "calendar") }
+            ProgressTrackerView()
+                .tabItem { Label("进度", systemImage: "chart.bar") }
             SettingsView()
                 .tabItem { Label("设置", systemImage: "slider.horizontal.3") }
         }

@@ -20,8 +20,12 @@ _Avoid_: Tag, label, type, area
 An optional number of minutes the student aims to reach in one Category each week (Monday to Sunday), such as 7 hours of Chinese. The Progress Tracker compares the week's Completions against it.
 _Avoid_: Goal, daily target, quota
 
+**Completion Count**:
+What the Progress Tracker shows for a Category with no Weekly Target: how many Completions the week holds, and nothing else. No minutes and no bar, because these are Categories where time doesn't matter, such as 生活. A Category is never left out of the Progress Tracker for having no Weekly Target.
+_Avoid_: Tally, score, streak, count-only mode
+
 **Archived Category**:
-A Category the student has retired. It can't be chosen for new Actions, but its past Actions and Completions still count in the Progress Tracker, and it can be restored. Categories are archived, never deleted.
+A Category the student has retired. It can't be chosen for new Actions, but its past Actions and Completions still count in the Progress Tracker, and it can be restored. A Category archived partway through a week still shows that week's Completions, against its Weekly Target if it has one, so work already done is never hidden by a later decision. Categories are archived, never deleted.
 _Avoid_: Deleted category, hidden category
 
 **Routine**:

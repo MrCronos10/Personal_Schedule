@@ -10,6 +10,10 @@ final class Category {
     var isArchived: Bool = false
     var createdAt: Date = Date()
 
+    /// The Weekly Target: minutes aimed at in this Category each week. Empty means no Weekly Target,
+    /// and the Progress Tracker shows a Completion Count instead. See CONTEXT.md.
+    var weeklyTargetMinutes: Int?
+
     @Relationship(deleteRule: .nullify, inverse: \Action.category)
     var actions: [Action]? = []
 
