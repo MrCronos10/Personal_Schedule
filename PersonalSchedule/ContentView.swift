@@ -10,6 +10,8 @@ struct ContentView: View {
                 .tabItem { Label("今天", systemImage: "calendar") }
             ReadingView()
                 .tabItem { Label("阅读", systemImage: "text.book.closed") }
+            NotesListView()
+                .tabItem { Label("笔记", systemImage: "note.text") }
             ProgressTrackerView()
                 .tabItem { Label("进度", systemImage: "chart.bar") }
             SettingsView()

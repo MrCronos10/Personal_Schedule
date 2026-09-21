@@ -86,6 +86,47 @@ struct CompletionLibrary {
         )
     }
 
+    // MARK: - The Notes List
+
+    /// Every Completion carrying a **Note**, newest first.
+    ///
+    /// A Completion with no Note, or one that is only spaces, is not listed: this is the Notes List,
+    /// not a list of everything done. Kept apart from the database so the screen and the tests run
+    /// the same rule.
+    static func notes(_ completions: [Completion]) -> [Completion] {
+        completions
+            .filter { !($0.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            // A Day has no time in it, so two Notes written on one day need `createdAt` to settle
+            // their order, or they come back however the store feels like that morning.
+            .sorted {
+                $0.dayNumber == $1.dayNumber
+                    ? $0.createdAt > $1.createdAt
+                    : $0.dayNumber > $1.dayNumber
+            }
+    }
+
+    /// The Notes matching what the student typed.
+    ///
+    /// Matches the Note itself, the title the Completion **copied when it was ticked**, and the
+    /// Category it counted toward **by its current name** — so 龙井, 读一篇文章 and 中文 all find the
+    /// same row. Empty text matches everything, because a search that hasn't been typed yet isn't a
+    /// filter.
+    ///
+    /// The title is a copy, so renaming an Action never moves a finished day out from under the
+    /// words used to look for it (ADR 0002). The Category name is **not** a copy, and that is
+    /// deliberate: a rename corrects what one Category is called rather than making it a different
+    /// Category, so past Notes follow it, exactly as the Progress Tracker's rows do.
+    static func search(_ text: String, in completions: [Completion]) -> [Completion] {
+        let needle = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !needle.isEmpty else { return completions }
+        return completions.filter { completion in
+            [completion.note, completion.titleWhenTicked, completion.category?.name]
+                .compactMap { $0 }
+                // Chinese has no case; the Latin that ends up in a Note does.
+                .contains { $0.localizedCaseInsensitiveContains(needle) }
+        }
+    }
+
     /// The rule the Progress Tracker is drawn from, kept apart from the database so the screen and the
     /// tests run the same one.
     ///
