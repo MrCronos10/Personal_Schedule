@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "%lld 篇文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld articles"
+          }
+        }
+      }
+    },
     "%lld分钟": {
       "localizations": {
         "en": {
@@ -107,6 +117,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Edit"
+          }
+        }
+      }
+    },
+    "先贴一段文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste an article first"
           }
         }
       }
@@ -241,6 +261,16 @@
         }
       }
     },
+    "导入文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import an article"
+          }
+        }
+      }
+    },
     "工作日": {
       "localizations": {
         "en": {
@@ -291,12 +321,32 @@
         }
       }
     },
+    "微信公众号、菜单、路牌…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WeChat, a menu, a street sign…"
+          }
+        }
+      }
+    },
     "恢复": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Restore"
+          }
+        }
+      }
+    },
+    "我的文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My articles"
           }
         }
       }
@@ -311,12 +361,42 @@
         }
       }
     },
+    "把你遇到的中文贴进来：微信文章、菜单、路牌都行。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste in the Chinese you meet: a WeChat article, a menu, a street sign."
+          }
+        }
+      }
+    },
+    "把文章贴在这里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste the article here"
+          }
+        }
+      }
+    },
     "改计划": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Edit Action"
+          }
+        }
+      }
+    },
+    "文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Article"
           }
         }
       }
@@ -451,12 +531,32 @@
         }
       }
     },
+    "来源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source"
+          }
+        }
+      }
+    },
     "标题": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Title"
+          }
+        }
+      }
+    },
+    "标题会用第一行。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The first line becomes the title."
           }
         }
       }
@@ -507,6 +607,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "No archived Categories"
+          }
+        }
+      }
+    },
+    "没有已归档的文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No archived articles"
+          }
+        }
+      }
+    },
+    "没能保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not save"
           }
         }
       }
@@ -681,6 +801,16 @@
         }
       }
     },
+    "还没有文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No articles yet"
+          }
+        }
+      }
+    },
     "还没有计划": {
       "localizations": {
         "en": {
@@ -817,6 +947,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Guiding goal"
+          }
+        }
+      }
+    },
+    "阅读": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading"
           }
         }
       }
