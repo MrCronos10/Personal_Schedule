@@ -18,6 +18,7 @@ struct ReadingView: View {
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
     var body: some View {
+        NavigationStack {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
@@ -61,8 +62,13 @@ struct ReadingView: View {
             .padding(.bottom, 24)
         }
         .background(Theme.paper)
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isImporting) {
             ArticleImportView()
+        }
+        .navigationDestination(for: Article.self) { article in
+            ArticleReaderView(article: article)
+        }
         }
     }
 
@@ -132,7 +138,7 @@ struct ReadingView: View {
     }
 }
 
-/// One Article in the reading list. Tapping it does nothing yet: ticket 15 opens it.
+/// One Article in the reading list. Tapping it opens the reader; 归档 keeps its own tap.
 struct ArticleRow: View {
     @Environment(\.locale) private var locale
 
@@ -142,7 +148,27 @@ struct ArticleRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            VStack(alignment: .leading, spacing: 4) {
+            // Only the text column is the link. A Button inside a NavigationLink's label is not
+            // hit-tested separately outside a List, so nesting 归档 in there would archive nothing
+            // and push the reader instead.
+            if isArchived {
+                textColumn
+            } else {
+                NavigationLink(value: article) { textColumn }
+                    .buttonStyle(.plain)
+            }
+
+            Button(isArchived ? "恢复" : "归档", action: onArchiveAction)
+                .buttonStyle(MiniButtonStyle())
+        }
+        .padding(.vertical, 11)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Theme.rule).frame(height: 1)
+        }
+    }
+
+    private var textColumn: some View {
+        VStack(alignment: .leading, spacing: 4) {
                 // The student's own writing, and the title taken from it: never translated.
                 Text(verbatim: article.title)
                     .font(Theme.serif(18))
@@ -160,16 +186,9 @@ struct ArticleRow: View {
                     .font(Theme.meta)
                     .foregroundStyle(Theme.muted.opacity(0.75))
                     .lineLimit(2)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            Button(isArchived ? "恢复" : "归档", action: onArchiveAction)
-                .buttonStyle(MiniButtonStyle())
         }
-        .padding(.vertical, 11)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Theme.rule).frame(height: 1)
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
     }
 
     private var importedDayText: String {

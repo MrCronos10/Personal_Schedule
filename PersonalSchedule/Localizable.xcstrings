@@ -131,6 +131,16 @@
         }
       }
     },
+    "其实不认识": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actually, I don't"
+          }
+        }
+      }
+    },
     "分类": {
       "localizations": {
         "en": {
@@ -347,6 +357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "My articles"
+          }
+        }
+      }
+    },
+    "我认识这个词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I know this word"
           }
         }
       }
@@ -791,6 +811,16 @@
         }
       }
     },
+    "读完": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finished reading"
+          }
+        }
+      }
+    },
     "还没有分类": {
       "localizations": {
         "en": {
@@ -847,6 +877,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "This Category is archived"
+          }
+        }
+      }
+    },
+    "这个词不在 HSK 4-5 里，不计入掌握。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This word is outside HSK 4-5, so it is not counted."
           }
         }
       }
