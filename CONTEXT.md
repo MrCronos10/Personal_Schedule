@@ -5,8 +5,8 @@ A personal tool for one student's year of study in China. It organises daily lif
 ## Language
 
 **Goal**:
-The one aim of the year: to communicate smoothly with Chinese people, holding real conversations without a translation app and handling everyday situations alone. Exam levels are not the Goal.
-_Avoid_: Target, objective, HSK level
+The one aim of the year: to communicate smoothly with Chinese people, holding real conversations without a translation app and handling everyday situations alone. Exam levels are not the Goal. HSK enters the app only as a **Word List**: a ready-made way to decide which words are worth learning next. The student is never preparing for an exam, and the app never mentions one.
+_Avoid_: Target, objective, HSK level as a goal
 
 **Action**:
 One thing the student plans to do, such as "learn 20 new words". It may have a time or not, and it is ticked off when done.
@@ -87,3 +87,55 @@ _Avoid_: Course list, school timetable
 **Progress Tracker**:
 The record of Completions over time, shown separately for each Category.
 _Avoid_: Stats, history, log
+
+**Article**:
+A piece of real Chinese writing the student pasted into the app: a 微信 post, a sign, a page of a textbook. It keeps its own text, a title taken from its first line, an optional **Source**, and the day it was imported. It is the unit that evidence is counted in: reading one Article can move a **Word** one step toward **Known**, and no further, however many times that word appears in it.
+_Avoid_: Text, document, lesson, post
+
+**Source**:
+Optional free text saying where an Article came from, such as 微信公众号 or 茶馆菜单. It is the student's own writing and is never translated.
+_Avoid_: URL, citation, origin
+
+**Archived Article**:
+An Article the student has put away. It leaves the reading list, its **Clean Sightings** still count, and it can be restored and reread. Articles are archived, never deleted, so the number of **Known** Words can never fall because of tidying up.
+_Avoid_: Deleted article, hidden article, finished article
+
+**Reading Session**:
+One sitting with one Article: the minutes it was on screen, and the **Lookups** made during it. It ends when the student presses 读完, which banks the Article's evidence and opens the Tick sheet with the minutes and the words met already filled in. The **Completion** it saves is an ordinary Completion in an ordinary Category, so reading counts toward a **Weekly Target** like anything else.
+_Avoid_: Reading, study session, review session
+
+**Word List**:
+A fixed set of Chinese words at one HSK level, bundled with the app and never edited. The app carries HSK 4 (600 words) and HSK 5 (1,300 words) from the HSK 2.0 standard, each word with its pinyin and English. Words from HSK 1–3 are not carried: they are assumed known and are not measured.
+_Avoid_: Dictionary, vocabulary, deck, syllabus
+
+**Word**:
+One entry in a **Word List**, together with what the student has done about it: its **Clean Sightings**, whether it is **Known**, and when. Chinese words outside HSK 4 and 5 are still split out of an Article and can still be looked up, but they carry no state and count toward nothing.
+_Avoid_: Term, vocab item, character
+
+**Lookup**:
+The record that the student tapped a Word in an Article to see its pinyin and English. It is evidence of *not* knowing: a Lookup returns that Word's **Clean Sightings** to zero, and the Word must earn all of them again.
+_Avoid_: Tap, hint, lookup failure
+
+**Clean Sighting**:
+One Article the student read to the end without looking a Word up. A Word gains at most one Clean Sighting per Article, and only the first time that Article is finished: rereading proves nothing new.
+_Avoid_: View, exposure, repetition, streak
+
+**Known**:
+A Word with three **Clean Sightings**: met in three different Articles, never looked up. The student can also mark a Word Known by hand, and can take it back, which returns it to zero. Known is the one number the year is measured by.
+_Avoid_: Learned, mastered, acquired, retired
+
+**Level**:
+One **Word List** seen as progress: how many of its Words are **Known**, out of all of them. HSK 4 is out of 600, HSK 5 out of 1,300. The count is against the whole List, not the words that happened to appear in the student's Articles, so it only ever goes up.
+_Avoid_: Stage, rank, tier, unlock
+
+**Passed**:
+A **Level** with four fifths of its Words **Known**. Passing HSK 4 is what makes HSK 5 the **Served Level**. Passing changes nothing about what the student is allowed to read: no Article is ever locked.
+_Avoid_: Completed, unlocked, cleared, achieved
+
+**Served Level**:
+The **Level** the app draws **Daily New Words** from: HSK 4 until it is **Passed**, then HSK 5. Words of the level not yet served are still shown, still tappable and still counted when they turn up in an Article. Serving is about what the app offers, never about what the student may do.
+_Avoid_: Current level, active level, unlocked level
+
+**Daily New Words**:
+Ten Words of the **Served Level** that the student has not met yet, offered once a day, each marked 认识 or 不认识. 认识 makes it **Known**; 不认识 returns it to the pool for another day. There is no streak, no count of what is due, and no penalty for a day skipped: a day not opened leaves nothing behind.
+_Avoid_: Review queue, flashcards, SRS, due words
