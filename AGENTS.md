@@ -14,7 +14,8 @@ Tickets 01–05 were built this way. Keep doing it unless the student says other
 
 ### Where tests go
 
-- **At the libraries and the day rule**: `CategoryLibrary`, `ActionLibrary`, `CompletionLibrary`, `DayPlan`. That is where the rules live, so that is where they are tested.
+- **At the libraries and the day rule**: `CategoryLibrary`, `ActionLibrary`, `CompletionLibrary`, `DayPlan`, and for reading `HSKWordList`, `ArticleLibrary`, `VocabularyLibrary`, `ReadingSession`. That is where the rules live, so that is where they are tested.
+- **Build a fixture from an explicit word list, never from a Chinese sentence you wrote by eye.** 篇, 干净, 软 and many other ordinary-looking words are on the HSK lists, so a sentence holds more measured Words than it appears to. Two counting tests were wrong before the code was for exactly this. Where a test counts, assert what the fixture contains first.
 - **Screens are checked by hand** on the student's iPhone, not with UI tests. The simulator can be launched from the command line but not tapped, so anything needing a tap is left for the student.
 - Screens must use the same rule as the tests: the shared `descriptor(for:)` / `ordered(_:)` helpers, never a second copy of a filter or sort.
 
@@ -47,6 +48,11 @@ xcrun simctl io booted screenshot out.png
 ```
 
 ### Rules that must hold
+
+- **Anything inside `PersonalSchedule/` ships inside the app.** It is a file-system synchronized group, so a file dropped there is copied into `PersonalSchedule.app` as a resource without anyone adding it to a target. A generator script lived in the app bundle for one commit this way. Tools and sources belong in `.scratch/`; only what the app reads at runtime goes in `PersonalSchedule/`.
+- **`Vocabulary/HSKWordList.json` is generated. Never hand-edit it.** Change `.scratch/reading-and-vocabulary/build-word-list.py` and regenerate, or the next rebuild silently discards the edit. `fetch-sources.sh` pins the upstream commits; `Vocabulary/SOURCE.md` says why each of the three sources is used for the one job it has.
+- **The two Level totals are the denominator of the year.** 600 and 1,300 are fixed by [ADR 0005](docs/adr/0005-levels-measure-a-fixed-list-and-never-gate-reading.md) and pinned by a test. If a source disagrees with them, stop and say so rather than moving the number the student has been watching.
+- **Xcode rewrites `Localizable.xcstrings` into its own format** (spaces before colons, its own ordering) on the next build after the file is edited by hand. That is not a mistake: commit the rewrite so the following diff stays readable. It also marks a key `extractionState: stale` when nothing in the code uses it any more — leave that note, it is accurate.
 
 - **Screen text** is written in Chinese in the code and translated in `PersonalSchedule/Localizable.xcstrings`. Every new string needs its English, or the translations test fails. The student's own names and Notes are never translated (`Text(verbatim:)`).
 - **Database**: every field has a default or is optional, no unique fields, relationships optional with an inverse. iCloud is off until the Apple Developer Program is paid.

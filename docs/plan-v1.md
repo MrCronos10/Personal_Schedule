@@ -147,8 +147,8 @@ Each step ends with something you can see working on your iPhone.
 
 Planned later, one at a time, in this order unless real use says otherwise:
 
-1. **Progress Tracker** with **Weekly Targets** (Monday to Sunday)
-2. **Notes List** with search
+1. ~~**Progress Tracker** with **Weekly Targets**~~ — built, ticket 11
+2. **Notes List** with search — **wanted now**: reading writes a Note naming the Words met, and there is still nowhere to read one back after the day it was written
 3. Reminders at timed Actions + **Evening Check**
 4. **Timetable** view, **Classes**, **No-class Days**
 5. Export and import a data file (import only into an empty app)
