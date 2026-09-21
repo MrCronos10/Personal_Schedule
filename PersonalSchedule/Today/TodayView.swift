@@ -47,9 +47,14 @@ struct TodayView: View {
                 dayTitle
                     .padding(.top, 14)
 
+                GuidingGoalBanner()
+                    .padding(.top, 16)
+
                 SectionCaption(title: isToday ? "今天的计划" : "这一天的计划")
 
                 DayChecklist(day: day)
+                    .card()
+                    .padding(.top, 10)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 24)

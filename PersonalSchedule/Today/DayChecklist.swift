@@ -174,9 +174,10 @@ struct ActionRow: View {
                 .frame(width: 44, alignment: .leading)
 
             Button(action: onOpen) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 5) {
+                    chips
                     Text(verbatim: shownTitle)
-                        .font(Theme.serif(16))
+                        .font(Theme.title)
                         .foregroundStyle(titleInk)
                         .strikethrough(isDone, color: Theme.rule)
                     meta
@@ -196,24 +197,31 @@ struct ActionRow: View {
         .contentShape(Rectangle())
     }
 
+    /// The chips above the title: what kind of Action it is, and how far behind it is. The Stitch
+    /// mock also carries a 未完 / 完 chip, which is left out here because the seal beside the row
+    /// already says the same thing and saying it twice is what makes a row look busy.
+    private var chips: some View {
+        HStack(spacing: 6) {
+            Chip(text: kindLabel)
+            if let minutes = action.defaultMinutes {
+                Chip(text: "\(minutes)分钟")
+            }
+            // Names a rule the app has always had and has never shown.
+            if isLate {
+                Chip(text: "从昨天推到今天", ink: Theme.late, ground: Theme.late.opacity(0.12))
+            }
+            if isMissed {
+                Chip(text: "错过", ink: Theme.late, ground: Theme.late.opacity(0.12))
+            }
+        }
+    }
+
     private var meta: some View {
         HStack(spacing: 0) {
             Text(verbatim: "【\(shownCategoryName)】")
                 .foregroundStyle(ink)
-            Text(kindLabel)
-                .foregroundStyle(Theme.muted)
             if isLate {
-                Text(verbatim: " · ")
-                    .foregroundStyle(Theme.muted)
-                Text("迟到")
-                    .foregroundStyle(Theme.late)
-                Text(verbatim: " \(plannedDayText)")
-                    .foregroundStyle(Theme.late)
-            }
-            if isMissed {
-                Text(verbatim: " · ")
-                    .foregroundStyle(Theme.muted)
-                Text("错过")
+                Text(verbatim: " · \(plannedDayText)")
                     .foregroundStyle(Theme.late)
             }
             if let minutes = completion?.minutes {
@@ -223,7 +231,7 @@ struct ActionRow: View {
                     .foregroundStyle(Theme.muted)
             }
         }
-        .font(.system(size: 12))
+        .font(Theme.meta)
     }
 
     private var tickBox: some View {
