@@ -24,24 +24,28 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 Text("设置")
-                    .font(Theme.serif(30, .black))
+                    .font(Theme.serif(34, .black))
                     .foregroundStyle(Theme.ink)
                     .padding(.top, 12)
 
                 SectionCaption(title: "分类")
 
-                ForEach(categories) { category in
-                    categoryRow(category) {
-                        Button("归档") {
-                            perform { try $0.archive(category) }
+                Group {
+                    ForEach(categories) { category in
+                        categoryRow(category) {
+                            Button("归档") {
+                                perform { try $0.archive(category) }
+                            }
+                            .buttonStyle(MiniButtonStyle())
                         }
-                        .buttonStyle(MiniButtonStyle())
+                    }
+
+                    if categories.isEmpty {
+                        emptyText("还没有分类")
                     }
                 }
-
-                if categories.isEmpty {
-                    emptyText("还没有分类")
-                }
+                .card()
+                .padding(.top, 10)
 
                 HStack(spacing: 8) {
                     TextField("新分类名称", text: $newName)
@@ -49,8 +53,8 @@ struct SettingsView: View {
                         .foregroundStyle(Theme.ink)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
-                        .background(Color.white)
-                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.rule))
+                        .background(Theme.paper)
+                        .overlay(RoundedRectangle(cornerRadius: Theme.controlRadius).stroke(Theme.rule))
                         .submitLabel(.done)
                         .onSubmit(addCategory)
                     Button("添加", action: addCategory)
@@ -67,29 +71,37 @@ struct SettingsView: View {
 
                 SectionCaption(title: "已归档")
 
-                ForEach(archivedCategories) { category in
-                    categoryRow(category, isArchived: true) {
-                        Button("恢复") {
-                            perform { try $0.restore(category) }
+                Group {
+                    ForEach(archivedCategories) { category in
+                        categoryRow(category, isArchived: true) {
+                            Button("恢复") {
+                                perform { try $0.restore(category) }
+                            }
+                            .buttonStyle(MiniButtonStyle())
                         }
-                        .buttonStyle(MiniButtonStyle())
+                    }
+
+                    if archivedCategories.isEmpty {
+                        emptyText("没有已归档的分类")
                     }
                 }
-
-                if archivedCategories.isEmpty {
-                    emptyText("没有已归档的分类")
-                }
+                .card()
+                .padding(.top, 10)
 
                 SectionCaption(title: "重复计划")
 
                 let routines = ActionLibrary.routines(allActions)
-                ForEach(routines) { routine in
-                    routineRow(routine)
-                }
+                Group {
+                    ForEach(routines) { routine in
+                        routineRow(routine)
+                    }
 
-                if routines.isEmpty {
-                    emptyText("还没有重复计划")
+                    if routines.isEmpty {
+                        emptyText("还没有重复计划")
+                    }
                 }
+                .card()
+                .padding(.top, 10)
 
                 if let routineError {
                     Text(routineError)

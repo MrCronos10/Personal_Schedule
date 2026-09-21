@@ -62,15 +62,19 @@ struct WeekLedger: View {
                 // Two different empty weeks, and they need different answers: no Categories at all means
                 // make one, while every Category archived means restore one — telling that student to add
                 // a Category would have them make a duplicate of one sitting in 已归档.
-                if categories.isEmpty {
-                    emptyText("请先在设置里添加分类")
-                } else if rows.isEmpty {
-                    emptyText("所有分类都已归档")
-                } else {
-                    ForEach(rows, id: \.category.persistentModelID) { row in
-                        CategoryWeekRow(row: row, ink: Theme.categoryInk(for: row.category, among: categories))
+                Group {
+                    if categories.isEmpty {
+                        emptyText("请先在设置里添加分类")
+                    } else if rows.isEmpty {
+                        emptyText("所有分类都已归档")
+                    } else {
+                        ForEach(rows, id: \.category.persistentModelID) { row in
+                            CategoryWeekRow(row: row, ink: Theme.categoryInk(for: row.category, among: categories))
+                        }
                     }
                 }
+                .card()
+                .padding(.top, 10)
             }
         .padding(.horizontal, 16)
         .padding(.bottom, 24)
