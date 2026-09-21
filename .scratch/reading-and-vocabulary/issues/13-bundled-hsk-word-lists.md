@@ -55,3 +55,29 @@ At `HSKWordList`, which is where the rule lives:
 - **One red-green cycle, not several.** The nine tests were written first and failed to compile, which is the red; `HSKWordList` was then written once and all nine passed. There is only one rule here — what is in the list and what it says — so splitting it into smaller cycles would have been theatre. The test that matters most is `anHSKOneToThreeWordIsNotInAnyList`: it is what catches a cumulative list being bundled by mistake, which is a failure that otherwise looks like nothing at all.
 - 94 tests pass, 9 suites, up from 84 in 8.
 - No screen and no new strings, so `Localizable.xcstrings` is untouched and the translations test is unaffected.
+
+### After `/code-review`
+
+The review found the data wrong in a way the tests had not thought to ask about, and it was right. Two findings mattered:
+
+- **The reading was chosen by a heuristic that had nothing to do with HSK.** "The reading with the most glosses wins" gave 圈 as `juān` (a pen for animals) instead of `quān`, 切 as `qiè` instead of `qiē`, 数 as `shǔ` instead of `shù`, 趟 as `tāng`, 吓 as `hè`, 薄 as `bó`. Nearly a third of HSK 4/5 is single characters, so this was not a handful of words.
+- **Senses were pooled across different traditional characters sharing one simplified form**, which gave 丑 as "clown" rather than "ugly", 克 as "to subdue" rather than "gram", 当 as "(onom.) ding dong", 云 as "(classical) to say", 朵 as "flower; earlobe" when it is a classifier.
+
+A wrong pinyin is worse than no pinyin: it teaches the student the wrong word, and under ADR 0004 they then bank three **Clean Sightings** on it without ever being told. Both findings had the same cause — asking CC-CEDICT a question it cannot answer, because it does not know which sense HSK means.
+
+**The fix was a better source, not a better heuristic.** [clem109/hsk-vocabulary](https://github.com/clem109/hsk-vocabulary) publishes its lists per HSK level, so the reading has already been chosen by someone who knew the level. It now supplies pinyin and senses for 1,815 of the 1,900 words; drkameleon is only a fallback for 44; 41 are written by hand. Every reading the review named is now correct, and `HSKWordListTests` holds them down by name so the heuristic cannot come back.
+
+The other findings, all taken:
+
+- `load()` used `assertionFailure`, which compiles out in release — exactly the silent-empty-list failure its own comment claimed to prevent. Now `fatalError`.
+- `HSKLevel.total` hardcoded 600 and 1,300 beside a list that could drift. It now reads the list, and a test pins both.
+- The JSON's `g` flag was written and never read; `isGrammarEntry` re-derived it from the spelling. It is now decoded, so a future word with a full-width bracket can't silently become a grammar entry.
+- `"(Tw)"` in the filter could never match, because the predicate lowercases first.
+- A dead clause in `readings()` applied the gloss filter to a pinyin string.
+- Five glosses were cut mid-bracket by the length limit (以为, 厉害, 规定, 则, 温柔). An unclosed parenthetical is now dropped instead.
+- The script could not be re-run: it read files that were never committed. `fetch-sources.sh` now pins all three upstream commits, and the script writes straight into `PersonalSchedule/Vocabulary/`.
+- `SOURCE.md` said ten hand-written words and listed fifteen. It is now 41 and says so.
+
+Four tests were added before the fixes: the denominator matching its list, the polyphonic readings, the senses HSK means, and a sweep asserting every gloss reads as a reminder — no hanzi, no `CL:`, no "variant of", no unclosed bracket, nothing over the limit. 98 tests pass, 9 suites.
+
+A rebuilt list is 119 KB, down from 124 KB.

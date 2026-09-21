@@ -9,12 +9,11 @@ enum HSKLevel: Int, CaseIterable, Codable, Sendable {
     case five = 5
 
     /// How many Words the Level holds: the denominator of its share of the year's Known count.
-    var total: Int {
-        switch self {
-        case .four: 600
-        case .five: 1300
-        }
-    }
+    ///
+    /// Read from the bundled list rather than written here, so there is one source of truth. A
+    /// second copy would let a Level report 612 / 600, or make Passed land at the wrong point,
+    /// if the bundle ever drifted from the number in ADR 0005.
+    var total: Int { HSKWordList.words(at: self).count }
 }
 
 /// One entry in a **Word List**: the word as it is written, its pinyin and its English.
@@ -31,7 +30,10 @@ struct HSKEntry: Equatable, Sendable {
     /// while bare 得 belongs to a lower level. The annotation is part of the word here, so these
     /// entries never match a word split out of an Article — bare 得 would otherwise be underlined
     /// in nearly every sentence and reach Known for nothing. They are met in Daily New Words only.
-    var isGrammarEntry: Bool { word.contains("（") }
+    ///
+    /// Marked by the generator, not guessed at from the word's spelling: a later entry carrying a
+    /// full-width bracket for some other reason must not quietly become a grammar entry.
+    let isGrammarEntry: Bool
 }
 
 /// The two **Word Lists** bundled with the app: HSK 4 and HSK 5 of the HSK 2.0 standard.
@@ -67,6 +69,8 @@ enum HSKWordList {
         let p: String
         let e: String
         let l: Int
+        /// Present, and true, only on a grammar entry.
+        let g: Bool?
     }
 
     private static func load() -> [HSKEntry] {
@@ -74,15 +78,22 @@ enum HSKWordList {
               let data = try? Data(contentsOf: url),
               let rows = try? JSONDecoder().decode([Row].self, from: data)
         else {
-            // The list is bundled, so this cannot happen in the app. Failing loudly here rather
-            // than returning nothing keeps a missing file from looking like a student who knows
-            // no words at all.
-            assertionFailure("HSKWordList.json is missing from the bundle")
-            return []
+            // The list is bundled with the app, so this can only mean a broken build. It has to
+            // stop here and in a release build too: an empty list is not an error the student
+            // would ever see as one. Every Level would read 0 / 600, no word would be underlined,
+            // and no Clean Sighting would ever be banked — a year of reading silently recording
+            // nothing, which is far worse than not starting.
+            fatalError("HSKWordList.json is missing or unreadable in the app bundle")
         }
         return rows.compactMap { row in
             guard let level = HSKLevel(rawValue: row.l) else { return nil }
-            return HSKEntry(word: row.w, pinyin: row.p, english: row.e, level: level)
+            return HSKEntry(
+                word: row.w,
+                pinyin: row.p,
+                english: row.e,
+                level: level,
+                isGrammarEntry: row.g ?? false
+            )
         }
     }
 }

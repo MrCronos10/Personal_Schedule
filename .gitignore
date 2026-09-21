@@ -6,3 +6,7 @@ xcuserdata/
 *.xcuserstate
 DerivedData/
 build/
+
+# Fetched word-list sources; rebuild with .scratch/reading-and-vocabulary/fetch-sources.sh
+.scratch/reading-and-vocabulary/sources/
+__pycache__/
