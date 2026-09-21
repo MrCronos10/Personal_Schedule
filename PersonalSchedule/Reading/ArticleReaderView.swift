@@ -9,8 +9,12 @@ import SwiftUI
 struct ArticleReaderView: View {
     @Environment(\.locale) private var locale
     @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
 
     let article: Article
+
+    @Query(DayPlan.descriptor) private var candidateActions: [Action]
+    @Query(CompletionLibrary.allDescriptor) private var allCompletions: [Completion]
 
     /// Only the **Known** Words: the screen needs them to leave their underline off, and nothing
     /// else. Fetching every row would grow toward 1,900 as the year went on.
@@ -27,6 +31,12 @@ struct ArticleReaderView: View {
     /// 读完 couldn't save. The student has to be told: this is the one moment the app records what
     /// their reading proved, and a button that silently does nothing reads as broken.
     @State private var bankFailed = false
+    /// Seconds the Article has actually been on screen. Not a record: it lives with the screen and
+    /// is handed to the Tick sheet, and a kill mid-article means the student types the number in.
+    @State private var secondsRead: TimeInterval = 0
+    @State private var shownAt: Date?
+    @State private var tickTarget: TickTarget?
+    @State private var isChoosingAction = false
 
     var body: some View {
         ScrollView {
@@ -62,6 +72,7 @@ struct ArticleReaderView: View {
                             bankFailed = false
                             // A Word that reached Known loses its underline, so redraw.
                             rendered = render()
+                            offerToTick()
                         } catch {
                             banked = nil
                             bankFailed = true
@@ -87,11 +98,51 @@ struct ArticleReaderView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.paper, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .onAppear { shownAt = Date() }
+        .onDisappear { stopCounting() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                shownAt = Date()
+            } else {
+                // Time only accrues while the Article is really on screen. The app cannot tell
+                // reading from staring, but it can tell reading from being in someone's pocket.
+                stopCounting()
+            }
+        }
+        .confirmationDialog(
+            Text("记到哪个计划？"),
+            isPresented: $isChoosingAction,
+            titleVisibility: .visible
+        ) {
+            ForEach(offeredActions) { action in
+                Button(action.title) { tick(action) }
+            }
+            // Always there, for reading that was not part of the plan. The evidence is banked
+            // either way: Clean Sightings never depend on a Completion being saved.
+            Button("不记录", role: .cancel) {
+                // Still on the screen and probably still reading, so start counting again rather
+                // than carrying a stale figure into the next 读完.
+                secondsRead = 0
+                shownAt = Date()
+            }
+        } message: {
+            Text("读了 \(ReadingSession.minutes(forSeconds: secondsRead)) 分钟")
+        }
+        .sheet(item: $tickTarget) { target in
+            TickSheetView(
+                action: target.action,
+                day: Day.today(),
+                prefilledMinutes: target.minutes,
+                prefilledNote: target.note
+            )
+        }
         .task(id: article.persistentModelID) {
             // SwiftUI can reuse this screen for a different Article, which is what the id is for.
             // The last Article's line must not be left sitting under the new one's button.
             banked = nil
             bankFailed = false
+            secondsRead = 0
+            shownAt = Date()
             segmented = VocabularyLibrary.segment(article.text)
             rendered = render()
         }
@@ -108,6 +159,43 @@ struct ArticleReaderView: View {
             WordLookupSheet(word: looked.text)
                 .presentationDetents([.medium])
         }
+    }
+
+    private func stopCounting() {
+        guard let shownAt else { return }
+        secondsRead += Date().timeIntervalSince(shownAt)
+        self.shownAt = nil
+    }
+
+    /// After 读完, offer to tick today's reading Routine with the minutes just read.
+    ///
+    /// Nothing is offered when there is no suitable Action: the app never makes one by itself, and
+    /// the evidence has been banked either way, so declining costs the student nothing.
+    private func offerToTick() {
+        stopCounting()
+        guard !offeredActions.isEmpty else {
+            // Nothing to offer, so the student is still reading: the clock goes back on.
+            shownAt = Date()
+            return
+        }
+        isChoosingAction = true
+    }
+
+    private var offeredActions: [Action] {
+        let today = Day.today()
+        return ReadingSession.offer(
+            among: DayPlan.plan(candidateActions, on: today, today: today),
+            completions: allCompletions,
+            on: today
+        )
+    }
+
+    private func tick(_ action: Action) {
+        tickTarget = TickTarget(
+            action: action,
+            minutes: ReadingSession.minutes(forSeconds: secondsRead),
+            note: (try? VocabularyLibrary(context: context).noteForSession(with: article)) ?? ""
+        )
     }
 
     /// One quiet line. No animation, no celebration, no sound: this happens every time the student
@@ -214,6 +302,14 @@ enum WordLink {
             .first { $0.name == "t" }?
             .value
     }
+}
+
+/// The Action 读完 offers to tick, with what the session already knows to fill in.
+struct TickTarget: Identifiable {
+    let action: Action
+    let minutes: Int
+    let note: String
+    var id: PersistentIdentifier { action.persistentModelID }
 }
 
 /// The word the lookup sheet is showing. A small type of its own rather than a bare String, so no

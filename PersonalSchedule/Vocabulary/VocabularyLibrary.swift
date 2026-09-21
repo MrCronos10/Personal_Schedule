@@ -204,6 +204,100 @@ struct VocabularyLibrary {
     /// Three different Articles, none of them looked up. See ADR 0004 for why three.
     static let sightingsForKnown = 3
 
+    /// How many Words a Note names before it gives up and says "…". A Note is a reminder of the
+    /// sitting, not an inventory of it.
+    static let wordsNamedInNote = 8
+
+    /// The Note the Tick sheet opens with: the Article, and the Words met that aren't **Known** yet.
+    ///
+    /// It is the student's own text from that moment on — editable, deletable, and never translated.
+    /// An Article with nothing new in it names itself and stops, rather than leaving a 新词： with
+    /// nothing after it.
+    func noteForSession(with article: Article) throws -> String {
+        let known = Set(
+            try context.fetch(
+                FetchDescriptor<WordProgress>(predicate: #Predicate { $0.isKnown })
+            ).map(\.word)
+        )
+        let met = Self.hskWords(in: article.text)
+            .map(\.word)
+            .filter { !known.contains($0) }
+
+        let title = "《\(article.title)》"
+        guard !met.isEmpty else { return title }
+        let named = met.prefix(Self.wordsNamedInNote).joined(separator: "、")
+        let ellipsis = met.count > Self.wordsNamedInNote ? "…" : ""
+        return "\(title) · 新词：\(named)\(ellipsis)"
+    }
+
+    // MARK: - Levels
+
+    /// How far one **Level** has come: **Known** Words out of the whole **Word List**.
+    ///
+    /// The denominator is the whole List, never the Words that happened to appear in the student's
+    /// Articles — a number that fell every time something new was imported would punish the exact
+    /// behaviour the feature is built to reward. So this only ever goes up, except when the student
+    /// themselves says 其实不认识. See ADR 0005.
+    func level(_ level: HSKLevel) throws -> LevelProgress {
+        let words = Set(HSKWordList.words(at: level).map(\.word))
+        let known = try context.fetch(
+            FetchDescriptor<WordProgress>(predicate: #Predicate { $0.isKnown })
+        ).filter { words.contains($0.word) }.count
+        return LevelProgress(level: level, known: known)
+    }
+
+    /// The Level **Daily New Words** are drawn from: HSK 4 until it is **Passed**, then HSK 5.
+    ///
+    /// This is the only thing passing a Level changes. No Article is ever locked, and a Word of the
+    /// unserved Level still counts the moment it turns up in something the student read.
+    func servedLevel() throws -> HSKLevel {
+        Self.servedLevel(four: try level(.four))
+    }
+
+    nonisolated static func servedLevel(four: LevelProgress) -> HSKLevel {
+        four.isPassed ? .five : .four
+    }
+
+    // MARK: - Daily New Words
+
+    /// How many unmet Words are offered a day. Small on purpose: this is a top-up, not a queue.
+    static let dailyNewWordCount = 10
+
+    /// Ten Words of the **Served Level** the student has not met yet.
+    ///
+    /// Only Words with no `WordProgress` row at all: a Word already on its way through reading is
+    /// the reading's job. The same ten all day, worked out from the day itself, so leaving the tab
+    /// and coming back doesn't reshuffle them.
+    ///
+    /// There is deliberately no notion of due, no streak and no debt. A day not opened leaves
+    /// nothing behind (ADR 0004).
+    func dailyNewWords(on day: Day = Day.today()) throws -> [HSKEntry] {
+        let met = Set(try context.fetch(FetchDescriptor<WordProgress>()).map(\.word))
+        let all = HSKWordList.words(at: try servedLevel())
+        guard !all.isEmpty else { return [] }
+
+        // Walk the whole List from a place the day decides, skipping what has been met. The offset
+        // is taken from the List's own length, never from what is left of it: seeding off the
+        // remaining pool would move the window every time a Word was answered or tapped, and the
+        // student would watch the day's ten reshuffle under their hand.
+        let start = abs(day.number) % all.count
+        var words: [HSKEntry] = []
+        for offset in 0..<all.count {
+            let entry = all[(start + offset) % all.count]
+            guard !met.contains(entry.word) else { continue }
+            words.append(entry)
+            if words.count == Self.dailyNewWordCount { break }
+        }
+        return words
+    }
+
+    /// 不认识: the student has met the Word now, so it leaves the daily pool and becomes the
+    /// reading's job. Nothing is held against them for saying so.
+    func markNotKnownToday(_ word: String) throws {
+        guard try progressCreatingIfNeeded(for: word) != nil else { return }
+        try context.saveOrRollBack()
+    }
+
     // MARK: - Reading what is recorded
 
     func progress(for word: String) throws -> WordProgress? {

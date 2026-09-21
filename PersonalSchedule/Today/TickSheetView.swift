@@ -10,13 +10,19 @@ struct TickSheetView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var minutesText: String
-    @State private var note = ""
+    @State private var note: String
     @State private var errorMessage: LocalizedStringKey?
 
-    init(action: Action, day: Day) {
+    /// A Reading Session fills in the minutes it counted and the Words met, instead of the Action's
+    /// Default Minutes and a blank Note. Both are the student's to change before saving, exactly as
+    /// they are when ticking from the Daily Checklist.
+    init(action: Action, day: Day, prefilledMinutes: Int? = nil, prefilledNote: String = "") {
         self.action = action
         self.day = day
-        _minutesText = State(initialValue: action.defaultMinutes.map(String.init) ?? "")
+        _minutesText = State(
+            initialValue: (prefilledMinutes ?? action.defaultMinutes).map(String.init) ?? ""
+        )
+        _note = State(initialValue: prefilledNote)
     }
 
     var body: some View {

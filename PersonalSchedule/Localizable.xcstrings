@@ -51,6 +51,16 @@
         }
       }
     },
+    "HSK 4 掌握八成后开始": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starts once HSK 4 is four-fifths known"
+          }
+        }
+      }
+    },
     "“%@”会被删除，不能恢复。": {
       "localizations": {
         "en": {
@@ -81,6 +91,26 @@
         }
       }
     },
+    "不认识": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not yet"
+          }
+        }
+      }
+    },
+    "不记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't record it"
+          }
+        }
+      }
+    },
     "今天": {
       "localizations": {
         "en": {
@@ -91,12 +121,32 @@
         }
       }
     },
+    "今天的新词看完了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That's today's new words"
+          }
+        }
+      }
+    },
     "今天的计划": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Today's plan"
+          }
+        }
+      }
+    },
+    "今日新词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's new words"
           }
         }
       }
@@ -337,6 +387,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Paused"
+          }
+        }
+      }
+    },
+    "已过": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passed"
           }
         }
       }
@@ -761,6 +821,26 @@
         }
       }
     },
+    "认识": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I know it"
+          }
+        }
+      }
+    },
+    "记到哪个计划？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Which plan should this count toward?"
+          }
+        }
+      }
+    },
     "设置": {
       "localizations": {
         "en": {
@@ -851,6 +931,16 @@
         }
       }
     },
+    "读了 %lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read for %lld minutes"
+          }
+        }
+      }
+    },
     "读完": {
       "localizations": {
         "en": {
@@ -907,6 +997,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Plan for this day"
+          }
+        }
+      }
+    },
+    "这一级的词都见过了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have met every word at this level"
           }
         }
       }

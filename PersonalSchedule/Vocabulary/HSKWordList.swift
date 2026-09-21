@@ -13,7 +13,7 @@ enum HSKLevel: Int, CaseIterable, Codable, Sendable {
     /// Read from the bundled list rather than written here, so there is one source of truth. A
     /// second copy would let a Level report 612 / 600, or make Passed land at the wrong point,
     /// if the bundle ever drifted from the number in ADR 0005.
-    var total: Int { HSKWordList.words(at: self).count }
+    var total: Int { HSKWordList.total(at: self) }
 }
 
 /// One entry in a **Word List**: the word as it is written, its pinyin and its English.
@@ -49,8 +49,16 @@ enum HSKWordList {
         uniquingKeysWith: { first, _ in first }
     )
 
+    private static let byLevel: [HSKLevel: [HSKEntry]] = Dictionary(grouping: all, by: \.level)
+
     static func words(at level: HSKLevel) -> [HSKEntry] {
-        all.filter { $0.level == level }
+        byLevel[level] ?? []
+    }
+
+    /// Cached, because a Level's total is read several times per row per render and scanning all
+    /// 1,900 entries each time is work the screen does not need to repeat.
+    static func total(at level: HSKLevel) -> Int {
+        words(at: level).count
     }
 
     static func entry(for word: String) -> HSKEntry? {
@@ -96,4 +104,21 @@ enum HSKWordList {
             )
         }
     }
+}
+
+/// How far one **Level** has come. See CONTEXT.md and ADR 0005.
+struct LevelProgress: Equatable {
+    let level: HSKLevel
+    /// Words **Known** at this Level.
+    let known: Int
+
+    /// Every Word the Level holds: 600 at HSK 4, 1,300 at HSK 5.
+    var total: Int { level.total }
+
+    /// **Passed** at four fifths. Integer arithmetic, so 479/600 is not Passed and 480/600 is —
+    /// a rounded percentage would make the boundary wobble.
+    var isPassed: Bool { known * 5 >= total * 4 }
+
+    /// How full the bar is, 0 to 1.
+    var share: Double { total == 0 ? 0 : Double(known) / Double(total) }
 }

@@ -4,38 +4,38 @@
 
 **Blocked by:** 16
 
-**Status:** ready-for-agent
+**Status:** ready-for-human (every check left needs a tap)
 
 ## The rule
 
 `VocabularyLibrary.level(_:progress:)` returns known, total and whether it is Passed:
 
-- [ ] Known is counted against the **whole Word List**, not against the Words that happened to appear in the student's Articles. A Word with no `WordProgress` row counts as not Known ([ADR 0005](../../../docs/adr/0005-levels-measure-a-fixed-list-and-never-gate-reading.md))
-- [ ] HSK 4 is out of 600 and HSK 5 out of 1,300 — new words at that level, not cumulative
-- [ ] Passed is `known * 5 >= total * 4`. Integer arithmetic, so 479/600 is not Passed and 480/600 is
-- [ ] `servedLevel(progress:)` is HSK 4 until HSK 4 is Passed, then HSK 5. That is the **only** thing passing changes
-- [ ] The number can only go up, except when the student says 其实不认识 themselves
+- [x] Known is counted against the **whole Word List**, not against the Words that happened to appear in the student's Articles. A Word with no `WordProgress` row counts as not Known ([ADR 0005](../../../docs/adr/0005-levels-measure-a-fixed-list-and-never-gate-reading.md))
+- [x] HSK 4 is out of 600 and HSK 5 out of 1,300 — new words at that level, not cumulative
+- [x] Passed is `known * 5 >= total * 4`. Integer arithmetic, so 479/600 is not Passed and 480/600 is
+- [x] `servedLevel(progress:)` is HSK 4 until HSK 4 is Passed, then HSK 5. That is the **only** thing passing changes
+- [x] The number can only go up, except when the student says 其实不认识 themselves
 
 ## The screen
 
-- [ ] Two rows at the top of the 阅读 tab, above the Article list, on a Stitch card
-- [ ] Each row: the list's name, a bar, and `412 / 600 · 69%` in muted type. The bar is the same red-ink-on-paper idea as the 进度 tab's, at the same weight — **no new colour and no new component**
-- [ ] A Passed Level carries 已过 in the green chip introduced in ticket 12, and keeps its bar full
-- [ ] The Level that is **not** served sits at lower contrast, with a quiet line: `HSK 4 掌握八成后开始`. It is not greyed out, not locked, and carries no lock icon. Its bar still moves whenever one of its Words turns up in an Article and is learned
-- [ ] Tapping a row does nothing. A browsable word list is a later ticket
-- [ ] The word for a Known Word on screen is 掌握. The word "exam", in either language, appears nowhere
+- [x] Two rows at the top of the 阅读 tab, above the Article list, on a Stitch card
+- [x] Each row: the list's name, a bar, and `412 / 600 · 69%` in muted type. The bar is the same red-ink-on-paper idea as the 进度 tab's, at the same weight — **no new colour and no new component**
+- [x] A Passed Level carries 已过 in the green chip introduced in ticket 12, and keeps its bar full
+- [x] The Level that is **not** served sits at lower contrast, with a quiet line: `HSK 4 掌握八成后开始`. It is not greyed out, not locked, and carries no lock icon. Its bar still moves whenever one of its Words turns up in an Article and is learned
+- [x] Tapping a row does nothing. A browsable word list is a later ticket
+- [x] The word for a Known Word on screen is 掌握. The word "exam", in either language, appears nowhere
 
 ## Tests
 
 At `VocabularyLibrary`:
 
-- [ ] An empty store reports `0 / 600` and `0 / 1300`, not a crash and not an empty screen
-- [ ] Known Words at level 4 do not count toward level 5
-- [ ] 479/600 is not Passed; 480/600 is
-- [ ] The served level is HSK 4 at 479 and HSK 5 at 480
-- [ ] The served level is still HSK 5 once HSK 5 is itself Passed — there is no level 6 to fall off the end into
-- [ ] A Word Known at HSK 5 while HSK 4 is unpassed still counts toward HSK 5's number. Words are never held back from counting, only from being served
-- [ ] Marking a Known Word 其实不认识 lowers the count by one and can un-Pass a Level
+- [x] An empty store reports `0 / 600` and `0 / 1300`, not a crash and not an empty screen
+- [x] Known Words at level 4 do not count toward level 5
+- [x] 479/600 is not Passed; 480/600 is
+- [x] The served level is HSK 4 at 479 and HSK 5 at 480
+- [x] The served level is still HSK 5 once HSK 5 is itself Passed — there is no level 6 to fall off the end into
+- [x] A Word Known at HSK 5 while HSK 4 is unpassed still counts toward HSK 5's number. Words are never held back from counting, only from being served
+- [x] Marking a Known Word 其实不认识 lowers the count by one and can un-Pass a Level
 
 ## Left for the iPhone
 

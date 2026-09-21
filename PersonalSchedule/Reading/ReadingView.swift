@@ -11,9 +11,22 @@ struct ReadingView: View {
 
     @Query(ArticleLibrary.readingDescriptor) private var reading: [Article]
     @Query(ArticleLibrary.archivedDescriptor) private var archived: [Article]
+    /// Watched so the meter and the daily list follow what reading and 今日新词 change.
+    @Query private var progressRows: [WordProgress]
+
+    /// One value covering both "a Word was met" and "a Word became Known", so a single tap runs
+    /// `refresh()` once rather than twice.
+    private var progressSignature: Int {
+        progressRows.count &* 31 &+ progressRows.count { $0.isKnown }
+    }
 
     @State private var isImporting = false
     @State private var isShowingArchived = false
+    /// Worked out when the tab appears and after a Word is answered, rather than on every render:
+    /// a Level counts Known Words against the whole 600 or 1,300.
+    @State private var four = LevelProgress(level: .four, known: 0)
+    @State private var five = LevelProgress(level: .five, known: 0)
+    @State private var dailyWords: [HSKEntry] = []
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
@@ -37,6 +50,12 @@ struct ReadingView: View {
 
                 title
                     .padding(.top, 14)
+
+                LevelMeterView(four: four, five: five)
+                    .padding(.top, 16)
+
+                DailyNewWordsView(words: dailyWords)
+                    .padding(.top, 10)
 
                 SectionCaption(title: "我的文章")
 
@@ -63,6 +82,8 @@ struct ReadingView: View {
         }
         .background(Theme.paper)
         .toolbar(.hidden, for: .navigationBar)
+        .task { refresh() }
+        .onChange(of: progressSignature) { refresh() }
         .sheet(isPresented: $isImporting) {
             ArticleImportView()
         }
@@ -70,6 +91,13 @@ struct ReadingView: View {
             ArticleReaderView(article: article)
         }
         }
+    }
+
+    private func refresh() {
+        let library = VocabularyLibrary(context: context)
+        four = (try? library.level(.four)) ?? LevelProgress(level: .four, known: 0)
+        five = (try? library.level(.five)) ?? LevelProgress(level: .five, known: 0)
+        dailyWords = (try? library.dailyNewWords()) ?? []
     }
 
     /// 阅读 in 田字格 boxes, the same practice-book heading 今天 and 进度 use.
