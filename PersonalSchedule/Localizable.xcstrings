@@ -1,6 +1,36 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "%lld 个词已掌握": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld words now known"
+          }
+        }
+      }
+    },
+    "%lld 个词更近一步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld words a step closer"
+          }
+        }
+      }
+    },
+    "%lld 个词要重新开始": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld words start again"
+          }
+        }
+      }
+    },
     "%lld 篇文章": {
       "localizations": {
         "en": {
@@ -651,6 +681,16 @@
         }
       }
     },
+    "没能记录这次阅读": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not record this reading"
+          }
+        }
+      }
+    },
     "添加": {
       "localizations": {
         "en": {
@@ -891,6 +931,16 @@
         }
       }
     },
+    "这篇没有新的词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No new words in this one"
+          }
+        }
+      }
+    },
     "进度": {
       "localizations": {
         "en": {
@@ -967,6 +1017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Routines"
+          }
+        }
+      }
+    },
+    "重读 · 没有新的记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reread · nothing new recorded"
           }
         }
       }

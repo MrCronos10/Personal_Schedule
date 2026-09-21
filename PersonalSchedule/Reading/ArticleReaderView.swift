@@ -21,6 +21,12 @@ struct ArticleReaderView: View {
     /// tokenizer over a whole 微信 article each time a tap wrote a row and invalidated the query.
     @State private var segmented: [SegmentedWord] = []
     @State private var rendered = AttributedString()
+    /// What the last 读完 moved, shown quietly under the button. Ticket 17 replaces this with the
+    /// Tick sheet; the line stays, because it is the only place the student is told what changed.
+    @State private var banked: VocabularyLibrary.BankResult?
+    /// 读完 couldn't save. The student has to be told: this is the one moment the app records what
+    /// their reading proved, and a button that silently does nothing reads as broken.
+    @State private var bankFailed = false
 
     var body: some View {
         ScrollView {
@@ -49,11 +55,28 @@ struct ArticleReaderView: View {
                     .padding(.top, 20)
                     .textSelection(.disabled)
 
-                Button("读完") {
-                    // Ticket 16 gives this its job: banking the Article's Clean Sightings and
-                    // opening the Tick sheet.
+                VStack(spacing: 10) {
+                    Button("读完") {
+                        do {
+                            banked = try VocabularyLibrary(context: context).bank(article)
+                            bankFailed = false
+                            // A Word that reached Known loses its underline, so redraw.
+                            rendered = render()
+                        } catch {
+                            banked = nil
+                            bankFailed = true
+                        }
+                    }
+                    .buttonStyle(RedButtonStyle())
+
+                    if bankFailed {
+                        Text("没能记录这次阅读")
+                            .font(Theme.meta)
+                            .foregroundStyle(Theme.error)
+                    } else if let banked {
+                        bankedLine(banked)
+                    }
                 }
-                .buttonStyle(RedButtonStyle())
                 .padding(.top, 28)
                 .frame(maxWidth: .infinity, alignment: .center)
             }
@@ -65,6 +88,10 @@ struct ArticleReaderView: View {
         .toolbarBackground(Theme.paper, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task(id: article.persistentModelID) {
+            // SwiftUI can reuse this screen for a different Article, which is what the id is for.
+            // The last Article's line must not be left sitting under the new one's button.
+            banked = nil
+            bankFailed = false
             segmented = VocabularyLibrary.segment(article.text)
             rendered = render()
         }
@@ -80,6 +107,44 @@ struct ArticleReaderView: View {
         .sheet(item: $lookedUpWord) { looked in
             WordLookupSheet(word: looked.text)
                 .presentationDetents([.medium])
+        }
+    }
+
+    /// One quiet line. No animation, no celebration, no sound: this happens every time the student
+    /// finishes something, and anything louder would wear out in a week.
+    @ViewBuilder
+    private func bankedLine(_ result: VocabularyLibrary.BankResult) -> some View {
+        if result.wasReread {
+            Text("重读 · 没有新的记录")
+                .font(Theme.meta)
+                .foregroundStyle(Theme.muted)
+        } else {
+            HStack(spacing: 6) {
+                if result.newlyKnown > 0 {
+                    Text("\(result.newlyKnown) 个词已掌握")
+                        .foregroundStyle(Theme.onDone)
+                }
+                if result.newlyKnown > 0 && result.advanced > 0 {
+                    Text(verbatim: "·").foregroundStyle(Theme.muted)
+                }
+                if result.advanced > 0 {
+                    Text("\(result.advanced) 个词更近一步")
+                        .foregroundStyle(Theme.muted)
+                }
+                // Losing ground is not the same as an Article with nothing in it, and the line
+                // must not read as though nothing happened when the student just tapped their way
+                // through every Word.
+                if result.newlyKnown == 0 && result.advanced == 0 {
+                    if result.returnedToZero > 0 {
+                        Text("\(result.returnedToZero) 个词要重新开始")
+                            .foregroundStyle(Theme.late)
+                    } else {
+                        Text("这篇没有新的词")
+                            .foregroundStyle(Theme.muted)
+                    }
+                }
+            }
+            .font(Theme.meta)
         }
     }
 

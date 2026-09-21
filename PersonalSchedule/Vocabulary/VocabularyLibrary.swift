@@ -141,6 +141,69 @@ struct VocabularyLibrary {
         try context.saveOrRollBack()
     }
 
+    // MARK: - Finishing an Article
+
+    /// What one 读完 moved, for the line the screen shows afterwards.
+    struct BankResult: Equatable {
+        /// Words that reached three **Clean Sightings** and are now **Known**.
+        var newlyKnown = 0
+        /// Words that gained a sighting without reaching three yet. A Word the student already
+        /// knows is not counted: it has not moved toward anything.
+        var advanced = 0
+        /// Words sent back to zero by a **Lookup** in this Article. An Article whose Words were all
+        /// looked up is not an Article with nothing in it.
+        var returnedToZero = 0
+        /// This Article had already been banked, so nothing moved. Rereading proves nothing new.
+        var wasReread = false
+    }
+
+    /// Counts what reading this **Article** to the end proves.
+    ///
+    /// Every HSK 4/5 Word in it, once however often it appears: a Word looked up *in this Article*
+    /// goes back to zero, and a Word not looked up gains one **Clean Sighting**. Three makes it
+    /// **Known**. See ADR 0004.
+    ///
+    /// An Article may only ever bank once. Rereading is worth doing and proves nothing new, so a
+    /// second 读完 moves no Word and says so.
+    @discardableResult
+    func bank(_ article: Article, on day: Day = Day.today()) throws -> BankResult {
+        guard !article.isBanked else { return BankResult(wasReread: true) }
+
+        let lookedUpHere = Set(try lookups(in: article).map(\.word))
+        var result = BankResult()
+
+        for entry in Self.hskWords(in: article.text) {
+            guard let progress = try progressCreatingIfNeeded(for: entry.word) else { continue }
+            if lookedUpHere.contains(entry.word) {
+                // Evidence of not knowing. A Word the student has said they know stays Known:
+                // only 其实不认识 takes that back.
+                if progress.cleanSightings > 0 || !progress.isKnown {
+                    result.returnedToZero += 1
+                }
+                progress.cleanSightings = 0
+                continue
+            }
+            let wasKnown = progress.isKnown
+            progress.cleanSightings += 1
+            if progress.cleanSightings >= Self.sightingsForKnown, !wasKnown {
+                // A Word already Known keeps the day it was first known on, so the record says when
+                // the student got it, not when they last read it.
+                progress.isKnown = true
+                progress.knownDayNumber = day.number
+                result.newlyKnown += 1
+            } else if !wasKnown {
+                result.advanced += 1
+            }
+        }
+
+        article.isBanked = true
+        try context.saveOrRollBack()
+        return result
+    }
+
+    /// Three different Articles, none of them looked up. See ADR 0004 for why three.
+    static let sightingsForKnown = 3
+
     // MARK: - Reading what is recorded
 
     func progress(for word: String) throws -> WordProgress? {
@@ -160,13 +223,17 @@ struct VocabularyLibrary {
         return progress
     }
 
-    /// Every Lookup of one Word inside one Article. Ticket 16 uses this to decide whether the
-    /// Article earned that Word a Clean Sighting.
+    /// Every Lookup made inside one Article: the Words this reading does not get to count.
+    ///
+    /// Read off the Article's own relationship rather than fetched and filtered, so there is no
+    /// query that could quietly lose its article filter and freeze every Word the student ever
+    /// tapped.
+    func lookups(in article: Article) throws -> [WordLookup] {
+        article.lookups ?? []
+    }
+
+    /// Every Lookup of one Word inside one Article.
     func lookups(of word: String, in article: Article) throws -> [WordLookup] {
-        let articleID = article.persistentModelID
-        return try context.fetch(
-            FetchDescriptor<WordLookup>(predicate: #Predicate { $0.word == word })
-        )
-        .filter { $0.article?.persistentModelID == articleID }
+        try lookups(in: article).filter { $0.word == word }
     }
 }
