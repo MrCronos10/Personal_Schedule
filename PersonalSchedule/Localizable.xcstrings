@@ -1,6 +1,26 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "从%@起 · 这段时间不算错过": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From %@ — nothing in this stretch counts as Missed"
+          }
+        }
+      }
+    },
+    "错过，可以补记": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Missed — tap to log it retroactively"
+          }
+        }
+      }
+    },
     "%lld / %lld 条笔记": {
       "localizations": {
         "en": {

@@ -152,4 +152,55 @@ struct CompletionLibrary {
         }
         return WeekProgress(category: category, from: mine)
     }
+
+    // MARK: - The Progress Tracker's 7-day ledger
+
+    /// What a Category's day looks like in its ledger strip.
+    enum CategoryDayState: Equatable {
+        case done(minutes: Int, completions: Int)
+        case missed
+        case today
+        case plan
+    }
+
+    /// A Completion for the Category wins over a Missed Routine on the same day: the day shows what was
+    /// done, not what else in the same Category went untouched. Missed itself is never re-derived here —
+    /// it defers to `DayPlan.isMissed`, so a day before a Routine existed or inside a Pause is never Missed,
+    /// exactly as it already isn't on the Daily Checklist.
+    static func dayState(for category: Category, on day: Day, today: Day, completions: [Completion]) -> CategoryDayState {
+        let categoryID = category.persistentModelID
+        let dayCompletions = completions.filter {
+            $0.dayNumber == day.number && $0.category?.persistentModelID == categoryID
+        }
+        if !dayCompletions.isEmpty {
+            let minutes = dayCompletions.reduce(0) { $0 + ($1.minutes ?? 0) }
+            return .done(minutes: minutes, completions: dayCompletions.count)
+        }
+        let routines = (category.actions ?? []).filter(\.isRoutine)
+        if routines.contains(where: { DayPlan.isMissed($0, on: day, today: today) }) {
+            return .missed
+        }
+        return day == today ? .today : .plan
+    }
+
+    // MARK: - Active Routines this week, for the Progress Tracker's breakdown
+
+    /// One Routine's Completions this week, for the Category card that lists it.
+    struct RoutineWeekActivity {
+        let action: Action
+        let completions: Int
+    }
+
+    /// The Category's currently active Routines (not Paused), each with how many times it was completed
+    /// this week. One-time Actions are left out: they already show individually on the Daily Checklist, and
+    /// repeating them here would say the same thing twice.
+    static func activeRoutines(for category: Category, in week: Week, completions: [Completion]) -> [RoutineWeekActivity] {
+        let routines = (category.actions ?? []).filter { $0.isRoutine && !$0.isPaused }
+        return routines.map { routine in
+            let count = completions.filter {
+                week.contains($0.day) && $0.action?.persistentModelID == routine.persistentModelID
+            }.count
+            return RoutineWeekActivity(action: routine, completions: count)
+        }
+    }
 }

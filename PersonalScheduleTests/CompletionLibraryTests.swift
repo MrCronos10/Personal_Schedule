@@ -279,4 +279,132 @@ struct CompletionLibraryTests {
         #expect(nextWeek.map(\.category.name) == ["中文"])
         #expect(chinese.isArchived == false)
     }
+
+    // MARK: - A Category's day state, for the Progress Tracker's ledger
+
+    @Test func aCategoryDayIsDoneWhenAnythingWasCompletedEvenIfAnotherRoutineInItWasMissed() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let health = try CategoryLibrary(context: container.mainContext).add(named: "健康")
+        let completed = try addRoutineCreatedOnItsStartDay(
+            title: "晨跑", category: health, startDay: monday, context: container.mainContext
+        )
+        let missed = try addRoutineCreatedOnItsStartDay(
+            title: "太极", category: health, startDay: monday, context: container.mainContext
+        )
+        let today = monday.adding(days: 1)
+        try CompletionLibrary(context: container.mainContext).tick(completed, on: monday, minutes: 30, note: nil)
+
+        let state = CompletionLibrary.dayState(
+            for: health, on: monday, today: today,
+            completions: try container.mainContext.fetch(CompletionLibrary.allDescriptor)
+        )
+
+        #expect(state == .done(minutes: 30, completions: 1))
+        // Sanity: the other Routine in the same Category really was Missed that day, and lost the tie-break.
+        #expect(DayPlan.isMissed(missed, on: monday, today: today))
+    }
+
+    @Test func aCategoryDayIsMissedWhenARoutineInItWentUntouched() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let health = try CategoryLibrary(context: container.mainContext).add(named: "健康")
+        try addRoutineCreatedOnItsStartDay(
+            title: "太极", category: health, startDay: monday, context: container.mainContext
+        )
+        let today = monday.adding(days: 1)
+
+        let state = CompletionLibrary.dayState(for: health, on: monday, today: today, completions: [])
+
+        #expect(state == .missed)
+    }
+
+    @Test func aCategoryDayBeforeItsRoutineExistedOrInsideAPauseIsNeverMissed() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let health = try CategoryLibrary(context: container.mainContext).add(named: "健康")
+        let actionsLib = ActionLibrary(context: container.mainContext)
+        let routine = try addRoutineCreatedOnItsStartDay(
+            title: "太极", category: health, startDay: monday, context: container.mainContext
+        )
+        try actionsLib.pause(routine, from: monday.adding(days: 4))
+        let today = monday.adding(days: 10)
+
+        let beforeItExisted = CompletionLibrary.dayState(
+            for: health, on: monday.adding(days: -3), today: today, completions: []
+        )
+        let insideThePause = CompletionLibrary.dayState(
+            for: health, on: monday.adding(days: 4), today: today, completions: []
+        )
+
+        #expect(beforeItExisted == .plan)
+        #expect(insideThePause == .plan)
+    }
+
+    @Test func aCategoryDayIsTodayOrPlanWhenNothingIsDueYet() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let health = try CategoryLibrary(context: container.mainContext).add(named: "健康")
+        let today = monday
+
+        #expect(CompletionLibrary.dayState(for: health, on: monday, today: today, completions: []) == .today)
+        #expect(
+            CompletionLibrary.dayState(for: health, on: monday.adding(days: 1), today: today, completions: [])
+                == .plan
+        )
+    }
+
+    // MARK: - Active Routines this week, for the Progress Tracker's breakdown
+
+    @Test func activeRoutinesBreakdownCountsOnlyRoutinesNotOneTimeActions() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let actionsLib = ActionLibrary(context: container.mainContext)
+        let flashcards = try actionsLib.addRoutine(
+            title: "汉字闪卡", category: chinese, repeatDays: .everyDay, startDay: monday, defaultMinutes: 20
+        )
+        let oneTime = try actionsLib.addOneTime(title: "看电影", category: chinese, day: monday, defaultMinutes: 90)
+        let completions = CompletionLibrary(context: container.mainContext)
+        try completions.tick(flashcards, on: monday, minutes: 20, note: nil)
+        try completions.tick(flashcards, on: monday.adding(days: 1), minutes: 20, note: nil)
+        try completions.tick(oneTime, on: monday, minutes: 90, note: nil)
+
+        let breakdown = CompletionLibrary.activeRoutines(
+            for: chinese, in: Week(containing: monday),
+            completions: try container.mainContext.fetch(CompletionLibrary.allDescriptor)
+        )
+
+        #expect(breakdown.count == 1)
+        #expect(breakdown.first?.action.title == "汉字闪卡")
+        #expect(breakdown.first?.completions == 2)
+    }
+
+    @Test func activeRoutinesBreakdownLeavesOutAPausedRoutine() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let health = try CategoryLibrary(context: container.mainContext).add(named: "健康")
+        let actionsLib = ActionLibrary(context: container.mainContext)
+        let calligraphy = try actionsLib.addRoutine(
+            title: "书法", category: health, repeatDays: .everyDay, startDay: monday
+        )
+        try actionsLib.pause(calligraphy, from: monday)
+
+        let breakdown = CompletionLibrary.activeRoutines(
+            for: health, in: Week(containing: monday), completions: []
+        )
+
+        #expect(breakdown.isEmpty)
+    }
+
+    /// A Routine created on its own start day, so `DayPlan.isMissed` can be asked about days right after it —
+    /// mirrors `DayPlanTests`' own helper, since `createdAt` otherwise defaults to the real current moment.
+    @discardableResult
+    private func addRoutineCreatedOnItsStartDay(
+        title: String,
+        category: PersonalSchedule.Category,
+        startDay: Day,
+        context: ModelContext
+    ) throws -> Action {
+        let routine = try ActionLibrary(context: context).addRoutine(
+            title: title, category: category, repeatDays: .everyDay, startDay: startDay
+        )
+        routine.createdAt = startDay.date()
+        try context.saveOrRollBack()
+        return routine
+    }
 }

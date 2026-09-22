@@ -5,10 +5,16 @@ import SwiftUI
 struct TodayView: View {
     @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
-    @State private var day = Day.today()
+    @State private var day: Day
     /// The last day this screen saw as today. If the student was on it, the checklist follows to the new day after midnight.
     @State private var lastSeenToday = Day.today()
     @State private var isAddingAction = false
+
+    /// `initialDay` lets another screen open straight onto a chosen day — the Progress Tracker's ledger
+    /// does this to jump onto a Missed day so it can be logged retroactively (see WeekLedger).
+    init(initialDay: Day = .today()) {
+        _day = State(initialValue: initialDay)
+    }
 
     private var isToday: Bool { day == Day.today() }
     private var isChinese: Bool { locale.language.languageCode == .chinese }

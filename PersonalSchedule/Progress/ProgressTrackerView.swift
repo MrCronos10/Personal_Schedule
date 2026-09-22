@@ -16,7 +16,7 @@ struct ProgressTrackerView: View {
     }
 
     var body: some View {
-        WeekLedger(week: week, rows: rows, categories: categories)
+        WeekLedger(week: week, rows: rows, categories: categories, today: today, completions: completions)
             .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
                 today = Day.today()
             }
@@ -36,6 +36,13 @@ struct WeekLedger: View {
     let week: Week
     let rows: [WeekProgress]
     let categories: [Category]
+    let today: Day
+    let completions: [Completion]
+
+    /// The day a Missed ledger cell was tapped for. Opened as `TodayView(initialDay:)` so retroactively
+    /// logging the Completion reuses the Daily Checklist's own tick logic rather than a second copy of it.
+    @State private var retroactiveDay = Day.today()
+    @State private var isShowingRetroactiveDay = false
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
@@ -44,6 +51,9 @@ struct WeekLedger: View {
             content
         }
         .background(Theme.paper)
+        .sheet(isPresented: $isShowingRetroactiveDay) {
+            TodayView(initialDay: retroactiveDay)
+        }
     }
 
     private var content: some View {
@@ -69,7 +79,17 @@ struct WeekLedger: View {
                         emptyText("所有分类都已归档")
                     } else {
                         ForEach(rows, id: \.category.persistentModelID) { row in
-                            CategoryWeekRow(row: row, ink: Theme.categoryInk(for: row.category, among: categories))
+                            CategoryWeekRow(
+                                row: row,
+                                ink: Theme.categoryInk(for: row.category, among: categories),
+                                week: week,
+                                today: today,
+                                completions: completions,
+                                onTapMissedDay: { day in
+                                    retroactiveDay = day
+                                    isShowingRetroactiveDay = true
+                                }
+                            )
                         }
                     }
                 }
@@ -108,12 +128,57 @@ struct WeekLedger: View {
     }
 }
 
-/// One Category's line: its name, what the week holds, and a bar when there is a Weekly Target to aim at.
+/// One Category's card: its name and week total, a 7-day ledger, this week's Active Routines, and a
+/// Continuity Safeguard note for any Routine currently Paused.
+///
+/// An Archived Category keeps only its name and total — the ledger and Routines beneath it belong to a
+/// Category still being worked at, and an archived one has nothing left to look ahead or behind at.
 private struct CategoryWeekRow: View {
     let row: WeekProgress
     let ink: Color
+    let week: Week
+    let today: Day
+    let completions: [Completion]
+    let onTapMissedDay: (Day) -> Void
+
+    private var activeRoutines: [CompletionLibrary.RoutineWeekActivity] {
+        CompletionLibrary.activeRoutines(for: row.category, in: week, completions: completions)
+    }
+
+    private var pausedRoutines: [Action] {
+        (row.category.actions ?? []).filter { $0.isRoutine && $0.isPaused }
+    }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            header
+
+            if !row.isArchived {
+                LedgerStrip(
+                    category: row.category,
+                    week: week,
+                    today: today,
+                    completions: completions,
+                    ink: ink,
+                    onTapMissedDay: onTapMissedDay
+                )
+
+                if !activeRoutines.isEmpty {
+                    ActiveRoutinesList(activities: activeRoutines)
+                }
+
+                ForEach(pausedRoutines, id: \.persistentModelID) { routine in
+                    ContinuitySafeguardNote(routine: routine)
+                }
+            }
+        }
+        .padding(.vertical, 11)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Theme.rule).frame(height: 1)
+        }
+    }
+
+    private var header: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(verbatim: row.category.name)
@@ -140,10 +205,139 @@ private struct CategoryWeekRow: View {
                 WeeklyTargetBar(minutes: row.minutes, target: target)
             }
         }
-        .padding(.vertical, 11)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Theme.rule).frame(height: 1)
+    }
+}
+
+/// The Category's Mon–Sun strip: what each day of the week looks like for it. Tapping a Missed day opens
+/// the Daily Checklist on that day, to log a Completion retroactively.
+private struct LedgerStrip: View {
+    let category: Category
+    let week: Week
+    let today: Day
+    let completions: [Completion]
+    let ink: Color
+    let onTapMissedDay: (Day) -> Void
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<7, id: \.self) { offset in
+                let day = week.monday.adding(days: offset)
+                LedgerDayCell(
+                    day: day,
+                    state: CompletionLibrary.dayState(for: category, on: day, today: today, completions: completions),
+                    ink: ink,
+                    onTapMissed: { onTapMissedDay(day) }
+                )
+            }
         }
+    }
+}
+
+/// One day in a Category's ledger strip: its weekday letter, and a glyph for what that day was.
+private struct LedgerDayCell: View {
+    let day: Day
+    let state: CompletionLibrary.CategoryDayState
+    let ink: Color
+    let onTapMissed: () -> Void
+
+    @Environment(\.locale) private var locale
+
+    private var isMissed: Bool {
+        if case .missed = state { return true }
+        return false
+    }
+
+    var body: some View {
+        VStack(spacing: 3) {
+            Text(weekdayLetter)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(Theme.muted)
+            glyph
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if isMissed { onTapMissed() }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: weekdayLetter) + Text(" ") + stateText)
+        .accessibilityAddTraits(isMissed ? .isButton : [])
+    }
+
+    @ViewBuilder
+    private var glyph: some View {
+        switch state {
+        case .done:
+            Circle().fill(ink).frame(width: 8, height: 8)
+        case .missed:
+            Circle().strokeBorder(Theme.late, lineWidth: 1.5).frame(width: 8, height: 8)
+        case .today:
+            Circle().strokeBorder(Theme.ink, lineWidth: 1.5).frame(width: 8, height: 8)
+        case .plan:
+            Circle().fill(Theme.rule).frame(width: 6, height: 6)
+        }
+    }
+
+    private var stateText: Text {
+        switch state {
+        case .done: Text("完成")
+        case .missed: Text("错过，可以补记")
+        case .today: Text("今天")
+        case .plan: Text(verbatim: "")
+        }
+    }
+
+    private var weekdayLetter: String {
+        day.date().formatted(.dateTime.weekday(.narrow).locale(locale))
+    }
+}
+
+/// This week's Active Routines in the Category, each with how many times it was completed.
+private struct ActiveRoutinesList: View {
+    let activities: [CompletionLibrary.RoutineWeekActivity]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(activities, id: \.action.persistentModelID) { activity in
+                HStack(spacing: 6) {
+                    Text(verbatim: activity.action.title)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                    Spacer()
+                    Chip(text: "本周\(activity.completions)次")
+                    if let minutes = activity.action.defaultMinutes {
+                        Chip(text: "\(minutes)分钟")
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// A note for a Routine currently Paused: it stays 已暂停 rather than turning up as Missed, and this says so.
+private struct ContinuitySafeguardNote: View {
+    let routine: Action
+
+    @Environment(\.locale) private var locale
+
+    private var openPause: Pause? {
+        (routine.pauses ?? []).first { !$0.hasEnded }
+    }
+
+    var body: some View {
+        if let openPause {
+            HStack(spacing: 6) {
+                Chip(text: "已暂停", ink: Theme.muted, ground: Theme.cardHigh)
+                Text("从\(startDateText(openPause.startDay))起 · 这段时间不算错过")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.muted)
+            }
+        }
+    }
+
+    private func startDateText(_ day: Day) -> String {
+        day.date().formatted(.dateTime.month().day().locale(locale))
     }
 }
 
