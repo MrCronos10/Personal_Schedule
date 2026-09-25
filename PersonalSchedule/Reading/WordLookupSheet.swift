@@ -10,21 +10,18 @@ struct WordLookupSheet: View {
     @Environment(\.modelContext) private var context
 
     let word: String
+    /// The Articles the **Lookup** that opened this sheet just cleared, if any. Handed in rather
+    /// than queried: the Lookup deletes them before this sheet can draw.
+    let clearedArticles: [String]
 
     /// This Word's row, and only it. Fetching every row to answer a question about one would grow
     /// toward 1,900 as the year went on, and would be a second copy of `VocabularyLibrary`'s lookup.
     @Query private var progress: [WordProgress]
-    /// The Articles that earned this Word, oldest first. Filtered to the one Word for the same
-    /// reason, and watched rather than fetched once so marking the Word Known here updates them.
-    @Query private var sightings: [CleanSighting]
 
-    init(word: String) {
+    init(word: String, clearedArticles: [String] = []) {
         self.word = word
+        self.clearedArticles = clearedArticles
         _progress = Query(filter: #Predicate<WordProgress> { $0.word == word })
-        _sightings = Query(
-            filter: #Predicate<CleanSighting> { $0.word == word },
-            sort: \.dayNumber
-        )
     }
 
     private var entry: HSKEntry? { HSKWordList.entry(for: word) }
@@ -52,7 +49,7 @@ struct WordLookupSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 10)
 
-                earnedIn
+                clearedByThisLookup
                     .padding(.top, 18)
 
                 Spacer(minLength: 16)
@@ -85,38 +82,38 @@ struct WordLookupSheet: View {
         .background(Theme.paper)
     }
 
-    /// Where this Word was earned: the Articles read to the end without tapping it.
+    /// What this tap cost: the Articles whose **Clean Sightings** the **Lookup** just cleared, which
+    /// have to be read again before the Word can be **Known** (ADR 0004).
     ///
-    /// A Word with none says so rather than showing an empty space — nothing has gone wrong, there
-    /// is simply no evidence yet. A **Lookup** takes these away with the count (ADR 0004), so this
-    /// list can never name an Article that no longer counts.
+    /// Said quietly and only when something was actually cleared. This is the one place the student
+    /// finds out that asking for help has a price, and the app does not scold them for asking: the
+    /// line says what to do next, not what they did wrong. A Word with nothing behind it — much the
+    /// commonest tap — shows nothing here at all, because there is nothing to say.
     @ViewBuilder
-    private var earnedIn: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("读过的文章")
-                .font(Theme.label)
-                .tracking(1.4)
-                .foregroundStyle(Theme.red)
-
-            if sightings.isEmpty {
-                Text("还没有读过的文章。")
-                    .font(Theme.meta)
+    private var clearedByThisLookup: some View {
+        if !clearedArticles.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("这些文章要重新读")
+                    .font(Theme.label)
+                    .tracking(1.4)
                     .foregroundStyle(Theme.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-            } else {
-                ForEach(sightings) { sighting in
-                    // The student's own title, never translated. An Article deleted out from under
-                    // a sighting would leave it nameless; Articles are archived rather than deleted,
-                    // so this is the belt-and-braces case, not an expected one.
-                    Text(verbatim: sighting.article?.title ?? "—")
+
+                ForEach(clearedArticles, id: \.self) { title in
+                    // The student's own title, never translated.
+                    Text(verbatim: title)
                         .font(Theme.serif(15))
-                        .foregroundStyle(Theme.ink)
+                        .foregroundStyle(Theme.muted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
+
+#Preview("cleared two Articles") {
+    WordLookupSheet(word: "厕所", clearedArticles: ["茶馆菜单", "微信：杭州的秋天"])
+        .modelContainer(try! ScheduleStore.makeContainer(inMemory: true))
 }
 
 #Preview("HSK 4") {

@@ -1042,22 +1042,12 @@
         }
       }
     },
-    "读过的文章" : {
+    "这些文章要重新读" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Articles you have read it in"
-          }
-        }
-      }
-    },
-    "还没有读过的文章。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No articles yet."
+            "value" : "Read these again"
           }
         }
       }

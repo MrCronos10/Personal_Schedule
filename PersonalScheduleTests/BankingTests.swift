@@ -69,7 +69,26 @@ struct BankingTests {
 
         let sightings = try shelf.vocabulary.cleanSightings(of: "厕所")
         #expect(try shelf.vocabulary.progress(for: "厕所")?.isKnown == true)
-        #expect(sightings.compactMap { $0.article?.title } == ["1", "2", "3"])
+        // Compared as a set: all three were banked on one day, and the sort key is the day, so the
+        // order between them is not something the store promises.
+        #expect(Set(sightings.compactMap { $0.article?.title }) == ["1", "2", "3"])
+    }
+
+    /// **Known** is three *different* Articles, not three records. Nothing in the store stops two
+    /// rows describing one reading — no field is unique and iCloud sync is due later — and two
+    /// copies of one sighting must not be worth two Articles.
+    @Test func twoRecordsOfOneArticleAreNotTwoArticles() throws {
+        let shelf = try shelf()
+        let first = try shelf.articles.add(text: text(1, ["厕所"]))
+        try shelf.vocabulary.bank(first, on: day)
+        // A second copy of the same reading, as a sync between two devices could produce.
+        shelf.vocabulary.context.insert(CleanSighting(word: "厕所", article: first, day: day))
+        try shelf.vocabulary.context.save()
+
+        let second = try shelf.articles.add(text: text(2, ["厕所"]))
+        try shelf.vocabulary.bank(second, on: day)
+
+        #expect(try shelf.vocabulary.progress(for: "厕所")?.isKnown == false)
     }
 
     /// A Word the app does not measure is not evidence of anything and records nothing (ADR 0005).

@@ -151,12 +151,16 @@ struct ArticleReaderView: View {
         }
         .environment(\.openURL, OpenURLAction { url in
             guard let word = WordLink.word(from: url) else { return .systemAction }
-            lookedUpWord = LookedUpWord(text: word)
-            try? VocabularyLibrary(context: context).lookUp(word, in: article)
+            let library = VocabularyLibrary(context: context)
+            // Read before recording, because recording the Lookup is what clears them.
+            let cleared = ((try? library.cleanSightings(of: word)) ?? [])
+                .compactMap { $0.article?.title }
+            lookedUpWord = LookedUpWord(text: word, clearedArticles: cleared)
+            try? library.lookUp(word, in: article)
             return .handled
         })
         .sheet(item: $lookedUpWord) { looked in
-            WordLookupSheet(word: looked.text)
+            WordLookupSheet(word: looked.text, clearedArticles: looked.clearedArticles)
                 .presentationDetents([.medium])
         }
     }
@@ -316,5 +320,11 @@ struct TickTarget: Identifiable {
 /// stdlib conformance has to be invented to satisfy `sheet(item:)`.
 struct LookedUpWord: Identifiable {
     let text: String
+    /// The Articles this tap just cost the Word, read before the **Lookup** cleared them.
+    ///
+    /// Captured here rather than queried in the sheet: the same tap that opens the sheet records the
+    /// Lookup, which deletes the **Clean Sightings**, so by the time the sheet draws there is
+    /// nothing left to find. See ADR 0004 for why a Lookup takes them.
+    var clearedArticles: [String] = []
     var id: String { text }
 }

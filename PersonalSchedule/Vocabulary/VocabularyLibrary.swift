@@ -185,14 +185,21 @@ struct VocabularyLibrary {
 
         let lookedUpHere = Set(try lookups(in: article).map(\.word))
         var result = BankResult()
-        // Every Word's sightings in one fetch, grouped by Word. An Article can hold hundreds of
-        // measured Words, and asking the store per Word would be that many queries per 读完.
+        // This Article's Words' sightings in one fetch, grouped by Word. Asking the store per Word
+        // would be hundreds of queries per 读完; fetching the whole table would grow all year, since
+        // sightings are kept once a Word is Known. So it is narrowed to the Words actually in hand.
+        let wordsHere = Self.hskWords(in: article.text)
+        let wordsToLookFor = wordsHere.map(\.word)
         var sightingsByWord = Dictionary(
-            grouping: try context.fetch(FetchDescriptor<CleanSighting>()),
+            grouping: try context.fetch(
+                FetchDescriptor<CleanSighting>(
+                    predicate: #Predicate { wordsToLookFor.contains($0.word) }
+                )
+            ),
             by: \.word
         )
 
-        for entry in Self.hskWords(in: article.text) {
+        for entry in wordsHere {
             guard let progress = try progressCreatingIfNeeded(for: entry.word) else { continue }
             // Whatever this reading proved about the Word, it moved today, so the thirty-day wait
             // before Daily New Words may offer it again runs from here (ADR 0006). Without this a
@@ -216,7 +223,11 @@ struct VocabularyLibrary {
             // One record per Word per Article: `hskWords(in:)` already answers each Word once
             // however often it appears, and an Article may only ever bank once.
             context.insert(CleanSighting(word: entry.word, article: article, day: day))
-            if earned.count + 1 >= Self.sightingsForKnown, !wasKnown {
+            // Counted by Article and not by record, because Known means three *different* Articles.
+            // Nothing in the store stops two rows describing one reading — no field is unique and
+            // iCloud sync is due later — and two copies must not be worth two readings.
+            let earnedArticles = Set(earned.compactMap { $0.article?.persistentModelID })
+            if earnedArticles.count + 1 >= Self.sightingsForKnown, !wasKnown {
                 // A Word already Known keeps the day it was first known on, so the record says when
                 // the student got it, not when they last read it.
                 progress.isKnown = true
@@ -383,9 +394,11 @@ struct VocabularyLibrary {
         return progress
     }
 
-    /// The Articles that earned one **Word** its **Clean Sightings**, oldest first.
+    /// The **Clean Sightings** one **Word** has earned, by day.
     ///
     /// This is the Word's evidence, and its count: there is no separate number to drift from it.
+    /// Sightings banked on the same day tie, and their order between them is not promised — a
+    /// caller that needs a settled order has to decide one itself.
     func cleanSightings(of word: String) throws -> [CleanSighting] {
         try context.fetch(
             FetchDescriptor<CleanSighting>(
