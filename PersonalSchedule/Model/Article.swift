@@ -21,6 +21,9 @@ final class Article {
     @Relationship(deleteRule: .nullify, inverse: \WordLookup.article)
     var lookups: [WordLookup]? = []
 
+    @Relationship(deleteRule: .nullify, inverse: \CleanSighting.article)
+    var cleanSightings: [CleanSighting]? = []
+
     var importedDay: Day { Day(number: importedDayNumber) }
 
     init(title: String, text: String, source: String? = nil, importedDay: Day) {
@@ -48,6 +51,27 @@ final class WordLookup {
     }
 }
 
+/// One **Article** the student read to the end without looking a **Word** up: evidence of knowing
+/// it. Three of them, in three different Articles, makes the Word **Known**. See CONTEXT.md.
+///
+/// A record rather than a number, so a Word can say *where* it was earned. A **Lookup** deletes
+/// these along with the count they made up, because ADR 0004 means the evidence is genuinely gone
+/// and a list that outlived the count would be arguing with it.
+@Model
+final class CleanSighting {
+    var word: String = ""
+    var article: Article?
+    var dayNumber: Int = 0
+
+    var day: Day { Day(number: dayNumber) }
+
+    init(word: String, article: Article?, day: Day) {
+        self.word = word
+        self.article = article
+        self.dayNumber = day.number
+    }
+}
+
 /// What the student has done about one **Word**: how close it is to **Known**. See CONTEXT.md.
 ///
 /// Written lazily. A Word never met has no row and counts as not Known, so the store doesn't carry
@@ -56,8 +80,6 @@ final class WordLookup {
 final class WordProgress {
     var word: String = ""
     var levelValue: Int = 4
-    /// Articles read to the end without looking this Word up. Three makes it Known.
-    var cleanSightings: Int = 0
     var isKnown: Bool = false
     var knownDayNumber: Int?
     /// The day this Word was **Set Aside**: answered 不认识, looked up while reading, or taken back

@@ -124,11 +124,11 @@ struct ReadingSessionTests {
         let shelf = try shelf()
         let article = try shelf.articles.add(text: "西湖龙井\n厕所。")
         try shelf.vocabulary.bank(article, on: day)
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 1)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 1)
 
         // No Completion is saved at all.
         #expect(try shelf.context.fetch(CompletionLibrary.allDescriptor).isEmpty)
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 1)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 1)
     }
 
     // MARK: - Which Action it offers

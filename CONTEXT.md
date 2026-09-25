@@ -117,7 +117,7 @@ The record that the student tapped a Word in an Article to see its pinyin and En
 _Avoid_: Tap, hint, lookup failure
 
 **Clean Sighting**:
-One Article the student read to the end without looking a Word up. A Word gains at most one Clean Sighting per Article, and only the first time that Article is finished: rereading proves nothing new.
+One Article the student read to the end without looking a Word up. A Word gains at most one Clean Sighting per Article, and only the first time that Article is finished: rereading proves nothing new. Each one remembers the Article it came from, so a Word can say where it was earned, and a **Lookup** takes them all away together.
 _Avoid_: View, exposure, repetition, streak
 
 **Known**:

@@ -42,6 +42,44 @@ struct BankingTests {
         )
     }
 
+    // MARK: - A Clean Sighting remembers its Article
+
+    /// A Word can say *where* it was earned, not merely how often. Its sightings are its count, so
+    /// there is no separate number that could drift from the Articles explaining it.
+    @Test func aCleanSightingRemembersItsArticle() throws {
+        let shelf = try shelf()
+        let first = try shelf.articles.add(text: text(1, ["厕所"]))
+        let second = try shelf.articles.add(text: text(2, ["厕所"]))
+        try shelf.vocabulary.bank(first, on: day)
+        try shelf.vocabulary.bank(second, on: day)
+
+        let sightings = try shelf.vocabulary.cleanSightings(of: "厕所")
+        #expect(sightings.count == 2)
+        #expect(Set(sightings.compactMap { $0.article?.title }) == ["1", "2"])
+    }
+
+    /// A **Known** Word can say which three readings earned it. This is the whole point of keeping
+    /// records rather than a number.
+    @Test func aKnownWordNamesTheThreeArticlesThatEarnedIt() throws {
+        let shelf = try shelf()
+        for index in 1...3 {
+            let article = try shelf.articles.add(text: text(index, ["厕所"]))
+            try shelf.vocabulary.bank(article, on: day)
+        }
+
+        let sightings = try shelf.vocabulary.cleanSightings(of: "厕所")
+        #expect(try shelf.vocabulary.progress(for: "厕所")?.isKnown == true)
+        #expect(sightings.compactMap { $0.article?.title } == ["1", "2", "3"])
+    }
+
+    /// A Word the app does not measure is not evidence of anything and records nothing (ADR 0005).
+    @Test func anUnmeasuredWordEarnsNoCleanSighting() throws {
+        let shelf = try shelf()
+        let article = try shelf.articles.add(text: "1\n很好。")
+        try shelf.vocabulary.bank(article, on: day)
+        #expect(try shelf.vocabulary.cleanSightings(of: "很").isEmpty)
+    }
+
     // MARK: - One Article, one sighting
 
     /// A Word repeated nine times in one text is still one Article's worth of evidence.
@@ -49,7 +87,7 @@ struct BankingTests {
         let shelf = try shelf()
         let article = try shelf.articles.add(text: "厕所\n厕所很干净。厕所。")
         try shelf.vocabulary.bank(article, on: day)
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 1)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 1)
     }
 
     @Test func threeDifferentArticlesMakeAWordKnown() throws {
@@ -59,7 +97,7 @@ struct BankingTests {
             try shelf.vocabulary.bank(article, on: day)
         }
         let progress = try #require(try shelf.vocabulary.progress(for: "厕所"))
-        #expect(progress.cleanSightings == 3)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 3)
         #expect(progress.isKnown)
         #expect(progress.knownDay?.number == day.number)
     }
@@ -89,7 +127,7 @@ struct BankingTests {
         try shelf.vocabulary.bank(third, on: day)
 
         let progress = try #require(try shelf.vocabulary.progress(for: "厕所"))
-        #expect(progress.cleanSightings == 0)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").isEmpty)
         #expect(!progress.isKnown)
     }
 
@@ -104,7 +142,7 @@ struct BankingTests {
         try shelf.vocabulary.bank(first, on: day)
         try shelf.vocabulary.bank(second, on: day)
 
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 1)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 1)
     }
 
     @Test func aWordLookedUpInOneArticleStillEarnsFromTheNext() throws {
@@ -112,11 +150,11 @@ struct BankingTests {
         let first = try shelf.articles.add(text: "第一篇\n厕所很干净。")
         try shelf.vocabulary.lookUp("厕所", in: first, on: day)
         try shelf.vocabulary.bank(first, on: day)
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 0)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 0)
 
         let second = try shelf.articles.add(text: "第二篇\n厕所很干净。")
         try shelf.vocabulary.bank(second, on: day)
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 1)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 1)
     }
 
     /// A Known Word is not taken back by one tap: only 其实不认识 does that.
@@ -140,7 +178,7 @@ struct BankingTests {
         let article = try shelf.articles.add(text: "第一篇\n厕所很干净。")
         try shelf.vocabulary.bank(article, on: day)
         try shelf.vocabulary.bank(article, on: day)
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 1)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 1)
         #expect(article.isBanked)
     }
 
@@ -163,10 +201,10 @@ struct BankingTests {
         let shelf = try shelf()
         let article = try shelf.articles.add(text: "第一篇\n厕所很干净。")
         try shelf.vocabulary.bank(article, on: day)
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 1)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 1)
 
         try shelf.vocabulary.lookUp("厕所", in: article, on: day)
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 0)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 0)
     }
 
     // MARK: - What is left alone
@@ -196,7 +234,7 @@ struct BankingTests {
         let article = try shelf.articles.add(text: "第一篇\n厕所很干净。")
         try shelf.vocabulary.bank(article, on: day)
         try shelf.articles.archive(article)
-        #expect(try shelf.vocabulary.progress(for: "厕所")?.cleanSightings == 1)
+        #expect(try shelf.vocabulary.cleanSightings(of: "厕所").count == 1)
     }
 
     // MARK: - What the screen says

@@ -84,14 +84,16 @@ struct DailyNewWordsTests {
     @Test func aPartWayWordAlsoComesBackAfterThirtyDays() throws {
         let shelf = try library()
         let first = try #require(try shelf.dailyNewWords(on: day).first)
-        let progress = try #require(try shelf.progressCreatingIfNeeded(for: first.word))
-        progress.cleanSightings = 1
-        progress.setAsideDayNumber = day.number
-        try shelf.context.save()
+        let article = try ArticleLibrary(context: shelf.context)
+            .add(text: "1\n\(first.word)。")
+        try shelf.bank(article, on: day)
+        let progress = try #require(try shelf.progress(for: first.word))
 
+        #expect(try shelf.cleanSightings(of: first.word).count == 1)
         #expect(!VocabularyLibrary.isOfferable(progress, on: day.adding(days: 29)))
         #expect(VocabularyLibrary.isOfferable(progress, on: day.adding(days: 30)))
-        #expect(progress.cleanSightings == 1)
+        // Coming back is another chance to be offered, never a reason to lose earned evidence.
+        #expect(try shelf.cleanSightings(of: first.word).count == 1)
     }
 
     /// A **Known** Word is never offered, whatever else is true of it.

@@ -1042,6 +1042,26 @@
         }
       }
     },
+    "读过的文章" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Articles you have read it in"
+          }
+        }
+      }
+    },
+    "还没有读过的文章。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No articles yet."
+          }
+        }
+      }
+    },
     "读完" : {
       "localizations" : {
         "en" : {

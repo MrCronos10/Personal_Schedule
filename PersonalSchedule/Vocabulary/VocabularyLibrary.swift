@@ -118,7 +118,9 @@ struct VocabularyLibrary {
         guard let entry = HSKWordList.entry(for: word) else { return }
         context.insert(WordLookup(word: entry.word, article: article, day: day))
         if let progress = try progressCreatingIfNeeded(for: entry.word) {
-            progress.cleanSightings = 0
+            // The evidence is genuinely gone, not merely uncounted (ADR 0004), so the records go
+            // with the count: a list of Articles outliving it would be arguing with it.
+            try forgetCleanSightings(of: entry.word)
             // Needing help with a Word is the same admission as 不认识, so it starts the same
             // thirty-day clock rather than parking the Word out of Daily New Words for good.
             progress.setAsideDayNumber = day.number
@@ -140,9 +142,17 @@ struct VocabularyLibrary {
         guard let progress = try progress(for: word) else { return }
         progress.isKnown = false
         progress.knownDayNumber = nil
-        progress.cleanSightings = 0
+        try forgetCleanSightings(of: word)
         progress.setAsideDayNumber = day.number
         try context.saveOrRollBack()
+    }
+
+    /// Throws away a Word's **Clean Sightings**, so it is back to nothing and every Article has to
+    /// be earned again (ADR 0004).
+    private func forgetCleanSightings(of word: String) throws {
+        for sighting in try cleanSightings(of: word) {
+            context.delete(sighting)
+        }
     }
 
     // MARK: - Finishing an Article
@@ -175,6 +185,12 @@ struct VocabularyLibrary {
 
         let lookedUpHere = Set(try lookups(in: article).map(\.word))
         var result = BankResult()
+        // Every Word's sightings in one fetch, grouped by Word. An Article can hold hundreds of
+        // measured Words, and asking the store per Word would be that many queries per 读完.
+        var sightingsByWord = Dictionary(
+            grouping: try context.fetch(FetchDescriptor<CleanSighting>()),
+            by: \.word
+        )
 
         for entry in Self.hskWords(in: article.text) {
             guard let progress = try progressCreatingIfNeeded(for: entry.word) else { continue }
@@ -183,18 +199,24 @@ struct VocabularyLibrary {
             // Word stalled at one or two Clean Sightings would never be offerable again.
             progress.setAsideDayNumber = day.number
 
+            let earned = sightingsByWord[entry.word] ?? []
+
             if lookedUpHere.contains(entry.word) {
                 // Evidence of not knowing. A Word the student has said they know stays Known:
                 // only 其实不认识 takes that back.
-                if progress.cleanSightings > 0 || !progress.isKnown {
+                if !earned.isEmpty || !progress.isKnown {
                     result.returnedToZero += 1
                 }
-                progress.cleanSightings = 0
+                for sighting in earned { context.delete(sighting) }
+                sightingsByWord[entry.word] = []
                 continue
             }
+
             let wasKnown = progress.isKnown
-            progress.cleanSightings += 1
-            if progress.cleanSightings >= Self.sightingsForKnown, !wasKnown {
+            // One record per Word per Article: `hskWords(in:)` already answers each Word once
+            // however often it appears, and an Article may only ever bank once.
+            context.insert(CleanSighting(word: entry.word, article: article, day: day))
+            if earned.count + 1 >= Self.sightingsForKnown, !wasKnown {
                 // A Word already Known keeps the day it was first known on, so the record says when
                 // the student got it, not when they last read it.
                 progress.isKnown = true
@@ -312,9 +334,6 @@ struct VocabularyLibrary {
             // winner: losing a Known row here would offer the student a Word they already have.
             uniquingKeysWith: { left, right in
                 if left.isKnown != right.isKnown { return left.isKnown ? left : right }
-                if left.cleanSightings != right.cleanSightings {
-                    return left.cleanSightings > right.cleanSightings ? left : right
-                }
                 return (left.setAsideDayNumber ?? 0) >= (right.setAsideDayNumber ?? 0) ? left : right
             }
         )
@@ -362,6 +381,18 @@ struct VocabularyLibrary {
         let progress = WordProgress(word: entry.word, level: entry.level)
         context.insert(progress)
         return progress
+    }
+
+    /// The Articles that earned one **Word** its **Clean Sightings**, oldest first.
+    ///
+    /// This is the Word's evidence, and its count: there is no separate number to drift from it.
+    func cleanSightings(of word: String) throws -> [CleanSighting] {
+        try context.fetch(
+            FetchDescriptor<CleanSighting>(
+                predicate: #Predicate { $0.word == word },
+                sortBy: [SortDescriptor(\.dayNumber)]
+            )
+        )
     }
 
     /// Every Lookup made inside one Article: the Words this reading does not get to count.

@@ -12,6 +12,18 @@ struct VocabularyLibraryTests {
         return VocabularyLibrary(context: ModelContext(container))
     }
 
+    /// Earns a Word `count` **Clean Sightings** the way reading does: one Article each, each read to
+    /// the end. Built by banking rather than by writing records directly, so a test that sets up
+    /// two sightings is setting up a state the app can actually reach. The titles are bare numbers
+    /// because a Chinese title would smuggle its own HSK Words into the text.
+    private func giveSightings(_ count: Int, of word: String, in shelf: VocabularyLibrary) throws {
+        let articles = ArticleLibrary(context: shelf.context)
+        for index in 1...count {
+            let article = try articles.add(text: "\(index)\n\(word)。")
+            try shelf.bank(article, on: Day(number: 20260920))
+        }
+    }
+
     // MARK: - Splitting
 
     @Test func aSentenceSplitsIntoWordsNotCharacters() throws {
@@ -131,12 +143,11 @@ struct VocabularyLibraryTests {
     /// happens, so an untapped Word means something.
     @Test func aLookupReturnsAWordToZeroCleanSightings() throws {
         let shelf = try library()
+        try giveSightings(2, of: "厕所", in: shelf)
         let article = try ArticleLibrary(context: shelf.context).add(text: "厕所\n正文")
-        let progress = try #require(try shelf.progressCreatingIfNeeded(for: "厕所"))
-        progress.cleanSightings = 2
 
         try shelf.lookUp("厕所", in: article, on: Day(number: 20260921))
-        #expect(try shelf.progress(for: "厕所")?.cleanSightings == 0)
+        #expect(try shelf.cleanSightings(of: "厕所").count == 0)
     }
 
     /// A Known Word is not taken back by one tap: only the student saying so does that.
@@ -164,25 +175,23 @@ struct VocabularyLibraryTests {
 
     @Test func markingAWordKnownLeavesItsCleanSightingsAlone() throws {
         let shelf = try library()
-        let progress = try #require(try shelf.progressCreatingIfNeeded(for: "厕所"))
-        progress.cleanSightings = 2
+        try giveSightings(2, of: "厕所", in: shelf)
         try shelf.markKnown("厕所", on: Day(number: 20260921))
-        #expect(try shelf.progress(for: "厕所")?.cleanSightings == 2)
+        #expect(try shelf.cleanSightings(of: "厕所").count == 2)
     }
 
     /// 其实不认识 must clear the sightings too. Leaving three behind would make the Word Known again
     /// at the very next 读完, which would look like the app arguing with the student.
     @Test func takingKnownBackAlsoClearsTheEvidence() throws {
         let shelf = try library()
-        let progress = try #require(try shelf.progressCreatingIfNeeded(for: "厕所"))
-        progress.cleanSightings = 3
+        try giveSightings(3, of: "厕所", in: shelf)
         try shelf.markKnown("厕所", on: Day(number: 20260921))
 
         try shelf.markNotKnown("厕所")
         let after = try #require(try shelf.progress(for: "厕所"))
         #expect(!after.isKnown)
         #expect(after.knownDay == nil)
-        #expect(after.cleanSightings == 0)
+        #expect(try shelf.cleanSightings(of: "厕所").isEmpty)
     }
 
     @Test func aWordNeverMetHasNoRow() throws {
