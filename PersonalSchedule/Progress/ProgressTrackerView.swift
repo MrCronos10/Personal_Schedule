@@ -260,7 +260,7 @@ private struct LedgerDayCell: View {
             if isMissed { onTapMissed() }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: weekdayLetter) + Text(" ") + stateText)
+        .accessibilityLabel(Text(verbatim: weekdayLetter) + Text(verbatim: " ") + stateText)
         .accessibilityAddTraits(isMissed ? .isButton : [])
     }
 

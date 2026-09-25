@@ -12,6 +12,11 @@ struct NotesListView: View {
     @Query(CategoryLibrary.allDescriptor) private var allCategories: [Category]
 
     @State private var searchText = ""
+    /// The day a Note was tapped for. Opened as `TodayView(initialDay:)`, the same sheet the Progress
+    /// Tracker uses for a Missed day, so a Note is followed back to its own Daily Checklist rather than
+    /// a second copy of that screen.
+    @State private var openDay = Day.today()
+    @State private var isShowingDay = false
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
@@ -51,7 +56,11 @@ struct NotesListView: View {
                                     completion: completion,
                                     ink: Theme.categoryInk(
                                         for: completion.category, among: allCategories
-                                    )
+                                    ),
+                                    onTap: {
+                                        openDay = completion.day
+                                        isShowingDay = true
+                                    }
                                 )
                             }
                         }
@@ -64,6 +73,9 @@ struct NotesListView: View {
             .padding(.bottom, 24)
         }
         .background(Theme.paper)
+        .sheet(isPresented: $isShowingDay) {
+            TodayView(initialDay: openDay)
+        }
     }
 
     /// 笔记 in 田字格 boxes, the same practice-book heading the other tabs use.
@@ -136,6 +148,7 @@ struct NoteRow: View {
 
     let completion: Completion
     let ink: Color
+    let onTap: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -178,6 +191,9 @@ struct NoteRow: View {
         .overlay(alignment: .bottom) {
             Rectangle().fill(Theme.rule).frame(height: 1)
         }
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onTap)
+        .accessibilityAddTraits(.isButton)
     }
 
     private var dayText: String {
