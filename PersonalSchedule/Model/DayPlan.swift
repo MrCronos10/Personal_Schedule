@@ -66,12 +66,18 @@ struct DayPlan {
         guard action.isRoutine, day < today else { return false }
         guard day >= Day(action.createdAt) else { return false }
         guard appears(action, on: day, today: today) else { return false }
-        return !(action.completions ?? []).contains { $0.dayNumber == day.number }
+        return !isTicked(action, on: day)
     }
 
-    /// Actions with a time first, earliest first; then Actions without a time, in the order they were added.
-    static func ordered(_ actions: [Action]) -> [Action] {
+    /// Outstanding Actions first, then ticked ones (CONTEXT.md's Daily Checklist): within each group, Actions
+    /// with a time first, earliest first, then Actions without a time, in the order they were added.
+    static func ordered(_ actions: [Action], on day: Day) -> [Action] {
         actions.sorted { first, second in
+            let firstTicked = isTicked(first, on: day)
+            let secondTicked = isTicked(second, on: day)
+            if firstTicked != secondTicked {
+                return !firstTicked
+            }
             switch (first.timeMinutes, second.timeMinutes) {
             case let (firstTime?, secondTime?) where firstTime != secondTime:
                 return firstTime < secondTime
@@ -85,10 +91,14 @@ struct DayPlan {
         }
     }
 
+    private static func isTicked(_ action: Action, on day: Day) -> Bool {
+        (action.completions ?? []).contains { $0.dayNumber == day.number }
+    }
+
     /// The day's Actions, in the order they belong on screen, out of the Actions already fetched with
     /// `descriptor`. Screens use this with `@Query`, so there is one copy of the rule.
     static func plan(_ candidates: [Action], on day: Day, today: Day) -> [Action] {
-        ordered(candidates.filter { appears($0, on: day, today: today) })
+        ordered(candidates.filter { appears($0, on: day, today: today) }, on: day)
     }
 
     func actions(on day: Day, today: Day) throws -> [Action] {

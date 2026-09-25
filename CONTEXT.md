@@ -49,7 +49,7 @@ The view of a day's Classes and timed Actions, laid out by time.
 _Avoid_: Calendar, agenda
 
 **Daily Checklist**:
-The view of all of today's Actions, with or without a time, which the student ticks off.
+The view of all of today's Actions, with or without a time, which the student ticks off. Outstanding Actions show before ticked ones, so ticking one off moves it out of the way rather than off the screen.
 _Avoid_: To-do list, task list
 
 **Default Minutes**:

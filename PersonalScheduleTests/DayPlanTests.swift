@@ -839,6 +839,99 @@ struct DayPlanTests {
         #expect(titles == ["学20个新词", "健身", "洗衣服", "买SIM卡"])
     }
 
+    /// Outstanding Actions show before ticked ones (CONTEXT.md's Daily Checklist), so ticking one off moves
+    /// it out of the way rather than off the screen.
+    @Test func untickedActionsSortBeforeTickedOnesEvenWhenTickedWasAddedFirst() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
+        let actions = ActionLibrary(context: container.mainContext)
+        let ticked = try actions.addOneTime(title: "买SIM卡", category: life, day: monday)
+        try actions.addOneTime(title: "洗衣服", category: life, day: monday)
+        try CompletionLibrary(context: container.mainContext).tick(ticked, on: monday, minutes: 10, note: nil)
+
+        let titles = try plannedTitles(DayPlan(context: container.mainContext), on: monday, today: monday)
+
+        #expect(titles == ["洗衣服", "买SIM卡"])
+    }
+
+    /// The ticked tier is strictly after the unticked tier: an early-morning ticked Action still sorts after
+    /// an untimed unticked one, because the tier is decided before time is ever considered.
+    @Test func aTickedTimedActionStillSortsAfterAnUntickedUntimedAction() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
+        let actions = ActionLibrary(context: container.mainContext)
+        let tickedEarly = try actions.addOneTime(
+            title: "晨跑",
+            category: life,
+            day: monday,
+            time: TimeOfDay(hour: 6, minute: 0)
+        )
+        try actions.addOneTime(title: "洗衣服", category: life, day: monday)
+        try CompletionLibrary(context: container.mainContext).tick(tickedEarly, on: monday, minutes: 20, note: nil)
+
+        let titles = try plannedTitles(DayPlan(context: container.mainContext), on: monday, today: monday)
+
+        #expect(titles == ["洗衣服", "晨跑"])
+    }
+
+    /// Within the unticked tier, the existing time-then-added-order rule still holds.
+    @Test func withinTheUntickedTierTimedActionsComeFirstEarliestFirstThenUntimedInTheOrderAdded() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
+        let actions = ActionLibrary(context: container.mainContext)
+
+        try actions.addOneTime(title: "洗衣服", category: life, day: monday)
+        try actions.addOneTime(title: "健身", category: life, day: monday, time: TimeOfDay(hour: 18, minute: 30))
+        try actions.addOneTime(title: "买SIM卡", category: life, day: monday, time: TimeOfDay(hour: 7, minute: 0))
+
+        let titles = try plannedTitles(DayPlan(context: container.mainContext), on: monday, today: monday)
+
+        #expect(titles == ["买SIM卡", "健身", "洗衣服"])
+    }
+
+    /// Within the ticked tier, the same time-then-added-order rule holds, not just for unticked Actions.
+    @Test func withinTheTickedTierTimedActionsComeFirstEarliestFirstThenUntimedInTheOrderAdded() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
+        let actions = ActionLibrary(context: container.mainContext)
+        let completions = CompletionLibrary(context: container.mainContext)
+
+        let laundry = try actions.addOneTime(title: "洗衣服", category: life, day: monday)
+        let gym = try actions.addOneTime(title: "健身", category: life, day: monday, time: TimeOfDay(hour: 18, minute: 30))
+        let simCard = try actions.addOneTime(title: "买SIM卡", category: life, day: monday, time: TimeOfDay(hour: 7, minute: 0))
+        try completions.tick(laundry, on: monday, minutes: 30, note: nil)
+        try completions.tick(gym, on: monday, minutes: 45, note: nil)
+        try completions.tick(simCard, on: monday, minutes: 15, note: nil)
+
+        let titles = try plannedTitles(DayPlan(context: container.mainContext), on: monday, today: monday)
+
+        #expect(titles == ["买SIM卡", "健身", "洗衣服"])
+    }
+
+    /// A Missed Routine day is just an unticked Action on a past day — no third tier, it sorts into the
+    /// unticked group exactly like an unticked Action on today.
+    @Test func aMissedRoutineDaySortsInTheUntickedTier() throws {
+        let container = try ScheduleStore.makeContainer(inMemory: true)
+        let chinese = try CategoryLibrary(context: container.mainContext).add(named: "中文")
+        let life = try CategoryLibrary(context: container.mainContext).add(named: "生活")
+        let actions = ActionLibrary(context: container.mainContext)
+        let routine = try addRoutineCreatedOnItsStartDay(
+            title: "学20个新词",
+            category: chinese,
+            repeatDays: .everyDay,
+            startDay: monday,
+            context: container.mainContext
+        )
+        let laundry = try actions.addOneTime(title: "洗衣服", category: life, day: monday)
+        try CompletionLibrary(context: container.mainContext).tick(laundry, on: monday, minutes: 30, note: nil)
+        let today = Day(year: 2026, month: 9, day: 21)
+
+        #expect(DayPlan.isMissed(routine, on: monday, today: today))
+        let titles = try plannedTitles(DayPlan(context: container.mainContext), on: monday, today: today)
+
+        #expect(titles == ["学20个新词", "洗衣服"])
+    }
+
     /// The day's Actions by title, read in the Gregorian calendar so weekdays mean what they say.
     private func plannedTitles(_ plan: DayPlan, on day: Day, today: Day) throws -> [String] {
         try plan.actions(on: day, today: today).map(\.title)
