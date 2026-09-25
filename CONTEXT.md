@@ -137,5 +137,9 @@ The **Level** the app draws **Daily New Words** from: HSK 4 until it is **Passed
 _Avoid_: Current level, active level, unlocked level
 
 **Daily New Words**:
-Ten Words of the **Served Level** that the student has not met yet, offered once a day, each marked 认识 or 不认识. 认识 makes it **Known**; 不认识 returns it to the pool for another day. There is no streak, no count of what is due, and no penalty for a day skipped: a day not opened leaves nothing behind.
+Ten Words of the **Served Level** that the student has not met yet, offered once a day, each marked 认识 or 不认识. 认识 makes it **Known**; 不认识 sets the Word aside, and it may be offered again once thirty days have passed ([ADR 0006](docs/adr/0006-a-word-set-aside-comes-back.md)). There is no streak, no count of what is due, and no penalty for a day skipped: a day not opened leaves nothing behind.
 _Avoid_: Review queue, flashcards, SRS, due words
+
+**Set Aside**:
+A **Word** that is not **Known** and has nothing happening to it: the student answered 不认识, looked it up, or read it without reaching three **Clean Sightings**. It leaves **Daily New Words** for thirty days from whichever of those happened last, then becomes offerable again, keeping any sightings it had. Nothing is owed in the meantime: a Set Aside Word is never due, never counted, and never shown as waiting.
+_Avoid_: Due, scheduled, deferred, snoozed, leech

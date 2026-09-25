@@ -119,6 +119,9 @@ struct VocabularyLibrary {
         context.insert(WordLookup(word: entry.word, article: article, day: day))
         if let progress = try progressCreatingIfNeeded(for: entry.word) {
             progress.cleanSightings = 0
+            // Needing help with a Word is the same admission as 不认识, so it starts the same
+            // thirty-day clock rather than parking the Word out of Daily New Words for good.
+            progress.setAsideDayNumber = day.number
         }
         try context.saveOrRollBack()
     }
@@ -133,11 +136,12 @@ struct VocabularyLibrary {
 
     /// Taking that back. The **Clean Sightings** go too: leaving three behind would make the Word
     /// Known again at the very next 读完, which would read as the app arguing with the student.
-    func markNotKnown(_ word: String) throws {
+    func markNotKnown(_ word: String, on day: Day = Day.today()) throws {
         guard let progress = try progress(for: word) else { return }
         progress.isKnown = false
         progress.knownDayNumber = nil
         progress.cleanSightings = 0
+        progress.setAsideDayNumber = day.number
         try context.saveOrRollBack()
     }
 
@@ -174,6 +178,11 @@ struct VocabularyLibrary {
 
         for entry in Self.hskWords(in: article.text) {
             guard let progress = try progressCreatingIfNeeded(for: entry.word) else { continue }
+            // Whatever this reading proved about the Word, it moved today, so the thirty-day wait
+            // before Daily New Words may offer it again runs from here (ADR 0006). Without this a
+            // Word stalled at one or two Clean Sightings would never be offerable again.
+            progress.setAsideDayNumber = day.number
+
             if lookedUpHere.contains(entry.word) {
                 // Evidence of not knowing. A Word the student has said they know stays Known:
                 // only 其实不认识 takes that back.
@@ -263,38 +272,76 @@ struct VocabularyLibrary {
     /// How many unmet Words are offered a day. Small on purpose: this is a top-up, not a queue.
     static let dailyNewWordCount = 10
 
-    /// Ten Words of the **Served Level** the student has not met yet.
+    /// How long a **Set Aside** Word waits before it may be offered again. See ADR 0006.
     ///
-    /// Only Words with no `WordProgress` row at all: a Word already on its way through reading is
-    /// the reading's job. The same ten all day, worked out from the day itself, so leaving the tab
-    /// and coming back doesn't reshuffle them.
+    /// Blunt on purpose: not tuned, not per-Word and not earned. A Word answered 不认识 four times
+    /// running waits exactly as long as one answered once, because anything cleverer is an interval
+    /// schedule wearing a different hat, and ADR 0004 turned that down.
+    static let daysSetAside = 30
+
+    /// Whether a Word may be offered in **Daily New Words** on this day.
     ///
-    /// There is deliberately no notion of due, no streak and no debt. A day not opened leaves
-    /// nothing behind (ADR 0004).
+    /// Nil progress is a Word never met at all. Otherwise: any Word that isn't **Known** and hasn't
+    /// moved for thirty days. A Word part-way to Known is included on purpose — one that gained a
+    /// **Clean Sighting** and never turned up in an Article again would otherwise be stalled at one
+    /// or two forever, which is the hole ADR 0006 exists to close, reached through reading instead
+    /// of 不认识. Its sightings are kept either way: being offered again is another chance, never a
+    /// reason to lose evidence already earned.
+    static func isOfferable(_ progress: WordProgress?, on day: Day) -> Bool {
+        guard let progress else { return true }
+        guard !progress.isKnown else { return false }
+        // No clock was ever started, so the wait has trivially elapsed. This is what carries the fix
+        // onto rows written before ADR 0006 rather than leaving them parked for good.
+        guard let setAside = progress.setAsideDay else { return true }
+        return setAside.adding(days: daysSetAside) <= day
+    }
+
+    /// Ten Words of the **Served Level** that may be offered today.
+    ///
+    /// The same ten all day, worked out from the day itself, so leaving the tab and coming back
+    /// doesn't reshuffle them.
+    ///
+    /// There is deliberately no notion of due, no streak and no debt. A **Set Aside** Word coming
+    /// back is offered like any other unmet Word, and a day not opened leaves nothing behind
+    /// (ADR 0004, ADR 0006).
     func dailyNewWords(on day: Day = Day.today()) throws -> [HSKEntry] {
-        let met = Set(try context.fetch(FetchDescriptor<WordProgress>()).map(\.word))
+        let rows = Dictionary(
+            try context.fetch(FetchDescriptor<WordProgress>()).map { ($0.word, $0) },
+            // No field in the store is unique and iCloud sync is switched on later, so two rows for
+            // one Word is possible. Keep whichever has come furthest rather than an arbitrary
+            // winner: losing a Known row here would offer the student a Word they already have.
+            uniquingKeysWith: { left, right in
+                if left.isKnown != right.isKnown { return left.isKnown ? left : right }
+                if left.cleanSightings != right.cleanSightings {
+                    return left.cleanSightings > right.cleanSightings ? left : right
+                }
+                return (left.setAsideDayNumber ?? 0) >= (right.setAsideDayNumber ?? 0) ? left : right
+            }
+        )
         let all = HSKWordList.words(at: try servedLevel())
         guard !all.isEmpty else { return [] }
 
-        // Walk the whole List from a place the day decides, skipping what has been met. The offset
-        // is taken from the List's own length, never from what is left of it: seeding off the
+        // Walk the whole List from a place the day decides, skipping what can't be offered. The
+        // offset is taken from the List's own length, never from what is left of it: seeding off the
         // remaining pool would move the window every time a Word was answered or tapped, and the
         // student would watch the day's ten reshuffle under their hand.
         let start = abs(day.number) % all.count
         var words: [HSKEntry] = []
         for offset in 0..<all.count {
             let entry = all[(start + offset) % all.count]
-            guard !met.contains(entry.word) else { continue }
+            guard Self.isOfferable(rows[entry.word], on: day) else { continue }
             words.append(entry)
             if words.count == Self.dailyNewWordCount { break }
         }
         return words
     }
 
-    /// 不认识: the student has met the Word now, so it leaves the daily pool and becomes the
-    /// reading's job. Nothing is held against them for saying so.
-    func markNotKnownToday(_ word: String) throws {
-        guard try progressCreatingIfNeeded(for: word) != nil else { return }
+    /// 不认识: the Word is **Set Aside**. It leaves the daily pool for thirty days and is then
+    /// offerable again (ADR 0006). Nothing is held against the student for saying so, and nothing
+    /// is owed in the meantime: a Set Aside Word is never due and never shown as waiting.
+    func setAside(_ word: String, on day: Day = Day.today()) throws {
+        guard let progress = try progressCreatingIfNeeded(for: word) else { return }
+        progress.setAsideDayNumber = day.number
         try context.saveOrRollBack()
     }
 

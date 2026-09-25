@@ -27,6 +27,9 @@ struct ReadingView: View {
     @State private var four = LevelProgress(level: .four, known: 0)
     @State private var five = LevelProgress(level: .five, known: 0)
     @State private var dailyWords: [HSKEntry] = []
+    /// Whether the Served Level has nothing left to learn, which is what tells 今日新词 apart from
+    /// a day when everything left is inside its thirty-day wait (ADR 0006).
+    @State private var servedLevelIsComplete = false
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
@@ -54,7 +57,7 @@ struct ReadingView: View {
                 LevelMeterView(four: four, five: five)
                     .padding(.top, 16)
 
-                DailyNewWordsView(words: dailyWords)
+                DailyNewWordsView(words: dailyWords, isServedLevelComplete: servedLevelIsComplete)
                     .padding(.top, 10)
 
                 SectionCaption(title: "我的文章")
@@ -98,6 +101,9 @@ struct ReadingView: View {
         four = (try? library.level(.four)) ?? LevelProgress(level: .four, known: 0)
         five = (try? library.level(.five)) ?? LevelProgress(level: .five, known: 0)
         dailyWords = (try? library.dailyNewWords()) ?? []
+        let served = VocabularyLibrary.servedLevel(four: four)
+        let servedProgress = served == .four ? four : five
+        servedLevelIsComplete = servedProgress.known >= servedProgress.total
     }
 
     /// 阅读 in 田字格 boxes, the same practice-book heading 今天 and 进度 use.

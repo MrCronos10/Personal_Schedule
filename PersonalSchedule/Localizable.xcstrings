@@ -152,6 +152,16 @@
         }
       }
     },
+    "今天没有新词" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No new words today"
+          }
+        }
+      }
+    },
     "今天的新词看完了" : {
       "localizations" : {
         "en" : {

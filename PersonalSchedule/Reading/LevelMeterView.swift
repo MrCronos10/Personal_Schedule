@@ -73,6 +73,10 @@ struct DailyNewWordsView: View {
     @Environment(\.modelContext) private var context
 
     let words: [HSKEntry]
+    /// Whether every Word of the **Served Level** is **Known**. It separates the two empty states:
+    /// nothing left to learn, or nothing offerable today because what is left is inside its
+    /// thirty-day wait (ADR 0006). Saying "都见过了" for the second would be untrue.
+    var isServedLevelComplete: Bool = false
     /// Words answered in this sitting, so the rows settle instead of vanishing under the finger.
     @State private var answered: [String: Bool] = [:]
 
@@ -85,7 +89,9 @@ struct DailyNewWordsView: View {
                 .padding(.bottom, 8)
 
             if words.isEmpty {
-                Text("这一级的词都见过了")
+                // No count of what is waiting and no date it comes back: a Set Aside Word is never
+                // due, and a number here would be the queue ADR 0004 turned down.
+                Text(isServedLevelComplete ? "这一级的词都见过了" : "今天没有新词")
                     .font(Theme.serif(16))
                     .foregroundStyle(Theme.muted)
             } else if words.allSatisfy({ answered[$0.word] != nil }) {
@@ -129,7 +135,7 @@ struct DailyNewWordsView: View {
                         // Settle the row only if it was really written: a row that says 不认识 with
                         // nothing recorded is the silent failure 读完 goes out of its way to avoid.
                         if (try? VocabularyLibrary(context: context)
-                            .markNotKnownToday(entry.word)) != nil {
+                            .setAside(entry.word)) != nil {
                             answered[entry.word] = false
                         }
                     }

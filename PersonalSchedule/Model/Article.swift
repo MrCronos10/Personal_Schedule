@@ -60,9 +60,17 @@ final class WordProgress {
     var cleanSightings: Int = 0
     var isKnown: Bool = false
     var knownDayNumber: Int?
+    /// The day this Word was **Set Aside**: answered 不认识, looked up while reading, or taken back
+    /// with 其实不认识. **Daily New Words** offers it again thirty days later (ADR 0006).
+    ///
+    /// Nil means no clock was ever started. Rows written before ADR 0006 are all like this, and they
+    /// are treated as eligible rather than parked: a wait that was never recorded has, trivially,
+    /// elapsed, and leaving them out would keep the very hole the ADR exists to close.
+    var setAsideDayNumber: Int?
 
     var level: HSKLevel { HSKLevel(rawValue: levelValue) ?? .four }
     var knownDay: Day? { knownDayNumber.map(Day.init(number:)) }
+    var setAsideDay: Day? { setAsideDayNumber.map(Day.init(number:)) }
 
     init(word: String, level: HSKLevel) {
         self.word = word
