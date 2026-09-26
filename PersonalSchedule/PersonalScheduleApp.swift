@@ -17,6 +17,9 @@ struct PersonalScheduleApp: App {
             try MainActor.assumeIsolated {
                 let migration = DayMigration(context: container.mainContext)
                 try migration.run()
+                // Best effort: an Article missing this cache is only slower to read from, never
+                // wrong, so it is not worth the app over one bad row (ticket 04).
+                try? ArticleLibrary(context: container.mainContext).backfillMeasuredWords()
             }
             self.container = container
         } catch {

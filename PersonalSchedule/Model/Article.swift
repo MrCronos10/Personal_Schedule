@@ -30,6 +30,37 @@ final class Article {
 
     var bankedDay: Day? { bankedDayNumber.map(Day.init(number:)) }
 
+    /// This Article's distinct measured Words, cached at import as one newline-joined string — a
+    /// Word never contains a newline, so this needs no encoding heavier than that.
+    ///
+    /// Nil rather than an empty default, and the two must not be confused: nil means "never cached",
+    /// which `readability(known:)` falls back to working out on the spot rather than reading as
+    /// unmeasured. `ArticleLibrary.backfillMeasuredWords()` fills this in for any Article left this
+    /// way — imported before this field existed — so the fallback is a one-time gap at start, not a
+    /// standing cost paid on every render. An empty string means "cached, and there is nothing
+    /// measured in it" — the ordinary answer for prose with no HSK 4/5 Word at all.
+    ///
+    /// `text` is never edited after import, so the list is cached once and stands for the Article's
+    /// whole life: rebuilding it on every render would run the tokenizer over the reading list every
+    /// time a tap changed one Word's `WordProgress` row.
+    var measuredWordsText: String?
+
+    /// What share of this Article's measured **Words** are already **Known**, out of the `known` set
+    /// handed in — this asks nothing of the store itself, so it is always as current as whatever the
+    /// caller just fetched, and never a number frozen at import or at 读完 (**Readability**; see
+    /// CONTEXT.md).
+    ///
+    /// Nil when the Article has no measured Words: "no Readability" and "0% known" are different
+    /// claims, and there is real Chinese prose with nothing on the HSK 4/5 lists in it.
+    func readability(known: Set<String>) -> Double? {
+        let words = measuredWordsText.map { cached in
+            cached.isEmpty ? [] : cached.split(separator: "\n").map(String.init)
+        } ?? VocabularyLibrary.hskWords(in: text).map(\.word)
+        guard !words.isEmpty else { return nil }
+        let knownHere = words.filter(known.contains).count
+        return Double(knownHere) / Double(words.count)
+    }
+
     /// What this Article proved, as recorded when 读完 first banked it, or nil when there is nothing
     /// to say.
     ///

@@ -59,6 +59,9 @@ struct ArticleLibrary {
             source: (trimmedSource?.isEmpty ?? true) ? nil : trimmedSource,
             importedDay: importedDay
         )
+        // Cached once, here, because text is never edited again: `measuredWordsText`'s doc comment
+        // explains why nil and "" mean different things.
+        article.measuredWordsText = VocabularyLibrary.hskWords(in: text).map(\.word).joined(separator: "\n")
         context.insert(article)
         try context.saveOrRollBack()
         return article
@@ -74,6 +77,28 @@ struct ArticleLibrary {
     func restore(_ article: Article) throws {
         article.isArchived = false
         try context.saveOrRollBack()
+    }
+
+    /// Fills in `measuredWordsText` for Articles imported before this cache existed, so
+    /// `readability(known:)` never has to fall back to tokenizing their text on every render — the
+    /// same catch-up `DayMigration` runs for a Day written in the wrong calendar, run once at start.
+    ///
+    /// Not allowed to fail loudly, unlike that migration: an Article with no cached list is not
+    /// wrong, only slower to read from, so it is worth trying and never worth stopping the app for.
+    @discardableResult
+    func backfillMeasuredWords() throws -> Int {
+        let uncached = try context.fetch(
+            FetchDescriptor<Article>(predicate: #Predicate { $0.measuredWordsText == nil })
+        )
+        for article in uncached {
+            article.measuredWordsText = VocabularyLibrary.hskWords(in: article.text)
+                .map(\.word)
+                .joined(separator: "\n")
+        }
+        if !uncached.isEmpty {
+            try context.saveOrRollBack()
+        }
+        return uncached.count
     }
 
     func reading() throws -> [Article] {

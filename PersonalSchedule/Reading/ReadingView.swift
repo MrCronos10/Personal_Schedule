@@ -11,8 +11,15 @@ struct ReadingView: View {
 
     @Query(ArticleLibrary.readingDescriptor) private var reading: [Article]
     @Query(ArticleLibrary.archivedDescriptor) private var archived: [Article]
-    /// Watched so the meter and the daily list follow what reading and 今日新词 change.
+    /// Watched so the meter, the daily list, and every Article row's **Readability** follow what
+    /// reading and 今日新词 change.
     @Query private var progressRows: [WordProgress]
+
+    /// Handed to each row rather than looked up per row: one pass over what is Known, not one query
+    /// per Article in the list.
+    private var knownWords: Set<String> {
+        Set(progressRows.filter(\.isKnown).map(\.word))
+    }
 
     /// One value covering both "a Word was met" and "a Word became Known", so a single tap runs
     /// `refresh()` once rather than twice.
@@ -69,7 +76,7 @@ struct ReadingView: View {
                 } else {
                     VStack(spacing: 0) {
                         ForEach(reading) { article in
-                            ArticleRow(article: article) {
+                            ArticleRow(article: article, knownWords: knownWords) {
                                 try? ArticleLibrary(context: context).archive(article)
                             }
                         }
@@ -158,7 +165,7 @@ struct ReadingView: View {
                     } else {
                         VStack(spacing: 0) {
                             ForEach(archived) { article in
-                                ArticleRow(article: article, isArchived: true) {
+                                ArticleRow(article: article, knownWords: knownWords, isArchived: true) {
                                     try? ArticleLibrary(context: context).restore(article)
                                 }
                             }
@@ -177,6 +184,9 @@ struct ArticleRow: View {
     @Environment(\.locale) private var locale
 
     let article: Article
+    /// Handed in from the list rather than queried per row: one pass over **Known** Words for the
+    /// whole list, not one query per Article.
+    let knownWords: Set<String>
     var isArchived: Bool = false
     let onArchiveAction: () -> Void
 
@@ -213,6 +223,12 @@ struct ArticleRow: View {
                         Text(verbatim: " · ")
                     }
                     Text(verbatim: importedDayText)
+                    // Readability: information, never a gate (ADR 0005). Nothing here orders,
+                    // greys, badges or hides an Article — it only says what share is already Known,
+                    // the same way LevelMeterView already words a share.
+                    if let readability = article.readability(known: knownWords) {
+                        Text(verbatim: " · \(Int(readability * 100))%")
+                    }
                 }
                 .font(Theme.meta)
                 .foregroundStyle(Theme.muted)

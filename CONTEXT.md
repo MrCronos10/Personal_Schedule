@@ -100,6 +100,10 @@ _Avoid_: URL, citation, origin
 An Article the student has put away. It leaves the reading list, its **Clean Sightings** still count, and it can be restored and reread. Articles are archived, never deleted, so the number of **Known** Words can never fall because of tidying up.
 _Avoid_: Deleted article, hidden article, finished article
 
+**Readability**:
+What share of an **Article**'s measured **Words** the student already has **Known**, shown on the Article's row. It is information and never a gate: no Article is locked, hidden, reordered or marked too hard (ADR 0005).
+_Avoid_: Difficulty, level, grade, score
+
 **Banked Result**:
 What one **Article** proved, kept from the moment 读完 first banked it: how many **Words** it made **Known**, how many it moved closer, and how many a **Lookup** sent back to zero. It is never recomputed, so a Word looked up next week doesn't rewrite what an Article proved in March, and an Article never finished has none rather than a row of zeros.
 _Avoid_: Score, result, summary, report
