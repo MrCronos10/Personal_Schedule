@@ -427,4 +427,52 @@ struct VocabularyLibrary {
     func lookups(of word: String, in article: Article) throws -> [WordLookup] {
         try lookups(in: article).filter { $0.word == word }
     }
+
+    // MARK: - 难词
+
+    /// One **Word** the student's own history says keeps beating them.
+    struct StubbornWord: Equatable {
+        let entry: HSKEntry
+        /// Distinct Articles this Word has been looked up in. Not raw Lookups: two taps inside one
+        /// sitting are not twice the evidence three sittings are, and this mirrors how a **Clean
+        /// Sighting** counts one Article regardless of how many times a Word appears in it.
+        let articleCount: Int
+    }
+
+    /// Every **Word** looked up in more than one **Article** and not yet **Known**, most-defeated
+    /// first — the evidence a **Lookup** has been recording since ticket 15 and nothing had ever read
+    /// back until now.
+    func stubbornWords() throws -> [StubbornWord] {
+        let known = Set(
+            try context.fetch(
+                FetchDescriptor<WordProgress>(predicate: #Predicate { $0.isKnown })
+            ).map(\.word)
+        )
+        var articlesByWord: [String: Set<PersistentIdentifier>] = [:]
+        for lookup in try context.fetch(FetchDescriptor<WordLookup>()) {
+            guard let articleID = lookup.article?.persistentModelID else { continue }
+            articlesByWord[lookup.word, default: []].insert(articleID)
+        }
+        return articlesByWord.compactMap { word, articles -> StubbornWord? in
+            guard articles.count > 1, !known.contains(word) else { return nil }
+            // A word outside HSK 4/5 was never state to begin with (ADR 0005), and `lookUp` already
+            // refuses to record one; this guard is what keeps that true here too, defensively.
+            guard let entry = HSKWordList.entry(for: word) else { return nil }
+            return StubbornWord(entry: entry, articleCount: articles.count)
+        }
+        .sorted { lhs, rhs in
+            lhs.articleCount != rhs.articleCount
+                ? lhs.articleCount > rhs.articleCount
+                : lhs.entry.word < rhs.entry.word
+        }
+    }
+
+    /// Saves the student's own **Word Note**. An empty draft clears it rather than storing a
+    /// zero-length string, the same rule an empty **Source** follows on import.
+    func setNote(_ text: String, for word: String) throws {
+        guard let progress = try progressCreatingIfNeeded(for: word) else { return }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        progress.noteText = trimmed.isEmpty ? nil : trimmed
+        try context.saveOrRollBack()
+    }
 }

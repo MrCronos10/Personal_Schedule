@@ -67,6 +67,9 @@ struct ReadingView: View {
                 DailyNewWordsView(words: dailyWords, isServedLevelComplete: servedLevelIsComplete)
                     .padding(.top, 10)
 
+                stubbornWordsLink
+                    .padding(.top, 14)
+
                 SectionCaption(title: "我的文章")
 
                 if reading.isEmpty {
@@ -124,6 +127,24 @@ struct ReadingView: View {
                 .foregroundStyle(Theme.ink)
                 .accessibilityAddTraits(.isHeader)
         }
+    }
+
+    /// Always here, whether or not anything is on it: 难词 with nothing on it is good news, and the
+    /// entry point saying so is what makes that visible rather than hidden. No count, no badge — a
+    /// number here would be the queue ADR 0004 turned down.
+    private var stubbornWordsLink: some View {
+        NavigationLink {
+            StubbornWordsView()
+        } label: {
+            HStack(spacing: 4) {
+                Text("难词")
+                Image(systemName: "chevron.right")
+            }
+            .font(Theme.label)
+            .tracking(1.4)
+            .foregroundStyle(Theme.muted)
+        }
+        .buttonStyle(.plain)
     }
 
     /// The quiet voice the Daily Checklist already uses: a sentence and a way forward.

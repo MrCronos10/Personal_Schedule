@@ -18,6 +18,10 @@ struct WordLookupSheet: View {
     /// toward 1,900 as the year went on, and would be a second copy of `VocabularyLibrary`'s lookup.
     @Query private var progress: [WordProgress]
 
+    /// Seeded from `progress` once the sheet appears, then edited locally: a **Word Note** saves as
+    /// it is typed, and re-seeding it from a live query on every keystroke would fight the cursor.
+    @State private var noteDraft = ""
+
     init(word: String, clearedArticles: [String] = []) {
         self.word = word
         self.clearedArticles = clearedArticles
@@ -52,6 +56,9 @@ struct WordLookupSheet: View {
                 clearedByThisLookup
                     .padding(.top, 18)
 
+                wordNoteField
+                    .padding(.top, 18)
+
                 Spacer(minLength: 16)
 
                 if isKnown {
@@ -80,6 +87,31 @@ struct WordLookupSheet: View {
         .padding(24)
         }
         .background(Theme.paper)
+        // Seeded once per Word, not on every re-render: `progress` is a live @Query, and re-seeding
+        // the draft from it on every keystroke's own save would fight the cursor mid-type.
+        .task(id: word) { noteDraft = progress.first?.noteText ?? "" }
+    }
+
+    /// A memory trick for this Word, saved as it is typed. It belongs to the Word, not to a day, so
+    /// it is never shown in the **Notes List** — that screen is about **Completions**.
+    private var wordNoteField: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("记忆点")
+                .font(Theme.label)
+                .tracking(1.4)
+                .foregroundStyle(Theme.red)
+            TextField("怎么记住这个词…", text: $noteDraft, axis: .vertical)
+                .font(Theme.body)
+                .lineLimit(2...4)
+                .onChange(of: noteDraft) { _, newValue in
+                    // `.task(id: word)` seeds this same field from the stored Note, which is itself
+                    // a change `onChange` sees — without this guard, opening a Word that already has
+                    // one would write it straight back on every single tap, having changed nothing.
+                    let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard trimmed != (progress.first?.noteText ?? "") else { return }
+                    try? VocabularyLibrary(context: context).setNote(newValue, for: word)
+                }
+        }
     }
 
     /// What this tap cost: the Articles whose **Clean Sightings** the **Lookup** just cleared, which

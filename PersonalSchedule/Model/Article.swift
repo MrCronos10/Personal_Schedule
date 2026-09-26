@@ -148,6 +148,11 @@ final class WordProgress {
     /// are treated as eligible rather than parked: a wait that was never recorded has, trivially,
     /// elapsed, and leaving them out would keep the very hole the ADR exists to close.
     var setAsideDayNumber: Int?
+    /// The student's own **Word Note**: a memory trick, where they first met it, why it keeps
+    /// slipping. Nil rather than empty, so clearing the draft clears this rather than leaving a
+    /// zero-length string behind. Not a **Note**, and never shown in the **Notes List** — that
+    /// screen is about Completions, this is about the Word itself.
+    var noteText: String?
 
     var level: HSKLevel { HSKLevel(rawValue: levelValue) ?? .four }
     var knownDay: Day? { knownDayNumber.map(Day.init(number:)) }

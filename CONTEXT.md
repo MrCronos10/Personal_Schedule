@@ -124,6 +124,14 @@ _Avoid_: Term, vocab item, character
 The record that the student tapped a Word in an Article to see its pinyin and English. It is evidence of *not* knowing: a Lookup returns that Word's **Clean Sightings** to zero, and the Word must earn all of them again.
 _Avoid_: Tap, hint, lookup failure
 
+**Stubborn Word**:
+A Word looked up in more than one Article and not yet **Known** — the app's own Lookups, read back rather than only spent. Two Lookups inside one Article count as one: it is the Articles that count, the same as a **Clean Sighting**, not the taps.
+_Avoid_: Hard word, weak word, failed word, leech
+
+**Word Note**:
+The student's own free text on one Word: a memory trick, where they first met it, why it keeps slipping. It belongs to the Word, not to a day, so it is never a **Note** and never appears in the **Notes List** — that screen is about what happened on a day, this is about the Word itself.
+_Avoid_: Note, mnemonic, hint, definition
+
 **Clean Sighting**:
 One Article the student read to the end without looking a Word up. A Word gains at most one Clean Sighting per Article, and only the first time that Article is finished: rereading proves nothing new. Each one remembers the Article it came from, so a Word can say where it was earned, and a **Lookup** takes them all away together.
 _Avoid_: View, exposure, repetition, streak

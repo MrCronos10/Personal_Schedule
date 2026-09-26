@@ -1042,6 +1042,66 @@
         }
       }
     },
+    "%lld 篇文章里查过" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Looked up in %lld articles"
+          }
+        }
+      }
+    },
+    "难词" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stubborn words"
+          }
+        }
+      }
+    },
+    "记忆点" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Memory trick"
+          }
+        }
+      }
+    },
+    "怎么记住这个词…" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How to remember this word…"
+          }
+        }
+      }
+    },
+    "没有难词" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No stubborn words"
+          }
+        }
+      }
+    },
+    "在两篇及以上的文章里查过、还没记住的词会出现在这里。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Words looked up in two or more articles and not yet known will show up here."
+          }
+        }
+      }
+    },
     "这些文章要重新读" : {
       "localizations" : {
         "en" : {
