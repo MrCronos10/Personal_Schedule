@@ -239,6 +239,12 @@ struct VocabularyLibrary {
         }
 
         article.isBanked = true
+        // Kept on the Article, so what this reading was worth outlives the screen that showed it.
+        // The reread guard above returns before here, so a second 读完 can never overwrite it.
+        article.bankedDayNumber = day.number
+        article.bankedNewlyKnown = result.newlyKnown
+        article.bankedAdvanced = result.advanced
+        article.bankedReturnedToZero = result.returnedToZero
         try context.saveOrRollBack()
         return result
     }

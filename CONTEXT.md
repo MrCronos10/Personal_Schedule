@@ -100,6 +100,10 @@ _Avoid_: URL, citation, origin
 An Article the student has put away. It leaves the reading list, its **Clean Sightings** still count, and it can be restored and reread. Articles are archived, never deleted, so the number of **Known** Words can never fall because of tidying up.
 _Avoid_: Deleted article, hidden article, finished article
 
+**Banked Result**:
+What one **Article** proved, kept from the moment 读完 first banked it: how many **Words** it made **Known**, how many it moved closer, and how many a **Lookup** sent back to zero. It is never recomputed, so a Word looked up next week doesn't rewrite what an Article proved in March, and an Article never finished has none rather than a row of zeros.
+_Avoid_: Score, result, summary, report
+
 **Reading Session**:
 One sitting with one Article: the minutes it was on screen, and the **Lookups** made during it. It ends when the student presses 读完, which banks the Article's evidence and opens the Tick sheet with the minutes and the words met already filled in. The **Completion** it saves is an ordinary Completion in an ordinary Category, so reading counts toward a **Weekly Target** like anything else.
 _Avoid_: Reading, study session, review session

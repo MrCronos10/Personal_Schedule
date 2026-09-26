@@ -18,6 +18,34 @@ final class Article {
     /// Article proves nothing new, so it may only ever bank once.
     var isBanked: Bool = false
 
+    /// The Article's **Banked Result**: what this reading proved, kept from the moment it proved it.
+    ///
+    /// Written once, when 读完 first banks the Article, and never recomputed. A **Word** looked up
+    /// next week must not rewrite what an Article proved in March — the point of keeping this is to
+    /// say what that reading was worth, not what its Words are worth now.
+    var bankedDayNumber: Int?
+    var bankedNewlyKnown: Int = 0
+    var bankedAdvanced: Int = 0
+    var bankedReturnedToZero: Int = 0
+
+    var bankedDay: Day? { bankedDayNumber.map(Day.init(number:)) }
+
+    /// What this Article proved, as recorded when 读完 first banked it, or nil when there is nothing
+    /// to say.
+    ///
+    /// Keyed off the banked day rather than `isBanked`, and that is the whole point of storing the
+    /// day. An Article finished before this was built is already `isBanked`, and its counters arrive
+    /// at their default of zero, so reading `isBanked` here would have every finished Article in the
+    /// student's install announce that it proved nothing.
+    var bankedResult: VocabularyLibrary.BankResult? {
+        guard bankedDayNumber != nil else { return nil }
+        return VocabularyLibrary.BankResult(
+            newlyKnown: bankedNewlyKnown,
+            advanced: bankedAdvanced,
+            returnedToZero: bankedReturnedToZero
+        )
+    }
+
     @Relationship(deleteRule: .nullify, inverse: \WordLookup.article)
     var lookups: [WordLookup]? = []
 

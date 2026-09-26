@@ -202,42 +202,10 @@ struct ArticleReaderView: View {
         )
     }
 
-    /// One quiet line. No animation, no celebration, no sound: this happens every time the student
-    /// finishes something, and anything louder would wear out in a week.
-    @ViewBuilder
+    /// Phrased by `BankedResultLine`, which the Article's row uses too, so the two can never come to
+    /// word the same numbers differently.
     private func bankedLine(_ result: VocabularyLibrary.BankResult) -> some View {
-        if result.wasReread {
-            Text("重读 · 没有新的记录")
-                .font(Theme.meta)
-                .foregroundStyle(Theme.muted)
-        } else {
-            HStack(spacing: 6) {
-                if result.newlyKnown > 0 {
-                    Text("\(result.newlyKnown) 个词已掌握")
-                        .foregroundStyle(Theme.onDone)
-                }
-                if result.newlyKnown > 0 && result.advanced > 0 {
-                    Text(verbatim: "·").foregroundStyle(Theme.muted)
-                }
-                if result.advanced > 0 {
-                    Text("\(result.advanced) 个词更近一步")
-                        .foregroundStyle(Theme.muted)
-                }
-                // Losing ground is not the same as an Article with nothing in it, and the line
-                // must not read as though nothing happened when the student just tapped their way
-                // through every Word.
-                if result.newlyKnown == 0 && result.advanced == 0 {
-                    if result.returnedToZero > 0 {
-                        Text("\(result.returnedToZero) 个词要重新开始")
-                            .foregroundStyle(Theme.late)
-                    } else {
-                        Text("这篇没有新的词")
-                            .foregroundStyle(Theme.muted)
-                    }
-                }
-            }
-            .font(Theme.meta)
-        }
+        BankedResultLine(result: result)
     }
 
     private var importedDayText: String {

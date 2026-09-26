@@ -99,6 +99,96 @@ struct BankingTests {
         #expect(try shelf.vocabulary.cleanSightings(of: "很").isEmpty)
     }
 
+    // MARK: - What an Article proved
+
+    /// An Article keeps what its reading was worth, so a finished Article is not indistinguishable
+    /// from one never opened.
+    @Test func anArticleRemembersWhatItProved() throws {
+        let shelf = try shelf()
+        let article = try shelf.articles.add(text: text(1, ["厕所", "被子"]))
+        try shelf.vocabulary.bank(article, on: day)
+
+        #expect(article.bankedDay?.number == day.number)
+        #expect(article.bankedResult == VocabularyLibrary.BankResult(advanced: 2))
+    }
+
+    /// An Article banked before this feature existed has nothing to say either.
+    ///
+    /// Those Articles are already `isBanked`, and the counters added here arrive at their default of
+    /// zero, so keying off `isBanked` would have every finished Article in the student's install
+    /// announce 这篇没有新的词 on the first launch — telling them a reading that really did make Words
+    /// Known proved nothing. The banked day is what tells the two apart.
+    @Test func anArticleBankedBeforeThisFeatureHasNoBankedResult() throws {
+        let shelf = try shelf()
+        let article = try shelf.articles.add(text: text(1, ["厕所"]))
+        try shelf.vocabulary.bank(article, on: day)
+        // Exactly what lightweight migration leaves behind for a previously banked Article.
+        article.bankedDayNumber = nil
+        article.bankedNewlyKnown = 0
+        article.bankedAdvanced = 0
+        article.bankedReturnedToZero = 0
+
+        #expect(article.isBanked)
+        #expect(article.bankedResult == nil)
+    }
+
+    /// An Article never finished has nothing to say, and must not say zeros.
+    @Test func anArticleNeverFinishedHasNoBankedResult() throws {
+        let shelf = try shelf()
+        let article = try shelf.articles.add(text: text(1, ["厕所"]))
+        #expect(article.bankedDay == nil)
+        #expect(article.bankedResult == nil)
+    }
+
+    /// An Article whose Words were all looked up proved something: that they were not known. It is
+    /// not an Article with nothing in it (ADR 0004).
+    @Test func anArticleWhoseWordsWereAllLookedUpStillProvedSomething() throws {
+        let shelf = try shelf()
+        let article = try shelf.articles.add(text: text(1, ["厕所"]))
+        try shelf.vocabulary.lookUp("厕所", in: article, on: day)
+        try shelf.vocabulary.bank(article, on: day)
+
+        #expect(article.bankedResult == VocabularyLibrary.BankResult(returnedToZero: 1))
+    }
+
+    /// Kept from the moment it was earned, not worked out again later. A Word looked up next week
+    /// must not rewrite what this Article proved today.
+    @Test func aLaterLookupDoesNotRewriteWhatAnEarlierArticleProved() throws {
+        let shelf = try shelf()
+        let first = try shelf.articles.add(text: text(1, ["厕所"]))
+        try shelf.vocabulary.bank(first, on: day)
+        #expect(first.bankedAdvanced == 1)
+
+        let second = try shelf.articles.add(text: text(2, ["厕所"]))
+        try shelf.vocabulary.lookUp("厕所", in: second, on: day.adding(days: 7))
+        try shelf.vocabulary.bank(second, on: day.adding(days: 7))
+
+        #expect(first.bankedAdvanced == 1)
+        #expect(first.bankedDay?.number == day.number)
+    }
+
+    /// Rereading proves nothing new, and must not overwrite what the first reading proved.
+    @Test func aRereadLeavesTheBankedResultAlone() throws {
+        let shelf = try shelf()
+        let article = try shelf.articles.add(text: text(1, ["厕所"]))
+        try shelf.vocabulary.bank(article, on: day)
+        try shelf.vocabulary.bank(article, on: day.adding(days: 3))
+
+        #expect(article.bankedAdvanced == 1)
+        #expect(article.bankedDay?.number == day.number)
+    }
+
+    @Test func archivingAndRestoringLeavesTheBankedResultAlone() throws {
+        let shelf = try shelf()
+        let article = try shelf.articles.add(text: text(1, ["厕所"]))
+        try shelf.vocabulary.bank(article, on: day)
+        try shelf.articles.archive(article)
+        #expect(article.bankedAdvanced == 1)
+        try shelf.articles.restore(article)
+        #expect(article.bankedAdvanced == 1)
+        #expect(article.bankedDay?.number == day.number)
+    }
+
     // MARK: - One Article, one sighting
 
     /// A Word repeated nine times in one text is still one Article's worth of evidence.

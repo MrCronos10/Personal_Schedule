@@ -220,6 +220,12 @@ struct ArticleRow: View {
                     .font(Theme.meta)
                     .foregroundStyle(Theme.muted.opacity(0.75))
                     .lineLimit(2)
+                // What this reading proved, for as long as the Article is kept. An Article never
+                // finished has no result and shows nothing here rather than a row of zeros.
+                if let result = article.bankedResult {
+                    BankedResultLine(result: result)
+                        .padding(.top, 2)
+                }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
