@@ -153,6 +153,11 @@ final class WordProgress {
     /// zero-length string behind. Not a **Note**, and never shown in the **Notes List** — that
     /// screen is about Completions, this is about the Word itself.
     var noteText: String?
+    /// Distinct **Articles** this Word has been looked up in, for 难词 (ticket 10). Nil means "never
+    /// computed" — either a row written before this field existed, or a Word never looked up at all
+    /// — and `VocabularyLibrary.backfillStubbornArticleCounts()` is what tells the two apart and
+    /// settles it to a real number, which `lookUp` then only ever adds to.
+    var stubbornArticleCount: Int?
 
     var level: HSKLevel { HSKLevel(rawValue: levelValue) ?? .four }
     var knownDay: Day? { knownDayNumber.map(Day.init(number:)) }

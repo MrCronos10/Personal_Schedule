@@ -23,13 +23,16 @@ struct PersonalScheduleApp: App {
                 try? VocabularyLibrary(context: container.mainContext).backfillLevelCongratulations()
             }
             self.container = container
-            // Deliberately not run inline above, unlike the backfill next to it: this one tokenizes
-            // every previously imported Article's full text, and none of that is needed before the
-            // first frame draws — `Article.readability(known:)` already falls back to computing it on
-            // the spot for an Article with no cache yet (ticket 04). Running it in init() would have
-            // the whole reading list re-tokenized before the student ever sees a screen.
+            // Deliberately not run inline above, unlike the backfill next to it: neither is needed
+            // before the first frame draws. `Article.readability(known:)` already falls back to
+            // computing it on the spot for an Article with no cache yet (ticket 04), and 难词 reading
+            // a stale count for one launch is a cosmetic gap, not a wrong answer stored forever
+            // (ticket 10). Running either in init() would delay the first screen for work no screen
+            // is waiting on.
             Task { @MainActor in
-                try? ArticleLibrary(context: container.mainContext).backfillMeasuredWords()
+                let context = container.mainContext
+                try? ArticleLibrary(context: context).backfillMeasuredWords()
+                try? VocabularyLibrary(context: context).backfillStubbornArticleCounts()
             }
         } catch {
             fatalError("Could not open the database: \(error)")

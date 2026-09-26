@@ -116,14 +116,31 @@ struct VocabularyLibrary {
     /// A word outside HSK 4 and 5 records nothing at all. It can still be looked up.
     func lookUp(_ word: String, in article: Article, on day: Day = Day.today()) throws {
         guard let entry = HSKWordList.entry(for: word) else { return }
+        // 难词's count (ticket 10): the first Lookup of this Word in this Article, not every tap — a
+        // second tap in the same reading is not a second Article, matching how a Clean Sighting
+        // counts one Article regardless of repetition (ticket 05, pinned in CONTEXT.md's Stubborn
+        // Word entry). Both resolved *before* the new WordLookup below is inserted: they need the
+        // Word's prior state, not state that already includes the Lookup this call is itself making.
+        let isFirstLookupInThisArticle = try lookups(of: entry.word, in: article).isEmpty
+        let progress = try progressCreatingIfNeeded(for: entry.word)
+        // A nil count means "never computed" — either the startup backfill (ticket 10) hasn't reached
+        // this row yet, or it's brand new — and has to be resolved from the Word's actual history
+        // rather than assumed zero. Assuming zero would silently discard real history the backfill
+        // hasn't gotten to yet, and the backfill's own `== nil` check would then skip the row forever,
+        // having nothing left to say it was ever wrong.
+        let priorStubbornCount = try progress?.stubbornArticleCount ?? distinctArticleLookupCount(of: entry.word)
+
         context.insert(WordLookup(word: entry.word, article: article, day: day))
-        if let progress = try progressCreatingIfNeeded(for: entry.word) {
+        if let progress {
             // The evidence is genuinely gone, not merely uncounted (ADR 0004), so the records go
             // with the count: a list of Articles outliving it would be arguing with it.
             try forgetCleanSightings(of: entry.word)
             // Needing help with a Word is the same admission as 不认识, so it starts the same
             // thirty-day clock rather than parking the Word out of Daily New Words for good.
             progress.setAsideDayNumber = day.number
+            if isFirstLookupInThisArticle {
+                progress.stubbornArticleCount = priorStubbornCount + 1
+            }
         }
         try context.saveOrRollBack()
     }
@@ -498,28 +515,58 @@ struct VocabularyLibrary {
     /// first — the evidence a **Lookup** has been recording since ticket 15 and nothing had ever read
     /// back until now.
     func stubbornWords() throws -> [StubbornWord] {
-        let known = Set(
-            try context.fetch(
-                FetchDescriptor<WordProgress>(predicate: #Predicate { $0.isKnown })
-            ).map(\.word)
+        // WordProgress is bounded by the two Word Lists — at most 1,900 rows, ever — unlike
+        // WordLookup, which grows with every tap for the whole year. Reading `stubbornArticleCount`
+        // straight off rows already this small is the fix ticket 10 makes: no second table, and no
+        // fetch that grows as the year goes on (ticket 02's `bank` avoided the same shape for
+        // CleanSighting; this was the one place in the round that still had it).
+        return try context.fetch(FetchDescriptor<WordProgress>())
+            .compactMap { progress -> StubbornWord? in
+                guard (progress.stubbornArticleCount ?? 0) > 1, !progress.isKnown else { return nil }
+                // A word outside HSK 4/5 was never state to begin with (ADR 0005), and `lookUp`
+                // already refuses to record one; this guard keeps that true here too, defensively.
+                guard let entry = HSKWordList.entry(for: progress.word) else { return nil }
+                return StubbornWord(entry: entry, articleCount: progress.stubbornArticleCount ?? 0)
+            }
+            .sorted { lhs, rhs in
+                lhs.articleCount != rhs.articleCount
+                    ? lhs.articleCount > rhs.articleCount
+                    : lhs.entry.word < rhs.entry.word
+            }
+    }
+
+    /// Fills in `stubbornArticleCount` for Words met before this field existed, so a Word already
+    /// looked up in more than one Article doesn't vanish from 难词 the moment this ships. Run once at
+    /// app start, the same way `ArticleLibrary.backfillMeasuredWords()` and
+    /// `backfillLevelCongratulations()` catch up state written before their own fields existed.
+    ///
+    /// Scoped to one Word at a time rather than fetching the whole `WordLookup` table: this only
+    /// ever runs once per row, but the table it would otherwise read in full is the exact one this
+    /// ticket exists to stop scanning.
+    @discardableResult
+    func backfillStubbornArticleCounts() throws -> Int {
+        let uncounted = try context.fetch(
+            FetchDescriptor<WordProgress>(predicate: #Predicate { $0.stubbornArticleCount == nil })
         )
-        var articlesByWord: [String: Set<PersistentIdentifier>] = [:]
-        for lookup in try context.fetch(FetchDescriptor<WordLookup>()) {
-            guard let articleID = lookup.article?.persistentModelID else { continue }
-            articlesByWord[lookup.word, default: []].insert(articleID)
+        for progress in uncounted {
+            progress.stubbornArticleCount = try distinctArticleLookupCount(of: progress.word)
         }
-        return articlesByWord.compactMap { word, articles -> StubbornWord? in
-            guard articles.count > 1, !known.contains(word) else { return nil }
-            // A word outside HSK 4/5 was never state to begin with (ADR 0005), and `lookUp` already
-            // refuses to record one; this guard is what keeps that true here too, defensively.
-            guard let entry = HSKWordList.entry(for: word) else { return nil }
-            return StubbornWord(entry: entry, articleCount: articles.count)
+        if !uncounted.isEmpty {
+            try context.saveOrRollBack()
         }
-        .sorted { lhs, rhs in
-            lhs.articleCount != rhs.articleCount
-                ? lhs.articleCount > rhs.articleCount
-                : lhs.entry.word < rhs.entry.word
-        }
+        return uncounted.count
+    }
+
+    /// How many distinct Articles `word` has ever been looked up in, counted directly from
+    /// `WordLookup` rather than read off `WordProgress`. Used only to *resolve* a count that isn't
+    /// trustworthy yet — a nil row the backfill hasn't reached, or hasn't reached at all — never on
+    /// every ordinary Lookup, which is the fetch ticket 10 exists to stop making routine.
+    private func distinctArticleLookupCount(of word: String) throws -> Int {
+        let articleIDs = Set(
+            try context.fetch(FetchDescriptor<WordLookup>(predicate: #Predicate { $0.word == word }))
+                .compactMap { $0.article?.persistentModelID }
+        )
+        return articleIDs.count
     }
 
     /// Saves the student's own **Word Note**. An empty draft clears it rather than storing a
