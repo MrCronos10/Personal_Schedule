@@ -47,12 +47,19 @@ struct ArticleReaderView: View {
                     .foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: 0) {
-                    if let source = article.source {
-                        Text(verbatim: source)
-                        Text(verbatim: " · ")
+                HStack(spacing: 6) {
+                    HStack(spacing: 0) {
+                        if let source = article.source {
+                            Text(verbatim: source)
+                            Text(verbatim: " · ")
+                        }
+                        Text(verbatim: importedDayText)
                     }
-                    Text(verbatim: importedDayText)
+                    Spacer()
+                    // One control for the whole Article, and only one: a speaker on every sentence
+                    // would break the screen's own rule of keeping controls out of the way of the
+                    // text, so this is the single place reading aloud lives.
+                    SpeakerButton(text: article.text)
                 }
                 .font(Theme.meta)
                 .foregroundStyle(Theme.muted)
@@ -99,7 +106,13 @@ struct ArticleReaderView: View {
         .toolbarBackground(Theme.paper, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .onAppear { shownAt = Date() }
-        .onDisappear { stopCounting() }
+        .onDisappear {
+            stopCounting()
+            // Only this Article's own narration: a Word sheet opened from within it never plays
+            // anything longer-lived than the reader itself, but guarding here rather than calling
+            // stop() outright keeps this screen from ever silencing sound that isn't its own.
+            SpeechPlayer.shared.stop(ifPlaying: article.text)
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 shownAt = Date()

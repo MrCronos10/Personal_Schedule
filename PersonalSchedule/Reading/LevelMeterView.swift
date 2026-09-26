@@ -123,6 +123,11 @@ struct DailyNewWordsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
+            // Before deciding 认识 or 不认识 is exactly the moment a student most needs to hear an
+            // unfamiliar Word, not after.
+            SpeakerButton(text: entry.word)
+                .foregroundStyle(Theme.muted)
+
             if let known = answered[entry.word] {
                 Chip(
                     text: known ? "认识" : "不认识",

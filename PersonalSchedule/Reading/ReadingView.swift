@@ -97,6 +97,13 @@ struct ReadingView: View {
         .toolbar(.hidden, for: .navigationBar)
         .task { refresh() }
         .onChange(of: progressSignature) { refresh() }
+        // Only a 今日新词 row's own sound: a Word or Article opened from this tab can outlive it
+        // (a pushed StubbornWordsView, a Word sheet), and leaving must not silence those either.
+        .onDisappear {
+            if let current = SpeechPlayer.shared.currentText, dailyWords.map(\.word).contains(current) {
+                SpeechPlayer.shared.stop()
+            }
+        }
         .sheet(isPresented: $isImporting) {
             ArticleImportView()
         }

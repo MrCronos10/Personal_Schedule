@@ -37,9 +37,17 @@ struct WordLookupSheet: View {
         // of the sheet, where it can't be reached and the Word can never be marked Known.
         ScrollView {
         VStack(alignment: .leading, spacing: 0) {
-            Text(verbatim: word)
-                .font(Theme.serif(40, .black))
-                .foregroundStyle(Theme.ink)
+            // Placed by the word itself rather than only by the pinyin below it, so an unmeasured
+            // word — a name, a number, anything outside HSK 4/5 — can still be heard: hearing
+            // something is not a measurement (ADR 0005), and this is the one line every word has.
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Text(verbatim: word)
+                    .font(Theme.serif(40, .black))
+                    .foregroundStyle(Theme.ink)
+                SpeakerButton(text: word)
+                    .font(.system(size: 20))
+                    .foregroundStyle(Theme.red)
+            }
 
             if let entry {
                 Text(verbatim: entry.pinyin)
@@ -90,6 +98,9 @@ struct WordLookupSheet: View {
         // Seeded once per Word, not on every re-render: `progress` is a live @Query, and re-seeding
         // the draft from it on every keystroke's own save would fight the cursor mid-type.
         .task(id: word) { noteDraft = progress.first?.noteText ?? "" }
+        // Only stops this Word's own sound: an Article can be narrating underneath this sheet, and
+        // dismissing the sheet must not silence it.
+        .onDisappear { SpeechPlayer.shared.stop(ifPlaying: word) }
     }
 
     /// A memory trick for this Word, saved as it is typed. It belongs to the Word, not to a day, so
