@@ -46,3 +46,39 @@ struct RedSealStamp: View {
     RedSealStamp(character: "记")
         .padding(40)
 }
+
+private struct OneShotSuccessHaptic: ViewModifier {
+    let shouldFire: Bool
+    /// Only ever goes false → true, once, for the lifetime of this view — never back to false, even
+    /// after `shouldFire` itself later returns to false. `.sensoryFeedback(trigger:)` plays on every
+    /// change of its trigger, so binding it straight to `shouldFire` would fire a second buzz the
+    /// moment a temporary "just happened" flag (a stamp shown, then cleared after a timeout) resets —
+    /// doubling what was meant to be one light haptic for one moment.
+    @State private var hasFired = false
+
+    func body(content: Content) -> some View {
+        content
+            .sensoryFeedback(.success, trigger: hasFired)
+            // Both are needed, for the two different shapes a caller can be in. A view that persists
+            // across the transition (a Level's own row, always on screen) sees it via `.onChange`,
+            // which never fires for a value already true when the view first appears. A view that is
+            // instead freshly mounted at the exact moment `shouldFire` is already true (a stamp
+            // inserted into the tree the moment it should show) needs `.onAppear` to catch that case,
+            // since there is no earlier value for `.onChange` to compare against.
+            .onAppear {
+                if shouldFire { hasFired = true }
+            }
+            .onChange(of: shouldFire) { _, newValue in
+                if newValue { hasFired = true }
+            }
+    }
+}
+
+extension View {
+    /// Plays a light success haptic exactly once, the first time `shouldFire` becomes true — see
+    /// `RedSealStamp`, which this is meant to accompany: a stamp landing, not a badge, so the haptic
+    /// that marks it landing should happen exactly as many times as the stamp itself lands.
+    func oneShotSuccessHaptic(when shouldFire: Bool) -> some View {
+        modifier(OneShotSuccessHaptic(shouldFire: shouldFire))
+    }
+}

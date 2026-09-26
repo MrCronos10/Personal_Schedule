@@ -71,8 +71,10 @@ struct LevelMeterView: View {
         .opacity(isServed || progress.level == served ? 1 : 0.55)
         // On the row itself, which always exists for this Level, rather than on the stamp — the
         // stamp is only ever freshly mounted the moment it appears, and a trigger attached to a
-        // freshly-mounted view isn't guaranteed to see its initial value as a change.
-        .sensoryFeedback(.success, trigger: justPassedLevels.contains(progress.level))
+        // freshly-mounted view isn't guaranteed to see its initial value as a change. One-shot,
+        // because `justPassedLevels` removes the Level again after its couple of seconds on screen,
+        // and a plain `.sensoryFeedback` bound to that would buzz a second time on the way out.
+        .oneShotSuccessHaptic(when: justPassedLevels.contains(progress.level))
     }
 }
 
@@ -175,8 +177,6 @@ struct DailyNewWordsView: View {
         .overlay(alignment: .bottom) {
             Rectangle().fill(Theme.rule).frame(height: 1)
         }
-        // The row persists across the tap (it's keyed by Word in the ForEach above), so this is a
-        // genuine value change rather than a freshly-mounted view's initial value.
-        .sensoryFeedback(.success, trigger: answered[entry.word] == true)
+        .oneShotSuccessHaptic(when: answered[entry.word] == true)
     }
 }

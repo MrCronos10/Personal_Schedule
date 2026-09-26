@@ -336,6 +336,24 @@ struct VocabularyLibrary {
         try context.saveOrRollBack()
     }
 
+    /// Marks any already-**Passed** Level congratulated, silently — no stamp, no haptic. Run once at
+    /// app start, the same way `DayMigration` and `ArticleLibrary.backfillMeasuredWords()` catch up
+    /// state written before their own feature existed.
+    ///
+    /// Without this, a Level Passed months before this feature shipped would fire its stamp the first
+    /// time the student opened the tab after updating — celebrating an achievement that already
+    /// happened as though it just did.
+    @discardableResult
+    func backfillLevelCongratulations() throws -> Int {
+        var backfilled = 0
+        for level in HSKLevel.allCases {
+            guard try self.level(level).isPassed, try !hasCongratulated(level) else { continue }
+            try markCongratulated(level)
+            backfilled += 1
+        }
+        return backfilled
+    }
+
     private func levelCongratulationRows(for level: HSKLevel) throws -> [LevelCongratulation] {
         let levelValue = level.rawValue
         return try context.fetch(

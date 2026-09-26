@@ -92,7 +92,7 @@ struct WordLookupSheet: View {
                         RedSealStamp(character: "记")
                     }
                 }
-                .sensoryFeedback(.success, trigger: justMarkedKnown)
+                .oneShotSuccessHaptic(when: justMarkedKnown)
                 // A brief pause to let the stamp land before the sheet closes on its own — not a
                 // second tap to acknowledge it, which is what "never blocks a tap" rules out.
                 .task(id: justMarkedKnown) {

@@ -42,8 +42,11 @@ struct ArticleImportView: View {
                         .padding(.top, 10)
                         .focused($isTextFocused)
                         .overlay(alignment: .topLeading) {
+                            // Written for all three ways in, not only paste: a photo that recognized
+                            // nothing lands back on this same empty state, and "paste it here" would
+                            // read as though the photo had been forgotten rather than come back blank.
                             if text.isEmpty {
-                                Text("把文章贴在这里")
+                                Text("贴上文章，或者拍照识别文字")
                                     .font(Theme.serif(17))
                                     .foregroundStyle(Theme.muted.opacity(0.6))
                                     .padding(.horizontal, 14)

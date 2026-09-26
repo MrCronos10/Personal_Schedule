@@ -16,6 +16,52 @@ struct LevelCongratulationTests {
         #expect(try library().hasCongratulated(.four) == false)
     }
 
+    // MARK: - Backfilling a Level already Passed before this feature existed
+
+    /// A Level Passed before this feature shipped must not stamp itself the first time the student
+    /// opens the tab after updating: that would celebrate an achievement from months ago as though it
+    /// just happened. Backfilling it as already-congratulated, silently, is what keeps it quiet.
+    @Test func aLevelAlreadyPassedIsBackfilledAsCongratulated() throws {
+        let shelf = try library()
+        for entry in HSKWordList.words(at: .four).prefix(480) {
+            try shelf.markKnown(entry.word)
+        }
+        #expect(try shelf.level(.four).isPassed)
+        #expect(try shelf.hasCongratulated(.four) == false)
+
+        #expect(try shelf.backfillLevelCongratulations() == 1)
+        #expect(try shelf.hasCongratulated(.four))
+    }
+
+    @Test func aLevelNotYetPassedIsNotBackfilled() throws {
+        let shelf = try library()
+        #expect(try shelf.backfillLevelCongratulations() == 0)
+        #expect(try shelf.hasCongratulated(.four) == false)
+    }
+
+    /// Run at every start, so running it again must do nothing — the same rule `DayMigration` and
+    /// `backfillMeasuredWords` both follow.
+    @Test func runningTheBackfillAgainChangesNothing() throws {
+        let shelf = try library()
+        for entry in HSKWordList.words(at: .four).prefix(480) {
+            try shelf.markKnown(entry.word)
+        }
+        #expect(try shelf.backfillLevelCongratulations() == 1)
+        #expect(try shelf.backfillLevelCongratulations() == 0)
+    }
+
+    /// A Level already congratulated live — the ordinary way, not backfilled — must not be
+    /// double-counted or disturbed by a later backfill run.
+    @Test func aLevelAlreadyCongratulatedIsNotTouchedByTheBackfill() throws {
+        let shelf = try library()
+        for entry in HSKWordList.words(at: .four).prefix(480) {
+            try shelf.markKnown(entry.word)
+        }
+        try shelf.markCongratulated(.four)
+        #expect(try shelf.backfillLevelCongratulations() == 0)
+        #expect(try shelf.hasCongratulated(.four))
+    }
+
     @Test func markingCongratulatedIsRemembered() throws {
         let shelf = try library()
         try shelf.markCongratulated(.four)

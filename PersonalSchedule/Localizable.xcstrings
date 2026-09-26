@@ -593,6 +593,7 @@
       }
     },
     "把你遇到的中文贴进来：微信文章、菜单、路牌都行。" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -602,12 +603,33 @@
         }
       }
     },
+    "把你遇到的中文贴进来，或者拍照识别：微信文章、菜单、路牌都行。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste in the Chinese you meet, or photograph it: a WeChat article, a menu, a street sign."
+          }
+        }
+      }
+    },
     "把文章贴在这里" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Paste the article here"
+          }
+        }
+      }
+    },
+    "贴上文章，或者拍照识别文字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste an article, or photograph it to recognize the text"
           }
         }
       }

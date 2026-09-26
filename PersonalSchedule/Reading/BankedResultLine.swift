@@ -15,10 +15,6 @@ struct BankedResultLine: View {
     /// replayed there every time the row scrolled into view would be exactly the badge-on-a-permanent-
     /// state ADR 0004 turned down — so the stamp is gated on freshness, not on `newlyKnown` alone.
     var isFreshlyBanked = false
-    /// Flips true on appear rather than being read at its initial value: `.sensoryFeedback` fires on
-    /// a genuine change, and a trigger whose *first* value is already `true` is not guaranteed to
-    /// count as one. `justStamped` starts false unconditionally, so appearing is always a real change.
-    @State private var justStamped = false
 
     var body: some View {
         if result.wasReread {
@@ -42,12 +38,10 @@ struct BankedResultLine: View {
                 }
             }
             .font(Theme.meta)
-            .sensoryFeedback(.success, trigger: justStamped)
-            .onAppear {
-                if isFreshlyBanked && result.newlyKnown > 0 {
-                    justStamped = true
-                }
-            }
+            // One-shot rather than a plain `.sensoryFeedback`: the stamp is only ever freshly
+            // mounted the moment it should appear, and a trigger attached to a freshly-mounted view
+            // isn't guaranteed to see its initial value as a change (see `RedSealStamp.swift`).
+            .oneShotSuccessHaptic(when: isFreshlyBanked && result.newlyKnown > 0)
         }
     }
 

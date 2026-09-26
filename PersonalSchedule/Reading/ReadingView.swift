@@ -187,7 +187,7 @@ struct ReadingView: View {
             Text("还没有文章")
                 .font(Theme.serif(16))
                 .foregroundStyle(Theme.muted)
-            Text("把你遇到的中文贴进来：微信文章、菜单、路牌都行。")
+            Text("把你遇到的中文贴进来，或者拍照识别：微信文章、菜单、路牌都行。")
                 .font(Theme.meta)
                 .foregroundStyle(Theme.muted)
                 .fixedSize(horizontal: false, vertical: true)
