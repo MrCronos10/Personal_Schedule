@@ -21,6 +21,11 @@ struct WordLookupSheet: View {
     /// Seeded from `progress` once the sheet appears, then edited locally: a **Word Note** saves as
     /// it is typed, and re-seeding it from a live query on every keystroke would fight the cursor.
     @State private var noteDraft = ""
+    /// True the moment 我认识这个词 is tapped, so the stamp can be shown before the sheet closes.
+    /// `isKnown` itself flips almost immediately once `progress` re-fetches after the write, which
+    /// would swap the button to 其实不认识 mid-animation — the stamp is gated on this instead, so it
+    /// shows regardless of which button is underneath it by the time it renders.
+    @State private var justMarkedKnown = false
 
     init(word: String, clearedArticles: [String] = []) {
         self.word = word
@@ -69,18 +74,31 @@ struct WordLookupSheet: View {
 
                 Spacer(minLength: 16)
 
-                if isKnown {
-                    Button("其实不认识") {
-                        try? VocabularyLibrary(context: context).markNotKnown(word)
-                        dismiss()
+                HStack(spacing: 10) {
+                    if isKnown {
+                        Button("其实不认识") {
+                            try? VocabularyLibrary(context: context).markNotKnown(word)
+                            dismiss()
+                        }
+                        .buttonStyle(MiniButtonStyle())
+                    } else {
+                        Button("我认识这个词") {
+                            try? VocabularyLibrary(context: context).markKnown(word)
+                            justMarkedKnown = true
+                        }
+                        .buttonStyle(MiniButtonStyle())
                     }
-                    .buttonStyle(MiniButtonStyle())
-                } else {
-                    Button("我认识这个词") {
-                        try? VocabularyLibrary(context: context).markKnown(word)
-                        dismiss()
+                    if justMarkedKnown {
+                        RedSealStamp(character: "记")
                     }
-                    .buttonStyle(MiniButtonStyle())
+                }
+                .sensoryFeedback(.success, trigger: justMarkedKnown)
+                // A brief pause to let the stamp land before the sheet closes on its own — not a
+                // second tap to acknowledge it, which is what "never blocks a tap" rules out.
+                .task(id: justMarkedKnown) {
+                    guard justMarkedKnown else { return }
+                    try? await Task.sleep(for: .milliseconds(700))
+                    dismiss()
                 }
             } else {
                 Text("这个词不在 HSK 4-5 里，不计入掌握。")

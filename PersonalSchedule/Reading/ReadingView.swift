@@ -37,6 +37,11 @@ struct ReadingView: View {
     /// Whether the Served Level has nothing left to learn, which is what tells 今日新词 apart from
     /// a day when everything left is inside its thirty-day wait (ADR 0006).
     @State private var servedLevelIsComplete = false
+    /// The Levels whose **Passed** stamp should land right now — a `Set`, not one optional value,
+    /// because HSK 4 and HSK 5 can both cross Passed in the same `refresh()`: a single overwritten
+    /// value would mark the first congratulated and then silently lose its stamp before SwiftUI ever
+    /// rendered it. Each Level is added once and removed a couple of seconds later on its own.
+    @State private var justPassedLevels: Set<HSKLevel> = []
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
@@ -61,7 +66,7 @@ struct ReadingView: View {
                 title
                     .padding(.top, 14)
 
-                LevelMeterView(four: four, five: five)
+                LevelMeterView(four: four, five: five, justPassedLevels: justPassedLevels)
                     .padding(.top, 16)
 
                 DailyNewWordsView(words: dailyWords, isServedLevelComplete: servedLevelIsComplete)
@@ -121,6 +126,28 @@ struct ReadingView: View {
         let served = VocabularyLibrary.servedLevel(four: four)
         let servedProgress = served == .four ? four : five
         servedLevelIsComplete = servedProgress.known >= servedProgress.total
+
+        // The Level stamp waits for this tab (ticket 08): wherever a Word actually turned Known,
+        // only here is Passed ever detected and marked congratulated, so passing while reading or
+        // inside a Word sheet never interrupts either of those screens.
+        //
+        // Both Levels can cross Passed in the same refresh — reading one Article can bank enough
+        // Words to finish HSK 4 and, via Served Level moving on, still leave HSK 5 already sitting
+        // past four fifths from Words met along the way. Each is added to the set on its own rather
+        // than assigned to a single value, so the second can never silently overwrite the first
+        // before SwiftUI has rendered it.
+        for progress in [four, five] where progress.isPassed {
+            guard let alreadyCongratulated = try? library.hasCongratulated(progress.level),
+                  !alreadyCongratulated
+            else { continue }
+            try? library.markCongratulated(progress.level)
+            let level = progress.level
+            justPassedLevels.insert(level)
+            Task {
+                try? await Task.sleep(for: .seconds(2))
+                justPassedLevels.remove(level)
+            }
+        }
     }
 
     /// 阅读 in 田字格 boxes, the same practice-book heading 今天 and 进度 use.

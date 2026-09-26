@@ -9,6 +9,10 @@ import SwiftUI
 struct LevelMeterView: View {
     let four: LevelProgress
     let five: LevelProgress
+    /// The Levels whose **Passed** stamp should land right now (ticket 08). Both can be present at
+    /// once — HSK 4 and HSK 5 can cross Passed in the same `refresh()` — and each is a moment, not a
+    /// standing state: `ReadingView` removes a Level a couple of seconds after adding it.
+    var justPassedLevels: Set<HSKLevel> = []
 
     private var served: HSKLevel { VocabularyLibrary.servedLevel(four: four) }
 
@@ -31,6 +35,9 @@ struct LevelMeterView: View {
                     .foregroundStyle(Theme.ink)
                 if progress.isPassed {
                     Chip(text: "已过", ink: Theme.onDone, ground: Theme.done)
+                }
+                if justPassedLevels.contains(progress.level) {
+                    RedSealStamp(character: "过")
                 }
                 Spacer()
                 Text(verbatim: "\(progress.known) / \(progress.total)")
@@ -62,6 +69,10 @@ struct LevelMeterView: View {
             }
         }
         .opacity(isServed || progress.level == served ? 1 : 0.55)
+        // On the row itself, which always exists for this Level, rather than on the stamp — the
+        // stamp is only ever freshly mounted the moment it appears, and a trigger attached to a
+        // freshly-mounted view isn't guaranteed to see its initial value as a change.
+        .sensoryFeedback(.success, trigger: justPassedLevels.contains(progress.level))
     }
 }
 
@@ -129,6 +140,12 @@ struct DailyNewWordsView: View {
                 .foregroundStyle(Theme.muted)
 
             if let known = answered[entry.word] {
+                // `answered` only ever gains an entry from a tap in this sitting — a Word already
+                // Known before today never reaches this row at all (`dailyNewWords` excludes it) — so
+                // `known == true` here always means "just now", safe to stamp without a second flag.
+                if known {
+                    RedSealStamp(character: "记")
+                }
                 Chip(
                     text: known ? "认识" : "不认识",
                     ink: known ? Theme.onDone : Theme.muted,
@@ -158,5 +175,8 @@ struct DailyNewWordsView: View {
         .overlay(alignment: .bottom) {
             Rectangle().fill(Theme.rule).frame(height: 1)
         }
+        // The row persists across the tap (it's keyed by Word in the ForEach above), so this is a
+        // genuine value change rather than a freshly-mounted view's initial value.
+        .sensoryFeedback(.success, trigger: answered[entry.word] == true)
     }
 }

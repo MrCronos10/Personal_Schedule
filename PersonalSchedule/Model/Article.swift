@@ -163,3 +163,20 @@ final class WordProgress {
         self.levelValue = level.rawValue
     }
 }
+
+/// Whether a **Level**'s **Passed** stamp has already been shown, so reopening the 阅读 tab does not
+/// congratulate the same Level twice. See CONTEXT.md.
+///
+/// Written lazily, the same as `WordProgress`: a Level never Passed has no row. Taking a Level back
+/// below **Passed** with 其实不认识 deletes this row rather than merely flagging it, so passing again
+/// is worth marking again — there is nothing here to leave stale.
+@Model
+final class LevelCongratulation {
+    var levelValue: Int = 4
+
+    var level: HSKLevel { HSKLevel(rawValue: levelValue) ?? .four }
+
+    init(level: HSKLevel) {
+        self.levelValue = level.rawValue
+    }
+}

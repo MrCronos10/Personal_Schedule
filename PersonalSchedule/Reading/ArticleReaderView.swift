@@ -218,7 +218,9 @@ struct ArticleReaderView: View {
     /// Phrased by `BankedResultLine`, which the Article's row uses too, so the two can never come to
     /// word the same numbers differently.
     private func bankedLine(_ result: VocabularyLibrary.BankResult) -> some View {
-        BankedResultLine(result: result)
+        // Freshly banked: this is the one moment the stamp lands (ticket 08). The same line reused
+        // on the Article's own row (ticket 03) never passes this, so it never replays there.
+        BankedResultLine(result: result, isFreshlyBanked: true)
     }
 
     private var importedDayText: String {

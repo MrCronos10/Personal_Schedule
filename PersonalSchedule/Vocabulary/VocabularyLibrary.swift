@@ -145,6 +145,13 @@ struct VocabularyLibrary {
         try forgetCleanSightings(of: word)
         progress.setAsideDayNumber = day.number
         try context.saveOrRollBack()
+
+        // Taking a Word back can drop its Level below Passed. When it does, the Level's stamp is
+        // re-armed: passing it again, having really been earned twice, is worth marking again
+        // (ticket 08). A Word taken back that doesn't move the Level below Passed leaves it alone.
+        if let level = HSKWordList.level(of: word), try !self.level(level).isPassed {
+            try clearCongratulation(level)
+        }
     }
 
     /// Throws away a Word's **Clean Sightings**, so it is back to nothing and every Article has to
@@ -304,6 +311,36 @@ struct VocabularyLibrary {
 
     nonisolated static func servedLevel(four: LevelProgress) -> HSKLevel {
         four.isPassed ? .five : .four
+    }
+
+    // MARK: - The Level stamp
+
+    /// Whether this Level's **Passed** stamp has already been shown (ticket 08).
+    func hasCongratulated(_ level: HSKLevel) throws -> Bool {
+        try !levelCongratulationRows(for: level).isEmpty
+    }
+
+    /// Remembers that the stamp has been shown, so reopening the 阅读 tab doesn't show it again.
+    /// Idempotent: marking an already-congratulated Level a second time writes nothing new.
+    func markCongratulated(_ level: HSKLevel) throws {
+        guard try !hasCongratulated(level) else { return }
+        context.insert(LevelCongratulation(level: level))
+        try context.saveOrRollBack()
+    }
+
+    /// Forgets that the stamp has been shown, so passing the Level again is worth marking again.
+    func clearCongratulation(_ level: HSKLevel) throws {
+        let rows = try levelCongratulationRows(for: level)
+        guard !rows.isEmpty else { return }
+        for row in rows { context.delete(row) }
+        try context.saveOrRollBack()
+    }
+
+    private func levelCongratulationRows(for level: HSKLevel) throws -> [LevelCongratulation] {
+        let levelValue = level.rawValue
+        return try context.fetch(
+            FetchDescriptor<LevelCongratulation>(predicate: #Predicate { $0.levelValue == levelValue })
+        )
     }
 
     // MARK: - Daily New Words
