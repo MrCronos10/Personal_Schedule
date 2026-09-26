@@ -262,6 +262,56 @@
         }
       }
     },
+    "拍照" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photograph"
+          }
+        }
+      }
+    },
+    "从相册选择" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose from Photos"
+          }
+        }
+      }
+    },
+    "没有相机权限，可以在设置里打开" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No camera permission — you can turn it on in Settings"
+          }
+        }
+      }
+    },
+    "没能读取这张照片" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't read that photo"
+          }
+        }
+      }
+    },
+    "没能识别这张照片里的文字" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't recognize the text in that photo"
+          }
+        }
+      }
+    },
     "其实不认识" : {
       "localizations" : {
         "en" : {
@@ -1068,6 +1118,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Memory trick"
+          }
+        }
+      }
+    },
+    "NSCameraUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photograph a menu, a sign or a textbook page to import as an Article."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍下菜单、路牌或课本上的中文，导入成文章。"
           }
         }
       }

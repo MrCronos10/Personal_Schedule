@@ -1,7 +1,9 @@
+import PhotosUI
 import SwiftData
 import SwiftUI
 
-/// 导入文章: paste the text, name where it came from if you like, save.
+/// 导入文章: paste the text, photograph it, or pick a photo already taken — name where it came from
+/// if you like, save.
 ///
 /// The title is not asked for. It is taken from the first line, so importing is one paste and one
 /// button — the point is to catch Chinese the student just met, before the moment passes.
@@ -12,6 +14,9 @@ struct ArticleImportView: View {
     @State private var text = ""
     @State private var source = ""
     @State private var errorMessage: LocalizedStringKey?
+    @State private var isShowingCamera = false
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var isRecognizing = false
 
     @FocusState private var isTextFocused: Bool
 
@@ -20,6 +25,9 @@ struct ArticleImportView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     SectionCaption(title: "文章")
+
+                    captureRow
+                        .padding(.top, 10)
 
                     TextEditor(text: $text)
                         .font(Theme.serif(17))
@@ -85,6 +93,80 @@ struct ArticleImportView: View {
             }
         }
         .onAppear { isTextFocused = true }
+        .sheet(isPresented: $isShowingCamera) {
+            CameraCaptureView { image in
+                Task { await recognizeAndFill(image) }
+            }
+            .ignoresSafeArea()
+        }
+        .onChange(of: selectedPhoto) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                defer { selectedPhoto = nil }
+                guard let data = try? await newItem.loadTransferable(type: Data.self),
+                      let image = UIImage(data: data)
+                else {
+                    errorMessage = "没能读取这张照片"
+                    return
+                }
+                await recognizeAndFill(image)
+            }
+        }
+    }
+
+    /// 拍照 (if the device has a camera) and 从相册选择, side by side above the text.
+    ///
+    /// 从相册选择 uses `PhotosPicker`, which needs no permission entry at all: it runs out of process
+    /// and only ever hands the app the one photo chosen. The camera does need permission, so it is
+    /// asked for the moment it is actually wanted, never before.
+    private var captureRow: some View {
+        HStack(spacing: 10) {
+            if CameraAccess.isHardwareAvailable {
+                Button {
+                    Task {
+                        if await CameraAccess.requestAccess() {
+                            isShowingCamera = true
+                        } else {
+                            errorMessage = "没有相机权限，可以在设置里打开"
+                        }
+                    }
+                } label: {
+                    Label("拍照", systemImage: "camera")
+                }
+                .buttonStyle(MiniButtonStyle())
+            }
+
+            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                Label("从相册选择", systemImage: "photo")
+            }
+            .buttonStyle(MiniButtonStyle())
+
+            if isRecognizing {
+                ProgressView()
+                    .padding(.leading, 2)
+            }
+        }
+    }
+
+    /// Recognised text always lands here, in the same field a pasted Article already goes through —
+    /// never saved directly. An image with nothing recognizable on it fills the field with nothing,
+    /// which is the ordinary answer, not an error: the student can still just type.
+    ///
+    /// Replaces whatever draft was already there rather than appending to it: one photo is one
+    /// attempt at getting the text in, the same way pasting replaces a half-finished paste. That
+    /// replacement must only happen on an actual answer, though — success with nothing found, which
+    /// is a real empty string. A `try?` here would fold Vision failing to run at all into that same
+    /// empty string, silently discarding whatever the student had already typed with no word said
+    /// about it, which is a different event entirely and needs its own message.
+    private func recognizeAndFill(_ image: UIImage) async {
+        isRecognizing = true
+        defer { isRecognizing = false }
+        do {
+            text = try await TextRecognizer.recognizeText(in: image)
+            isTextFocused = true
+        } catch {
+            errorMessage = "没能识别这张照片里的文字"
+        }
     }
 
     private func save() {

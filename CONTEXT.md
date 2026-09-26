@@ -89,7 +89,7 @@ The record of Completions over time, shown separately for each Category.
 _Avoid_: Stats, history, log
 
 **Article**:
-A piece of real Chinese writing the student pasted into the app: a 微信 post, a sign, a page of a textbook. It keeps its own text, a title taken from its first line, an optional **Source**, and the day it was imported. It is the unit that evidence is counted in: reading one Article can move a **Word** one step toward **Known**, and no further, however many times that word appears in it.
+A piece of real Chinese writing the student pasted or photographed into the app: a 微信 post, a sign, a page of a textbook. It keeps its own text, a title taken from its first line, an optional **Source**, and the day it was imported. It is the unit that evidence is counted in: reading one Article can move a **Word** one step toward **Known**, and no further, however many times that word appears in it.
 _Avoid_: Text, document, lesson, post
 
 **Source**:
