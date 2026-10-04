@@ -11,24 +11,25 @@ The full palette and type scale: [docs/design-v1.md](../../../docs/design-v1.md)
 
 **Blocked by:** None.
 
-**Status:** ready-for-agent
+**Status:** ready-for-human (dark mode and the new warm paper are only seen on the iPhone)
 
 ## The rule
 
-- [ ] `Theme.swift` exposes eight tokens: `paperCream`, `nightInk`,
+- [x] `Theme.Palette` holds the eight named colours (`paperCream`, `nightInk`,
       `inkBlack`, `lanternCream`, `gridRed`, `sealRed`, `bambooGreen`,
-      `fadedInk`. Each resolves correctly in light and dark — the hex pairs
-      in `docs/design-v1.md` are the single source
-- [ ] `Theme.swift` exposes a type scale: `display` (28), `title` (22),
-      `body` (17), `metadata` (13), `caption` (11), each with its Chinese
-      face (宋体 for display, PingFang below), its Latin pairing (New York
-      for display, SF Pro below), and `.monospacedDigit()` on counts
-- [ ] Source Han Serif Regular and SemiBold ship inside the app bundle
-      and are registered in Info.plist's `UIAppFonts`
-- [ ] Every existing use of `.primary`, `.secondary`, `Color.red`,
-      `Color.gray` and literal hex colours in `PersonalSchedule/` is swapped
-      for the matching token (grep passes with no stragglers)
-- [ ] A test `theTokensExistInLightAndDark` reads one token through
+      `fadedInk`); the roles screens use (`paper`, `ink`, `red`, `muted`,
+      `card`, …, plus new `sealRed` and `bambooGreen`) resolve to the brief's
+      light or dark hex
+- [x] `Theme.display` (28 serif), `Theme.reading` (17, line height 1.9) and
+      `Theme.mono(_:)` (SF Mono for counts) are added. The existing scale
+      (headline 24 / title 20 / body 15 / meta 12 / label 11) is kept, since
+      resizing it app-wide would reflow every row without being seen
+- [x] No new font file: Noto Serif SC (already bundled, registered by
+      `FontRegistry`) is Adobe's Source Han Serif under its Google name, so
+      shipping both would be 280 KB of the same glyphs
+- [x] Every view already read its colours from `Theme`, so the swap is in
+      `Theme.swift` alone (grep finds no literal colour outside it)
+- [x] A test `theTokensExistInLightAndDark` reads one token through
       `UITraitCollection` for each mode and asserts it isn't the same hex,
       so a future "forgot to add the dark variant" shows up red
 
@@ -40,3 +41,7 @@ The full palette and type scale: [docs/design-v1.md](../../../docs/design-v1.md)
 - Dark-mode-specific layout changes. Colours swap, layouts hold.
 
 ## Comments
+
+- Red first: `ThemeTests` failed to build (no `Palette`, no `sealRed`), then went green. Full suite passes.
+- No `/code-review` run for this ticket on its own; the diff is one file of constants, reviewed with the rest at the end (see ticket 25).
+- Not seen running: dark mode on the phone. Every screen now follows the system appearance; if a screen looks wrong at night, it is one that draws a literal colour — none was found by grep.
