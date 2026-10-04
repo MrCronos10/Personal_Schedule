@@ -9,12 +9,19 @@ struct TodayView: View {
     /// The last day this screen saw as today. If the student was on it, the checklist follows to the new day after midnight.
     @State private var lastSeenToday = Day.today()
     @State private var isAddingAction = false
+    @State private var isShowingNotes = false
+    @State private var isShowingSettings = false
 
     /// `initialDay` lets another screen open straight onto a chosen day — the Progress Tracker's ledger
     /// does this to jump onto a Missed day so it can be logged retroactively (see WeekLedger).
-    init(initialDay: Day = .today()) {
+    init(initialDay: Day = .today(), showsShortcuts: Bool = true) {
         _day = State(initialValue: initialDay)
+        self.showsShortcuts = showsShortcuts
     }
+
+    /// The 笔记 and 设置 doors belong to the Today tab; a Today opened as a sheet from the ledger or a
+    /// Note has them off, so it can't open a Notes list from inside a Notes list.
+    private let showsShortcuts: Bool
 
     private var isToday: Bool { day == Day.today() }
     private var isChinese: Bool { locale.language.languageCode == .chinese }
@@ -50,8 +57,23 @@ struct TodayView: View {
                 }
                 .padding(.top, 12)
 
-                dayTitle
-                    .padding(.top, 14)
+                HStack(alignment: .top) {
+                    dayTitle
+                    Spacer()
+                    if showsShortcuts {
+                        Button { isShowingNotes = true } label: {
+                            Image(systemName: "note.text")
+                        }
+                        .buttonStyle(MiniButtonStyle())
+                        .accessibilityLabel(Text("笔记"))
+                        Button { isShowingSettings = true } label: {
+                            Image(systemName: "gearshape")
+                        }
+                        .buttonStyle(MiniButtonStyle())
+                        .accessibilityLabel(Text("设置"))
+                    }
+                }
+                .padding(.top, 14)
 
                 GuidingGoalBanner()
                     .padding(.top, 16)
@@ -68,6 +90,12 @@ struct TodayView: View {
         .background(Theme.paper)
         .sheet(isPresented: $isAddingAction) {
             ActionFormView(day: day)
+        }
+        .sheet(isPresented: $isShowingNotes) {
+            SheetShell { NotesListView() }
+        }
+        .sheet(isPresented: $isShowingSettings) {
+            SheetShell { SettingsView() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
             followToday()

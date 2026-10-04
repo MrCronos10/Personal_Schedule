@@ -74,7 +74,7 @@ struct NotesListView: View {
         }
         .background(Theme.paper)
         .sheet(isPresented: $isShowingDay) {
-            TodayView(initialDay: openDay)
+            TodayView(initialDay: openDay, showsShortcuts: false)
         }
     }
 

@@ -95,3 +95,9 @@ live inside 阅读, so this groups vocabulary with vocabulary. The tab bar is
 back to the original five (今天, 阅读, 笔记, 进度, 设置) with nothing in
 "More". No library or model change was needed; `TopicListView` is unchanged
 and still owns the whole screen it draws.
+
+Update ([ADR 0009](0009-visual-design-is-practice-book-hybrid.md)): the tab bar is
+now four tabs (今天, 阅读, 词, 进度). The word lists left 阅读 for the new 词
+tab, so 农业词 is reached from 词, still beside 难词. Settings is a gear on
+Today and Notes opens from Today, so nothing is in "More" and the Coach's key
+field is one tap from the first tab.

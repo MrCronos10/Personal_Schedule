@@ -2011,6 +2011,16 @@
           }
         }
       }
+    },
+    "词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Words"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

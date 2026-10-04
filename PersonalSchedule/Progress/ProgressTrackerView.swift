@@ -55,7 +55,7 @@ struct WeekLedger: View {
         }
         .background(BackgroundView())
         .sheet(isPresented: $isShowingRetroactiveDay) {
-            TodayView(initialDay: retroactiveDay)
+            TodayView(initialDay: retroactiveDay, showsShortcuts: false)
         }
     }
 
