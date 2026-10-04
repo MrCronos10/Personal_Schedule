@@ -6,6 +6,7 @@ enum ScheduleStore {
     static let schema = Schema([
         Category.self, Action.self, Completion.self, Pause.self,
         Article.self, WordLookup.self, WordProgress.self, CleanSighting.self, LevelCongratulation.self,
+        TopicWordProgress.self, TopicCustomWord.self,
     ])
 
     static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {

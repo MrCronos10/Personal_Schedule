@@ -116,6 +116,26 @@ _Avoid_: Reading, study session, review session
 A fixed set of Chinese words at one HSK level, bundled with the app and never edited. The app carries HSK 4 (600 words) and HSK 5 (1,300 words) from the HSK 2.0 standard, each word with its pinyin and English. Words from HSK 1–3 are not carried: they are assumed known and are not measured.
 _Avoid_: Dictionary, vocabulary, deck, syllabus
 
+**Topic List**:
+A second word list sitting beside the HSK **Word Lists**: 125 Chinese terms the student needs for their family's manure-to-organic-fertilizer business in Cambodia, split into six **Topic Groups**. The Topic List has its own meter — how many terms are **Topic Known**, out of 125 (plus any **Custom Topic Words**) — and never mixes with the HSK **Level** numbers (ADR 0007). A term on both lists, such as 农业, keeps independent state in each.
+_Avoid_: Custom word list, second deck, business HSK
+
+**Topic Word**:
+One term on the **Topic List**: the word, its pinyin, a short English, and the **Topic Group** it belongs to. Like a Word on a Word List it is read from the bundle, and the student's progress against it (whether they have marked it **Topic Known**) is stored separately.
+_Avoid_: Custom word, business word, vocab item
+
+**Topic Group**:
+One of the six groups the **Topic List** is split into: 粪便与原料, 堆肥与发酵, 养分与土壤, 质量安全与检测, 生产与机械, 市场与贸易. A group is how the student browses the list, not a locked unit of progress: every term in every group counts toward the one Topic List number from the day it is added.
+_Avoid_: Topic level, category, section
+
+**Topic Known**:
+A **Topic Word** the student has marked 认识 on the Topic List screen. Hand-marked only in this version; reading-based evidence against the Topic List is a later ticket (ADR 0007). The student can take it back with 其实不认识, which returns the term to Not Known.
+_Avoid_: Learned, mastered, Known (that word belongs to the HSK Level number)
+
+**Custom Topic Word**:
+A term the student added to the **Topic List** themselves — a word they met with a supplier, in a factory visit, or in a lab report. It raises the Topic List's denominator by one, and is archived rather than deleted, so the Topic meter never falls because of tidying up. A term from the bundled list is never archived or edited.
+_Avoid_: My word, local word, user-added word
+
 **Word**:
 One entry in a **Word List**, together with what the student has done about it: its **Clean Sightings**, whether it is **Known**, and when. Chinese words outside HSK 4 and 5 are still split out of an Article and can still be looked up, but they carry no state and count toward nothing.
 _Avoid_: Term, vocab item, character
