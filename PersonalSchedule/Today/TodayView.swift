@@ -14,7 +14,14 @@ struct TodayView: View {
     /// Watched so the strip follows a Word turning Known, wherever that happened.
     @Query private var wordProgressRows: [WordProgress]
     @Query private var topicProgressRows: [TopicWordProgress]
+    /// Watched so the reading-goal seal follows a 读完 made anywhere.
+    @Query(filter: #Predicate<Article> { $0.isBanked }) private var bankedArticles: [Article]
     @State private var recent: [RecentCell] = []
+    @AppStorage(ReadingPreferences.goalKey) private var readingGoal = ReadingPreferences.defaultGoal
+    /// The day's reading has reached the goal; the seal stays on the header for the rest of the day.
+    @State private var goalReached = false
+    /// True only on the visit where the seal is first stamped: it lands with a haptic, once.
+    @State private var stampJustLanded = false
     @State private var isShowingNotes = false
     @State private var isShowingSettings = false
 
@@ -31,6 +38,23 @@ struct TodayView: View {
 
     private var knownSignature: Int {
         wordProgressRows.count { $0.isKnown } &* 31 &+ topicProgressRows.count { $0.isKnown }
+    }
+
+    /// Whether today's reading has reached the goal, and whether the seal is due to land right now.
+    private func refreshGoal() {
+        let today = Day.today()
+        let characters = (try? ArticleLibrary(context: context).charactersRead(on: today)) ?? 0
+        goalReached = characters >= readingGoal
+        var celebrations = Celebrations(defaults: .standard)
+        if celebrations.readingGoalStampIsDue(charactersToday: characters, goal: readingGoal, on: today) {
+            celebrations.markReadingGoalStamped(on: today)
+            stampJustLanded = true
+            Task {
+                // Landed: any later visit today shows the seal already in place, without the landing.
+                try? await Task.sleep(for: .seconds(2))
+                stampJustLanded = false
+            }
+        }
     }
 
     private func refreshRecent() {
@@ -73,6 +97,11 @@ struct TodayView: View {
 
                 HStack(alignment: .top) {
                     dayTitle
+                    if showsShortcuts && goalReached && isToday {
+                        RedSealStamp(character: "读", ground: Theme.sealRed, animated: stampJustLanded)
+                            .padding(.leading, 8)
+                            .accessibilityHidden(true)
+                    }
                     Spacer()
                     if showsShortcuts {
                         Button { isShowingNotes = true } label: {
@@ -116,8 +145,11 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingSettings) {
             SheetShell { SettingsView() }
         }
-        .onAppear { refreshRecent() }
+        .onAppear { refreshRecent(); refreshGoal() }
         .onChange(of: knownSignature) { refreshRecent() }
+        .onChange(of: bankedArticles.count) { refreshGoal() }
+        .onChange(of: readingGoal) { refreshGoal() }
+        .sensoryFeedback(.impact(weight: .medium), trigger: stampJustLanded) { _, landed in landed }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
             followToday()
         }

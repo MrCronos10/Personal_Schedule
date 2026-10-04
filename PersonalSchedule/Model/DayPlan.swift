@@ -91,6 +91,13 @@ struct DayPlan {
         }
     }
 
+    /// Whether the day has at least one Routine and every Routine on it is ticked. One-time Actions
+    /// don't count either way: this is the "everything I committed to repeating is done" moment.
+    static func routinesAllDone(_ plan: [Action], on day: Day) -> Bool {
+        let routines = plan.filter(\.isRoutine)
+        return !routines.isEmpty && routines.allSatisfy { isTicked($0, on: day) }
+    }
+
     private static func isTicked(_ action: Action, on day: Day) -> Bool {
         (action.completions ?? []).contains { $0.dayNumber == day.number }
     }

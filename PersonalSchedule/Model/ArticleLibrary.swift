@@ -29,6 +29,21 @@ struct ArticleLibrary {
         )
     }
 
+    /// How many Chinese characters the student read on a day: the Han characters in every Article
+    /// whose 读完 banked that day. An Article banks once, so rereading adds nothing; this is what the
+    /// daily reading goal is measured against.
+    func charactersRead(on day: Day) throws -> Int {
+        let number = day.number
+        let articles = try context.fetch(
+            FetchDescriptor<Article>(predicate: #Predicate { $0.bankedDayNumber == number })
+        )
+        return articles.reduce(0) { $0 + Self.hanCount($1.text) }
+    }
+
+    nonisolated static func hanCount(_ text: String) -> Int {
+        text.unicodeScalars.count { (0x4E00...0x9FFF).contains($0.value) }
+    }
+
     /// The title an Article gets: its first line with anything in it, cut to `titleLimit`.
     ///
     /// A pasted 微信 article often begins with blank lines, so the first line that is only spaces is

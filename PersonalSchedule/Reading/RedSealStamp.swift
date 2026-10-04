@@ -9,15 +9,23 @@ import SwiftUI
 /// no record of its own — whoever shows it is responsible for showing it only once.
 struct RedSealStamp: View {
     let character: String
+    var ground: Color = Theme.red
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var isShown = false
+    @State private var isShown: Bool
+
+    /// `animated: false` is a seal already stamped: the same mark, with no landing.
+    init(character: String, ground: Color = Theme.red, animated: Bool = true) {
+        self.character = character
+        self.ground = ground
+        _isShown = State(initialValue: !animated)
+    }
 
     var body: some View {
         Text(verbatim: character)
             .font(Theme.serif(19, .black))
             .foregroundStyle(Theme.paper)
             .frame(width: 36, height: 36)
-            .background(Theme.red)
+            .background(ground)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay(
                 RoundedRectangle(cornerRadius: 6)

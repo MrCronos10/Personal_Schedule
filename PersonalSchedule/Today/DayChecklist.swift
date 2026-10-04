@@ -13,6 +13,8 @@ struct DayChecklist: View {
     @Query private var dayCompletions: [Completion]
     @Query(sort: \Category.createdAt) private var allCategories: [Category]
 
+    /// The folded "今天 — 完成" card, opened to see the Routines again.
+    @State private var isUnfolded = false
     @State private var sheet: Sheet?
     @State private var untickTarget: Action?
     @State private var deleteTarget: Action?
@@ -43,6 +45,11 @@ struct DayChecklist: View {
     var body: some View {
         let actions: [Action] = DayPlan.plan(candidateActions, on: day, today: today)
         let completions: [PersistentIdentifier: Completion] = completionsByAction()
+        // Every Routine ticked folds them into one card, but only for today: "今天 — 完成" would be
+        // wrong on another day, and a past day is for looking back at, not for being congratulated.
+        let routinesDone = day == today && DayPlan.routinesAllDone(actions, on: day)
+        let isFolded = routinesDone && !isUnfolded
+        let firstRoutine = actions.first(where: \.isRoutine)?.persistentModelID
 
         Group {
             if actions.isEmpty {
@@ -52,9 +59,21 @@ struct DayChecklist: View {
                     .padding(.vertical, 14)
             } else {
                 ForEach(actions) { action in
-                    row(for: action, completion: completions[action.persistentModelID])
+                    if isFolded && action.isRoutine {
+                        if action.persistentModelID == firstRoutine {
+                            foldedCard
+                        }
+                    } else {
+                        row(for: action, completion: completions[action.persistentModelID])
+                    }
                 }
             }
+        }
+        .animation(.easeOut(duration: 0.25), value: isFolded)
+        .sensoryFeedback(.impact(weight: .light), trigger: isFolded) { _, folded in folded }
+        // A Routine unticked after unfolding is no longer all done; the next time they are, fold again.
+        .onChange(of: routinesDone) { _, done in
+            if !done { isUnfolded = false }
         }
         .sheet(item: $sheet) { showing in
             switch showing {
@@ -98,6 +117,33 @@ struct DayChecklist: View {
         } message: { _ in
             Text("“\(deleteTitle)”会被删除，不能恢复。")
         }
+    }
+
+    /// All of today's Routines in one cream card. Tapping it opens them again, so a Routine can still
+    /// be unticked.
+    private var foldedCard: some View {
+        Button {
+            isUnfolded = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(Theme.bambooGreen)
+                Text("今天 — 完成")
+                    .font(Theme.title)
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.muted)
+            }
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(Theme.rule).frame(height: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(Text("展开"))
     }
 
     private func row(for action: Action, completion: Completion?) -> ActionRow {

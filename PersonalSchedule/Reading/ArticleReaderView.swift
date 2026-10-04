@@ -24,6 +24,9 @@ struct ArticleReaderView: View {
     /// The Word whose meaning is open under a paragraph. One at a time: tapping another Word, in
     /// this paragraph or another, moves the card there.
     @AppStorage(ReadingPreferences.fontSizeKey) private var fontSize = ReadingPreferences.defaultFontSize
+    /// The 读 seal that fades up for a moment when a reading banks (ADR 0009).
+    @State private var showsReadSeal = false
+    @State private var readSealCount = 0
     @State private var inlineLookup: InlineLookup?
     @State private var scroll = ScrollMetrics()
     @State private var viewportHeight: CGFloat = 0
@@ -93,8 +96,10 @@ struct ArticleReaderView: View {
                 VStack(spacing: 10) {
                     Button("读完") {
                         do {
-                            banked = try VocabularyLibrary(context: context).bank(article)
+                            let result = try VocabularyLibrary(context: context).bank(article)
+                            banked = result
                             bankFailed = false
+                            if !result.wasReread { showReadSeal() }
                             // A Word that reached Known loses its underline, so redraw.
                             paragraphs = render()
                             offerToTick()
@@ -137,6 +142,15 @@ struct ArticleReaderView: View {
                 .onChange(of: viewport.size.height) { _, height in viewportHeight = height }
         })
         .overlay(alignment: .top) { progressBar }
+        .overlay(alignment: .center) {
+            if showsReadSeal {
+                RedSealStamp(character: "读")
+                    .scaleEffect(2.2)
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: readSealCount)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             CoachDock(article: article)
         }
@@ -200,6 +214,17 @@ struct ArticleReaderView: View {
         }
         .onChange(of: knownWords) {
             paragraphs = render()
+        }
+    }
+
+    /// Fades in over 200ms, holds 600ms, fades out over 200ms. Reading is the work, so the mark is
+    /// quiet and gets out of the way; a reread banks nothing and shows nothing.
+    private func showReadSeal() {
+        readSealCount += 1
+        withAnimation(.easeOut(duration: 0.2)) { showsReadSeal = true }
+        Task {
+            try? await Task.sleep(for: .milliseconds(800))
+            withAnimation(.easeIn(duration: 0.2)) { showsReadSeal = false }
         }
     }
 
