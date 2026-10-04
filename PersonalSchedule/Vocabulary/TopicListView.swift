@@ -245,7 +245,7 @@ private struct TopicRow: View {
                     if isKnown {
                         Text("完")
                             .font(Theme.serif(16, .black))
-                            .foregroundStyle(Theme.paper)
+                            .foregroundStyle(Theme.onRed)
                             .frame(width: 28, height: 28)
                             .background(Theme.red)
                             .clipShape(RoundedRectangle(cornerRadius: 3))
@@ -273,7 +273,7 @@ private struct TopicRow: View {
                         } label: {
                             Text("认识")
                                 .font(Theme.body)
-                                .foregroundStyle(Theme.paper)
+                                .foregroundStyle(Theme.onRed)
                                 .padding(.horizontal, 14).padding(.vertical, 6)
                                 .background(Theme.red)
                                 .clipShape(RoundedRectangle(cornerRadius: Theme.controlRadius))

@@ -24,6 +24,8 @@ struct CollectionGridView: View {
     @State private var hasOpenedASection = false
     @State private var selected: SelectedCell?
     @State private var glowing: Set<String> = []
+    /// The last router request this grid acted on, so coming back to the tab later does not replay it.
+    @State private var handledFocusToken = 0
 
     private static let lastSeenKnownKey = "collectionGrid.knownWords"
     private static let columns = Array(repeating: GridItem(.flexible(), spacing: 3), count: 10)
@@ -56,7 +58,7 @@ struct CollectionGridView: View {
             settleGlow()
         }
         .onChange(of: signature) { refresh() }
-        .onChange(of: router?.focusedSection) { openFocusedSection() }
+        .onChange(of: router?.focusToken) { openFocusedSection() }
         .sheet(item: $selected) { cell in
             Group {
                 if cell.isTopic {
@@ -111,15 +113,17 @@ struct CollectionGridView: View {
     }
 
     private func openFocusedSection() {
-        guard let section = router?.focusedSection else { return }
+        guard let router, router.focusToken != handledFocusToken, let section = router.focusedSection else { return }
+        handledFocusToken = router.focusToken
         withAnimation(.easeOut(duration: 0.2)) { _ = expanded.insert(section) }
     }
 
     private func refresh() {
-        let library = CollectionLibrary(context: context)
-        four = (try? library.cells(for: .four)) ?? []
-        five = (try? library.cells(for: .five)) ?? []
-        topic = (try? library.topicCells()) ?? []
+        if let all = try? CollectionLibrary(context: context).allCells() {
+            four = all.four
+            five = all.five
+            topic = all.topic
+        }
         if !hasOpenedASection {
             hasOpenedASection = true
             let fourKnown = four.filter { $0.state == .known }.count
@@ -143,7 +147,10 @@ struct CollectionGridView: View {
                 }
             }
         }
-        defaults.set(Array(knownNow), forKey: Self.lastSeenKnownKey)
+        // Written only when it changed: it is up to ~1,900 strings, and this runs on every visit.
+        if (defaults.array(forKey: Self.lastSeenKnownKey) as? [String]).map(Set.init) != knownNow {
+            defaults.set(Array(knownNow), forKey: Self.lastSeenKnownKey)
+        }
     }
 }
 

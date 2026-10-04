@@ -342,10 +342,16 @@ struct ArticleReaderView: View {
         // Words already looked up in this Article get a darker rule: the same "seen" faded ink the
         // Collection Grid uses, so the two screens speak one language.
         let lookedUp = Set(((try? VocabularyLibrary(context: context).lookups(in: article)) ?? []).map(\.word))
+        // Words and paragraphs both run in text order, so one moving index serves every paragraph
+        // instead of scanning all the words again for each.
+        var next = 0
         return ArticleParagraphs.ranges(in: text).enumerated().map { index, line in
             var out = AttributedString()
             var cursor = line.lowerBound
-            for word in segmented where word.range.lowerBound >= line.lowerBound && word.range.upperBound <= line.upperBound {
+            while next < segmented.count, segmented[next].range.lowerBound < line.lowerBound { next += 1 }
+            while next < segmented.count, segmented[next].range.upperBound <= line.upperBound {
+                let word = segmented[next]
+                next += 1
                 if cursor < word.range.lowerBound {
                     out.append(plain(String(text[cursor..<word.range.lowerBound])))
                 }

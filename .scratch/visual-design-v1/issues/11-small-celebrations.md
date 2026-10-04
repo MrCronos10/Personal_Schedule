@@ -64,3 +64,18 @@ Why no streaks or badges: [ADR 0004](../../../docs/adr/0004-known-is-earned-by-r
 - The 读 seal in the reader appears only for a first banking, not a reread.
 - The cell-ink and next-visit glow are ticket 18's; `freshlyKnown` is tested there and the glow marks a cell once per visit because the last-seen set is saved on appear.
 - Not seen running: the reader seal and haptic, the Today stamp landing, the fold animation.
+
+## Review of tickets 15-25
+
+`/code-review` (high) over `2ed4311..HEAD` found ten things; all were real and are fixed in the review commit, with a test first where a rule changed:
+
+- Dark mode put near-black `Theme.paper` text on dark red (seals, the 难 badge, the red button, the user's Coach bubble). New `Theme.onRed`, light in both modes (`ThemeTests.textOnRedIsLightInBothModes`).
+- `AppRouter.focusedSection` was never cleared, so asking for the same section twice did nothing and Progress jumped to a stale section days later. Each request now has a `focusToken`, and each screen acts on a token once (`AppRouterTests`).
+- A Today opened as a sheet, or the tab while another tab showed, could spend the day's goal stamp unseen. Only the visible Today tab refreshes the strip and seal now; it also refreshes after midnight.
+- The reader's paragraph split missed CRLF line endings (`ReaderLayoutTests.windowsLineEndingsSplitParagraphsToo`).
+- `render()` scanned every word for every paragraph; it is now a single pass.
+- Today no longer holds queries over every progress row and banked Article body.
+- The grids rebuilt every cell and re-read the tables for each section: `CollectionLibrary.allCells()` reads once, `cells(for:limit:)` builds only a sliver, and the last-seen set is written only when it changed (`CollectionLibraryTests`).
+- The "read without a lookup" list and the Today strip keyed rows by text; they now key by position / Word and section, and the strip scrolls to the newest cell when it changes.
+
+The temporary snapshot test used to look at screens was removed before the final run (it crashed the shared test process once and is not a test of the app).

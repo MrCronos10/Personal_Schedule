@@ -14,6 +14,8 @@ enum CellState: Equatable, Sendable {
 struct RecentCell: Equatable, Sendable {
     let cell: CollectionCell
     let section: CollectionSection
+
+    var key: String { "\(section)-\(cell.word)" }
 }
 
 struct CollectionCell: Equatable, Identifiable, Sendable {
@@ -29,11 +31,25 @@ struct CollectionLibrary {
     let context: ModelContext
 
     /// Every Word of one Level, in the Word List's own order so a Word stays where the student last
-    /// saw it.
-    func cells(for level: HSKLevel) throws -> [CollectionCell] {
+    /// saw it. `limit` builds only the first cells, for the cards that show a sliver.
+    func cells(for level: HSKLevel, limit: Int? = nil) throws -> [CollectionCell] {
+        try cells(for: level, limit: limit, known: knownHSKWords(), met: metWords())
+    }
+
+    /// All three sections from one read of the progress tables, rather than one read each.
+    func allCells() throws -> (four: [CollectionCell], five: [CollectionCell], topic: [CollectionCell]) {
         let known = try knownHSKWords()
         let met = try metWords()
-        return HSKWordList.words(at: level).map { entry in
+        return (
+            try cells(for: .four, limit: nil, known: known, met: met),
+            try cells(for: .five, limit: nil, known: known, met: met),
+            try topicCells()
+        )
+    }
+
+    private func cells(for level: HSKLevel, limit: Int?, known: Set<String>, met: Set<String>) -> [CollectionCell] {
+        let entries = HSKWordList.words(at: level)
+        return (limit.map { Array(entries.prefix($0)) } ?? entries).map { entry in
             let state: CellState = known.contains(entry.word) ? .known : (met.contains(entry.word) ? .seen : .notMet)
             return CollectionCell(word: entry.word, state: state)
         }

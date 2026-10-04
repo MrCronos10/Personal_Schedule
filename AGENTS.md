@@ -34,9 +34,9 @@ Tickets 01–05 were built this way. Keep doing it unless the student says other
 # and an OS number must match exactly, e.g. 18.3.1 not 18.3)
 xcodebuild -showdestinations -project PersonalSchedule.xcodeproj -scheme PersonalSchedule
 
-# all tests (this Mac, September 2026: iPhone 16, iOS 18.3.1)
+# all tests (this Mac, October 2026: iPhone 17, iOS 26.3.1)
 xcodebuild test -project PersonalSchedule.xcodeproj -scheme PersonalSchedule \
-  -destination 'platform=iOS Simulator,id=1B2000CF-B206-4497-BB25-939DB3128082'
+  -destination 'platform=iOS Simulator,id=18A36EB6-FE50-40C1-B2A3-6EE3A34D7064'
 
 # one test file
 ... -only-testing:PersonalScheduleTests/DayPlanTests

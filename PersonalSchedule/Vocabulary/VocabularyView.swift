@@ -83,9 +83,9 @@ struct VocabularyView: View {
         five = (try? library.level(.five)) ?? LevelProgress(level: .five, known: 0)
         dailyWords = (try? library.dailyNewWords()) ?? []
         let collection = CollectionLibrary(context: context)
-        fourCells = (try? collection.cells(for: .four)) ?? []
-        fiveCells = (try? collection.cells(for: .five)) ?? []
-        topicCells = (try? collection.topicCells()) ?? []
+        fourCells = (try? collection.cells(for: .four, limit: 20)) ?? []
+        fiveCells = (try? collection.cells(for: .five, limit: 20)) ?? []
+        topicCells = Array(((try? collection.topicCells()) ?? []).prefix(20))
         topicMeter = (try? TopicLibrary(context: context).meter()) ?? TopicMeter(known: 0, total: 0)
         stubborn = (try? library.stubbornWords()) ?? []
         let served = VocabularyLibrary.servedLevel(four: four)
@@ -137,7 +137,7 @@ struct VocabularyView: View {
             HStack(spacing: 8) {
                 Text(verbatim: "难")
                     .font(Theme.serif(13, .black))
-                    .foregroundStyle(Theme.paper)
+                    .foregroundStyle(Theme.onRed)
                     .frame(width: 22, height: 22)
                     .background(Theme.sealRed)
                     .clipShape(RoundedRectangle(cornerRadius: 3))

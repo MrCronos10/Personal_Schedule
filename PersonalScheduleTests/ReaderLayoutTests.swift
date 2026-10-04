@@ -31,6 +31,13 @@ struct ReaderLayoutTests {
         #expect(lines == ["标题", "第一段。", "第二段。"])
     }
 
+    /// Text pasted from Windows or some web sources ends lines with CRLF, which Swift treats as one
+    /// character that is not "\n".
+    @Test func windowsLineEndingsSplitParagraphsToo() {
+        let text = "甲\r\n乙\r\n\r\n丙\r丁"
+        #expect(ArticleParagraphs.ranges(in: text).map { String(text[$0]) } == ["甲", "乙", "丙", "丁"])
+    }
+
     @Test func aLineOfOnlySpacesIsNotAParagraph() {
         let text = "甲\n   \n乙"
         #expect(ArticleParagraphs.ranges(in: text).map { String(text[$0]) } == ["甲", "乙"])

@@ -11,11 +11,6 @@ struct TodayView: View {
     @State private var isAddingAction = false
     @Environment(\.modelContext) private var context
     @Environment(AppRouter.self) private var router: AppRouter?
-    /// Watched so the strip follows a Word turning Known, wherever that happened.
-    @Query private var wordProgressRows: [WordProgress]
-    @Query private var topicProgressRows: [TopicWordProgress]
-    /// Watched so the reading-goal seal follows a 读完 made anywhere.
-    @Query(filter: #Predicate<Article> { $0.isBanked }) private var bankedArticles: [Article]
     @State private var recent: [RecentCell] = []
     @AppStorage(ReadingPreferences.goalKey) private var readingGoal = ReadingPreferences.defaultGoal
     /// The day's reading has reached the goal; the seal stays on the header for the rest of the day.
@@ -36,8 +31,13 @@ struct TodayView: View {
     /// Note has them off, so it can't open a Notes list from inside a Notes list.
     private let showsShortcuts: Bool
 
-    private var knownSignature: Int {
-        wordProgressRows.count { $0.isKnown } &* 31 &+ topicProgressRows.count { $0.isKnown }
+    /// Only the Today tab itself shows the strip and the seal; a Today opened as a sheet from the
+    /// ledger or a Note must not spend the day's stamp on a screen the student is not looking at, and
+    /// neither may the tab while another tab is showing.
+    private func refreshForTab() {
+        guard showsShortcuts, router?.tab ?? .today == .today else { return }
+        refreshRecent()
+        refreshGoal()
     }
 
     /// Whether today's reading has reached the goal, and whether the seal is due to land right now.
@@ -145,10 +145,11 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingSettings) {
             SheetShell { SettingsView() }
         }
-        .onAppear { refreshRecent(); refreshGoal() }
-        .onChange(of: knownSignature) { refreshRecent() }
-        .onChange(of: bankedArticles.count) { refreshGoal() }
-        .onChange(of: readingGoal) { refreshGoal() }
+        // Refreshed when this tab comes into view rather than by watching every progress row: words
+        // turn Known and Articles bank on other tabs, and returning here is when it can be seen.
+        .onAppear { refreshForTab() }
+        .onChange(of: router?.tab) { refreshForTab() }
+        .onChange(of: readingGoal) { refreshForTab() }
         .sensoryFeedback(.impact(weight: .medium), trigger: stampJustLanded) { _, landed in landed }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
             followToday()
@@ -168,6 +169,8 @@ struct TodayView: View {
             day = today
         }
         lastSeenToday = today
+        // Yesterday's seal must not carry into a new day.
+        refreshForTab()
     }
 
     /// 今天 in 田字格 boxes for today; the weekday for other days. English uses heavy serif without boxes.

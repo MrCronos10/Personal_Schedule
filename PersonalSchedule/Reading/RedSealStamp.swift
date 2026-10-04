@@ -23,14 +23,14 @@ struct RedSealStamp: View {
     var body: some View {
         Text(verbatim: character)
             .font(Theme.serif(19, .black))
-            .foregroundStyle(Theme.paper)
+            .foregroundStyle(Theme.onRed)
             .frame(width: 36, height: 36)
             .background(ground)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
                     .inset(by: 2.5)
-                    .stroke(Theme.paper, lineWidth: 1.5)
+                    .stroke(Theme.onRed, lineWidth: 1.5)
             )
             .rotationEffect(.degrees(-8))
             .scaleEffect(isShown ? 1 : 0.4)

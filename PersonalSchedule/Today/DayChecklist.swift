@@ -286,14 +286,14 @@ struct ActionRow: View {
                 // The seal on a finished day. It is the same character in both languages.
                 Text(verbatim: "完")
                     .font(Theme.serif(19, .black))
-                    .foregroundStyle(Theme.paper)
+                    .foregroundStyle(Theme.onRed)
                     .frame(width: 36, height: 36)
                     .background(Theme.red)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
                             .inset(by: 2.5)
-                            .stroke(Theme.paper, lineWidth: 1.5)
+                            .stroke(Theme.onRed, lineWidth: 1.5)
                     )
                     .rotationEffect(.degrees(-8))
             } else {

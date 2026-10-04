@@ -43,4 +43,11 @@ struct ThemeTests {
         #expect(hex(Theme.red, in: .light) == 0xC8382E)
         #expect(hex(Theme.red, in: .dark) == 0xA3362E)
     }
+
+    /// Text on a red ground (seals, 难, the red button) must stay light in both modes: `paper` turns
+    /// near-black at night, which on a dark red is unreadable.
+    @Test func textOnRedIsLightInBothModes() {
+        #expect(hex(Theme.onRed, in: .light) == 0xFAF6EC)
+        #expect(hex(Theme.onRed, in: .dark) == 0xFAF6EC)
+    }
 }

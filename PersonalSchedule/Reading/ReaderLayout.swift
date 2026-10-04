@@ -15,9 +15,10 @@ enum ReadingProgress {
 /// An Article split into the paragraphs the reader draws, so a tapped word's lookup card can sit
 /// directly under the paragraph it belongs to.
 enum ArticleParagraphs {
-    /// The non-blank lines of `text`, in order, as ranges into it.
+    /// The non-blank lines of `text`, in order, as ranges into it. Any line ending counts, including
+    /// the CRLF that text pasted from Windows or the web carries.
     static func ranges(in text: String) -> [Range<String.Index>] {
-        text.split(separator: "\n", omittingEmptySubsequences: true)
+        text.split(whereSeparator: \.isNewline)
             .filter { !$0.allSatisfy(\.isWhitespace) }
             .map { $0.startIndex..<$0.endIndex }
     }

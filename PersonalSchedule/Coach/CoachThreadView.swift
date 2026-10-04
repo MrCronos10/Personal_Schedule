@@ -237,7 +237,7 @@ private struct MessageBubble: View {
             VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
                 Text(verbatim: message.text)
                     .font(Theme.serif(15))
-                    .foregroundStyle(message.role == .user ? Theme.paper : Theme.ink)
+                    .foregroundStyle(message.role == .user ? Theme.onRed : Theme.ink)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .background(message.role == .user ? Theme.red : Theme.cardHigh)

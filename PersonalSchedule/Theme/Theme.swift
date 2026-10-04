@@ -38,6 +38,9 @@ enum Theme {
     static let muted = Color.adaptive(light: 0x6B655C, dark: 0xA69F93)
     /// Grid red: 田字格 lines, the logo, the one highlight colour. Used sparingly.
     static let red = Color.adaptive(light: 0xC8382E, dark: 0xA3362E)
+    /// Text and borders on a red ground (seals, the red button). The same light cream in both modes:
+    /// `paper` turns near-black at night, which on a dark red is unreadable.
+    static let onRed = Color(hex: 0xFAF6EC)
     /// Seal red: pressed states, header rules, completion stamps.
     static let sealRed = Color.adaptive(light: 0x8B2A1F, dark: 0x6E2419)
     static let rule = Color.adaptive(light: 0xDEC8BA, dark: 0x4D443C)
@@ -196,7 +199,7 @@ struct RedButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(Theme.paper)
+            .foregroundStyle(Theme.onRed)
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
             .background(Theme.red.opacity(configuration.isPressed ? 0.8 : 1))

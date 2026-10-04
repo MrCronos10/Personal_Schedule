@@ -12,9 +12,13 @@ enum CollectionSection: Hashable, CaseIterable {
 final class AppRouter {
     var tab: AppTab = .today
     var focusedSection: CollectionSection?
+    /// Goes up by one on every request, so asking for the same section twice is still a change a
+    /// screen can see, and a screen can tell a request it has handled from one it has not.
+    private(set) var focusToken = 0
 
     func showProgress(at section: CollectionSection) {
         focusedSection = section
+        focusToken += 1
         tab = .progress
     }
 }

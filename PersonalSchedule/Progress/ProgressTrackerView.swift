@@ -45,24 +45,31 @@ struct WeekLedger: View {
 
     /// The day a Missed ledger cell was tapped for. Opened as `TodayView(initialDay:)` so retroactively
     /// logging the Completion reuses the Daily Checklist's own tick logic rather than a second copy of it.
+    @State private var handledFocusToken = 0
     @State private var retroactiveDay = Day.today()
     @State private var isShowingRetroactiveDay = false
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
+
+    /// Scrolls to the section another screen asked for, once per request: opening the tab later from
+    /// the tab bar starts at the top, not wherever the last card sent it.
+    private func scrollToRequestedSection(_ proxy: ScrollViewProxy, animated: Bool) {
+        guard let router, router.focusToken != handledFocusToken, let section = router.focusedSection else { return }
+        handledFocusToken = router.focusToken
+        if animated {
+            withAnimation(.easeOut(duration: 0.3)) { proxy.scrollTo(section, anchor: .top) }
+        } else {
+            proxy.scrollTo(section, anchor: .top)
+        }
+    }
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 content
             }
-            .onChange(of: router?.focusedSection) { _, section in
-                guard let section else { return }
-                withAnimation(.easeOut(duration: 0.3)) { proxy.scrollTo(section, anchor: .top) }
-            }
-            .onAppear {
-                guard let section = router?.focusedSection else { return }
-                proxy.scrollTo(section, anchor: .top)
-            }
+            .onChange(of: router?.focusToken) { scrollToRequestedSection(proxy, animated: true) }
+            .onAppear { scrollToRequestedSection(proxy, animated: false) }
         }
         .background(BackgroundView())
         .sheet(isPresented: $isShowingRetroactiveDay) {

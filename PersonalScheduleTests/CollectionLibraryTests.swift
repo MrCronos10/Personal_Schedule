@@ -176,4 +176,29 @@ struct CollectionLibraryTests {
 
         #expect(try shelf.collection.recentlyKnown().isEmpty)
     }
+
+    // MARK: - Cheaper reads
+
+    @Test func aLimitReturnsTheFirstCellsOfTheLevelInOrder() throws {
+        let shelf = try shelf()
+        try shelf.vocabulary.markKnown(HSKWordList.words(at: .four)[3].word, on: day)
+
+        let limited = try shelf.collection.cells(for: .four, limit: 20)
+        let all = try shelf.collection.cells(for: .four)
+        #expect(limited.count == 20)
+        #expect(limited == Array(all.prefix(20)))
+    }
+
+    @Test func allCellsAgreesWithAskingForEachSectionOnItsOwn() throws {
+        let shelf = try shelf()
+        let article = try shelf.articles.add(text: "1\n厕所")
+        try shelf.vocabulary.lookUp("厕所", in: article, on: day)
+        try shelf.vocabulary.markKnown("导游", on: day)
+        try shelf.topic.markKnown("堆肥", on: day)
+
+        let together = try shelf.collection.allCells()
+        #expect(together.four == (try shelf.collection.cells(for: .four)))
+        #expect(together.five == (try shelf.collection.cells(for: .five)))
+        #expect(together.topic == (try shelf.collection.topicCells()))
+    }
 }

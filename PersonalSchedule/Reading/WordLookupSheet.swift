@@ -174,7 +174,8 @@ struct WordLookupContent: View {
                     .font(Theme.label)
                     .tracking(1.4)
                     .foregroundStyle(Theme.muted)
-                ForEach(titles, id: \.self) { title in
+                // By position: two Articles can share a title.
+                ForEach(Array(titles.enumerated()), id: \.offset) { _, title in
                     Text(verbatim: title)
                         .font(Theme.serif(15))
                         .foregroundStyle(Theme.ink)
