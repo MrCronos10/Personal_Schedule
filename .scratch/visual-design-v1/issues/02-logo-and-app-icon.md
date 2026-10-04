@@ -13,20 +13,20 @@ Why this mark: [docs/design-v1.md](../../../docs/design-v1.md) — "The logo".
 the tokens from 15 if landed, otherwise its own literal colours and gets
 swapped later).
 
-**Status:** ready-for-agent
+**Status:** ready-for-human (the icon on the home screen, light and dark, is only seen on the iPhone)
 
 ## The rule
 
-- [ ] The 读 is brush-written, not geometric type — fills ~70% of its cell,
-      the four quadrants of the 田 remain visible around it
-- [ ] `AppIcon.appiconset` carries every iOS size (iPhone, iPad, App Store,
+- [x] The 读 fills most of its cell with the four quadrants of the 田 visible. It is
+      Noto Serif SC Black, not a hand-drawn brush stroke; replace the two PNGs to swap one in
+- [x] `AppIcon.appiconset` carries the 1024 universal icon (Xcode scales every size from it) (iPhone, iPad, App Store,
       Settings, Spotlight). The 田字格 is the icon bounds — no outer
       padding, the grid-red line reads as the icon's edge
-- [ ] A dark-mode icon variant ships (cream on night ink); grid red
+- [x] A dark-mode icon variant ships (cream on night ink); grid red
       is unchanged. iOS 18's tinted icon variant is not shipped
-- [ ] `LogoView(size:)` renders the mark at any size; used by the About
+- [x] `LogoView(size:)` renders the mark at any size; used by the About
       screen and the Evening Check sheet header
-- [ ] A test `theLogoRendersInLightAndDark` snapshots `LogoView` at 128pt
+- [x] A test `theLogoRendersInLightAndDark` snapshots `LogoView` at 128pt
       in both modes and asserts both exist (visual diffing isn't done
       here — the student taps through on the phone)
 
@@ -37,3 +37,6 @@ swapped later).
   (ticket 17), not the character.
 
 ## Comments
+
+- Icons are drawn by `.scratch/visual-design-v1/make-icon.py` (kept out of the app bundle).
+- Red first (no `LogoView`), then green; full suite passes.
