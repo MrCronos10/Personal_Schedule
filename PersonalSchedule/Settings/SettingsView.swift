@@ -10,6 +10,8 @@ struct SettingsView: View {
     @Query(sort: \Category.createdAt) private var allCategories: [Category]
     @Query(ActionLibrary.oldestFirstDescriptor) private var allActions: [Action]
 
+    @AppStorage(ReadingPreferences.goalKey) private var dailyGoal = ReadingPreferences.defaultGoal
+    @AppStorage(ReadingPreferences.fontSizeKey) private var fontSize = ReadingPreferences.defaultFontSize
     @State private var newName = ""
     @State private var errorMessage: LocalizedStringKey?
     @State private var renaming: Category?
@@ -32,6 +34,29 @@ struct SettingsView: View {
                     .font(Theme.serif(34, .black))
                     .foregroundStyle(Theme.ink)
                     .padding(.top, 12)
+
+                SectionCaption(title: "阅读")
+
+                VStack(alignment: .leading, spacing: 14) {
+                    Stepper(value: $dailyGoal, in: ReadingPreferences.goalRange, step: 50) {
+                        Text("每天读 \(dailyGoal) 字")
+                            .font(Theme.serif(17))
+                            .foregroundStyle(Theme.ink)
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("字号")
+                            .font(Theme.label)
+                            .tracking(1.4)
+                            .foregroundStyle(Theme.muted)
+                        Slider(value: $fontSize, in: ReadingPreferences.fontSizeRange, step: 1)
+                            .tint(Theme.red)
+                        Text(verbatim: "你好，今天天气很好。")
+                            .font(.system(size: fontSize))
+                            .foregroundStyle(Theme.ink)
+                    }
+                }
+                .card()
+                .padding(.top, 10)
 
                 SectionCaption(title: "分类")
 
@@ -126,6 +151,8 @@ struct SettingsView: View {
                 .padding(.top, 12)
 
                 coachSection
+
+                aboutSection
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
@@ -141,6 +168,40 @@ struct SettingsView: View {
                 perform { try $0.rename(category, to: renameText) }
             }
         }
+    }
+
+    private var aboutSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionCaption(title: "关于")
+            HStack(spacing: 14) {
+                LogoView(size: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("版本")
+                        .font(Theme.label)
+                        .tracking(1.4)
+                        .foregroundStyle(Theme.muted)
+                    Text(verbatim: versionText)
+                        .font(Theme.mono(15))
+                        .foregroundStyle(Theme.ink)
+                }
+            }
+            .card()
+            .padding(.top, 10)
+            // The typeface is the one thing in the app that is someone else's work, and its licence
+            // asks to be credited.
+            Text("字体：Noto Serif SC（SIL 开源字体许可）")
+                .font(Theme.meta)
+                .foregroundStyle(Theme.muted)
+                .padding(.top, 10)
+        }
+    }
+
+    private var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let build = info?["CFBundleVersion"] as? String ?? "1"
+        return "\(version) (\(build))"
     }
 
     /// A Category row: tap the name to rename it; the trailing button archives or restores it.

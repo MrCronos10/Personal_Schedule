@@ -2071,6 +2071,56 @@
           }
         }
       }
+    },
+    "每天读 %lld 字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read %lld characters a day"
+          }
+        }
+      }
+    },
+    "字号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text size"
+          }
+        }
+      }
+    },
+    "关于": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
+          }
+        }
+      }
+    },
+    "版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
+    "字体：Noto Serif SC（SIL 开源字体许可）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type: Noto Serif SC (SIL Open Font License)"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

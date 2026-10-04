@@ -23,6 +23,7 @@ struct ArticleReaderView: View {
 
     /// The Word whose meaning is open under a paragraph. One at a time: tapping another Word, in
     /// this paragraph or another, moves the card there.
+    @AppStorage(ReadingPreferences.fontSizeKey) private var fontSize = ReadingPreferences.defaultFontSize
     @State private var inlineLookup: InlineLookup?
     @State private var scroll = ScrollMetrics()
     @State private var viewportHeight: CGFloat = 0
@@ -73,8 +74,8 @@ struct ArticleReaderView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     ForEach(paragraphs) { paragraph in
                         Text(paragraph.text)
-                            .font(Theme.reading)
-                            .lineSpacing(Theme.readingLineSpacing)
+                            .font(.system(size: fontSize))
+                            .lineSpacing(ReadingPreferences.lineSpacing(forFontSize: fontSize))
                             .tint(Theme.ink)
                             .textSelection(.disabled)
                             .frame(maxWidth: .infinity, alignment: .leading)

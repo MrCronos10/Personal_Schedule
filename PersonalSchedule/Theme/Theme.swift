@@ -80,11 +80,6 @@ enum Theme {
     static let meta = Font.system(size: 12)
     /// 11, tracked — chips and captions.
     static let label = Font.system(size: 11, weight: .semibold)
-    /// 17 at line height 1.9 — Chinese reading text, where cramped lines are the first thing that
-    /// makes a page feel hostile. Pair with `readingLineSpacing`: SwiftUI adds it to the font's own
-    /// ~1.2 line height, so 0.7 more makes 1.9.
-    static let reading = Font.system(size: 17)
-    static let readingLineSpacing: CGFloat = 17 * 0.7
     /// SF Mono for counts ("128 / 600"), so digits keep one width and a row doesn't jitter as it grows.
     static func mono(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight, design: .monospaced)
