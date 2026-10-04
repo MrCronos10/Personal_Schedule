@@ -195,3 +195,33 @@ _Avoid_: Review queue, flashcards, SRS, due words
 **Set Aside**:
 A **Word** that is not **Known** and has nothing happening to it: the student answered 不认识, looked it up, or read it without reaching three **Clean Sightings**. It leaves **Daily New Words** for thirty days from whichever of those happened last, then becomes offerable again, keeping any sightings it had. Nothing is owed in the meantime: a Set Aside Word is never due, never counted, and never shown as waiting.
 _Avoid_: Due, scheduled, deferred, snoozed, leech
+
+## Look
+
+**Practice-book Hybrid**:
+The one visual direction the app takes: modern iOS chrome (tab bar, lists, sheets, SF Symbols) with **practice-book moments** inside content — 田字格 grid lines on Reading and Vocabulary, 宋体 headlines, red seals on completion, paper cream backgrounds. The chrome keeps the app professional at a glance; the practice-book moments keep its identity visible where the student lives. Pinned by [ADR 0009](docs/adr/0009-visual-design-is-practice-book-hybrid.md); the full brief is [docs/design-v1.md](docs/design-v1.md).
+_Avoid_: Practice-book look (that was the older, pure direction), scholar's notebook style
+
+**Collection Grid**:
+The Progress screen's main surface: every **Word** on the HSK **Word Lists** and the **Topic List** is one cell in a 田字格, in one of three **Cell States** (not met, seen, Known). It is the only "achievement" surface the app has — no streaks, no badges, no ranks ([ADR 0004](docs/adr/0004-known-is-earned-by-reading-not-by-review.md), [ADR 0009](docs/adr/0009-visual-design-is-practice-book-hybrid.md)). The grid grows because the student read, and that is the whole story.
+_Avoid_: Achievement wall, dashboard, trophy case
+
+**Cell State**:
+What one cell on the **Collection Grid** looks like for one **Word**: **not met** (empty cream cell, red grid lines), **seen** (character written in faded ink — the Word was looked up at least once, not yet **Known**), or **Known** (character in full ink black, brush-stroked). Seen is a surface for the state the model already carried — a Word with at least one **Lookup** and not yet Known — so the grid feels alive weeks before anything is Known.
+_Avoid_: Progress level, mastery tier, cell fill
+
+**Collection Sliver**:
+A thin horizontal strip on the **Today** screen showing the last ~20 cells the student filled across all **Word Lists** and the **Topic List** together, newest on the right. Tapping through opens the **Collection Grid** scrolled to the matching section. It is how the achievement moment appears on the home screen without taking it over.
+_Avoid_: Recent words, feed, timeline
+
+**Coach Dock**:
+The persistent bottom strip inside **Reading** where the **Reading Coach** lives. Collapsed by default (one line: "读伴 在想…" when he is writing, "问读伴" otherwise), pull-up to expand to the full **Coach Session**, pull-down to collapse. Replaces the earlier 问 button in the header; same house rules ([ADR 0008](docs/adr/0008-reading-coach-is-a-side-helper-not-homework.md)).
+_Avoid_: Chat panel, coach drawer, bottom sheet (that is a different iOS element)
+
+**Shelf**:
+One section on the **Vocabulary** tab: **难词**, **HSK Levels** (two cards, one per Level), **农业词**. Shelves are different *jobs* — 难词 is a do-today list, HSK Levels is a see-your-progress destination, 农业词 is a topic collection — so they get different visual weight on one screen rather than being flattened into tabs or one list.
+_Avoid_: Section, tab, list
+
+**Small Celebration**:
+One of four quiet moments the app marks: the brush-stroke **读** seal when a **Reading Session** banks, the cell inking itself when a Word crosses to **Known**, the red seal stamp on **Today** the first time the daily reading goal is hit, and the "今天 — 完成" fold when all today's **Routines** are done. Haptic, never sound; no messages, no points, no banners. What is not celebrated: opening the app, a streak day, a weekly review.
+_Avoid_: Reward, achievement toast, confetti, notification
