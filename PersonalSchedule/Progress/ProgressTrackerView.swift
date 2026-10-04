@@ -16,7 +16,8 @@ struct ProgressTrackerView: View {
     }
 
     var body: some View {
-        WeekLedger(week: week, rows: rows, categories: categories, today: today, completions: completions)
+        WeekLedger(week: week, rows: rows, categories: categories, today: today, completions: completions,
+                   showsCollection: true)
             .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
                 today = Day.today()
             }
@@ -38,6 +39,8 @@ struct WeekLedger: View {
     let categories: [Category]
     let today: Day
     let completions: [Completion]
+    /// The Progress tab puts the Collection Grid above the week; previews of the ledger alone leave it off.
+    var showsCollection = false
 
     /// The day a Missed ledger cell was tapped for. Opened as `TodayView(initialDay:)` so retroactively
     /// logging the Completion reuses the Daily Checklist's own tick logic rather than a second copy of it.
@@ -50,7 +53,7 @@ struct WeekLedger: View {
         ScrollView {
             content
         }
-        .background(Theme.paper)
+        .background(BackgroundView())
         .sheet(isPresented: $isShowingRetroactiveDay) {
             TodayView(initialDay: retroactiveDay)
         }
@@ -58,14 +61,28 @@ struct WeekLedger: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
-                Text(verbatim: weekRange)
-                    .font(.system(size: 13))
-                    .tracking(1)
-                    .foregroundStyle(Theme.muted)
-                    .padding(.top, 12)
+                if showsCollection {
+                    progressTitle
+                        .padding(.top, 12)
 
-                weekTitle
-                    .padding(.top, 14)
+                    CollectionGridView()
+                        .padding(.top, 16)
+
+                    Text(verbatim: weekRange)
+                        .font(.system(size: 13))
+                        .tracking(1)
+                        .foregroundStyle(Theme.muted)
+                        .padding(.top, 24)
+                } else {
+                    Text(verbatim: weekRange)
+                        .font(.system(size: 13))
+                        .tracking(1)
+                        .foregroundStyle(Theme.muted)
+                        .padding(.top, 12)
+
+                    weekTitle
+                        .padding(.top, 14)
+                }
 
                 SectionCaption(title: "本周的进度")
 
@@ -98,6 +115,19 @@ struct WeekLedger: View {
             }
         .padding(.horizontal, 16)
         .padding(.bottom, 24)
+    }
+
+    /// 进度 in 田字格 boxes: the Collection Grid is what the tab is about.
+    @ViewBuilder
+    private var progressTitle: some View {
+        if isChinese {
+            TianZiGeTitle(text: "进度")
+        } else {
+            Text("进度")
+                .font(Theme.serif(38, .black))
+                .foregroundStyle(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+        }
     }
 
     /// 本周 in 田字格 boxes, the same practice-book heading the 今天 tab uses. It says which week this is,

@@ -207,7 +207,7 @@ The Progress screen's main surface: every **Word** on the HSK **Word Lists** and
 _Avoid_: Achievement wall, dashboard, trophy case
 
 **Cell State**:
-What one cell on the **Collection Grid** looks like for one **Word**: **not met** (empty cream cell, red grid lines), **seen** (character written in faded ink — the Word was looked up at least once, not yet **Known**), or **Known** (character in full ink black, brush-stroked). Seen is a surface for the state the model already carried — a Word with at least one **Lookup** and not yet Known — so the grid feels alive weeks before anything is Known.
+What one cell on the **Collection Grid** looks like for one **Word**: **not met** (empty cream cell, red grid lines), **seen** (character written in faded ink — the Word has been met in an Article, by a **Lookup** or a **Clean Sighting**, and is not yet **Known**), or **Known** (character in full ink black, brush-stroked). Seen is a surface for the state the model already carried — a Word with a **Lookup** or a **Clean Sighting** and not yet Known — so the grid feels alive weeks before anything is Known.
 _Avoid_: Progress level, mastery tier, cell fill
 
 **Collection Sliver**:

@@ -16,37 +16,34 @@ Vocabulary: **Collection Grid** and **Cell State** in [CONTEXT.md](../../../CONT
 **Blocked by:** [15](01-palette-and-typography-primitives.md),
 [17](03-tianzige-watermark-background.md).
 
-**Status:** ready-for-agent
+**Status:** ready-for-human (taps: expand/collapse a section, tap a cell, watch a cell ink in)
 
 ## The rule
 
-- [ ] A `CollectionCellState` enum has exactly three cases: `.notMet`,
+- [x] A `CellState` enum has exactly three cases: `.notMet`,
       `.seen`, `.known` — any attempt to add a fourth is rejected in
       review
-- [ ] A rule `cellState(for:) -> CellState` lives at the library, not in
+- [x] The rule lives at `CollectionLibrary.cells(for:)` / `topicCells()`, not in
       the view: `.known` when the Word is **Known**, `.seen` when it has
-      at least one `WordLookup` and is not Known, `.notMet` otherwise.
+      a `WordLookup` or a `CleanSighting` and is not Known, `.notMet` otherwise.
       Topic Words map `.known` from **Topic Known** and `.notMet`
       otherwise (no `.seen` for them — the Topic List is hand-marked only
       per ADR 0007)
-- [ ] The grid lays ~10 cells per row on iPhone, cell size scales with
+- [x] The grid lays ~10 cells per row on iPhone, cell size scales with
       screen width. SF Mono headers above each section carry the count
       ("HSK 4 — 128 / 600") in matched monospaced digits
-- [ ] Tapping a cell opens a bottom sheet with the Word, its pinyin and
+- [x] Tapping a cell opens a bottom sheet with the Word, its pinyin and
       English, its Clean Sightings (and which Articles earned them), and
       a 其实不认识 button for Topic Words
-- [ ] When a Word transitions to `.known`, the cell inks itself with a
+- [x] When a Word transitions to `.known`, the cell inks itself with a
       300ms brush-stroke animation. If the student is not on Progress
       when it happens, the next visit shows a 1s grid-red glow around the
       freshly-inked cells
-- [ ] `BackgroundView` (ticket 17) fills the Progress screen
-- [ ] The existing Progress Tracker (Weekly Targets per Category) moves
+- [x] `BackgroundView` (ticket 17) fills the Progress screen
+- [x] The existing Progress Tracker (Weekly Targets per Category) moves
       below the Collection Grid on the same screen as a scrollable row
       of cream cards; it is not removed
-- [ ] Tests at `CategoryLibrary` or a new `CollectionLibrary` cover the
-      three Cell States, the HSK 4 / HSK 5 / Topic denominators, and
-      that a Lookup moves a `.known` cell back to `.seen` (it should
-      not — Known is Known; the rule is only for not-yet-Known Words)
+- [x] `CollectionLibraryTests` cover the three Cell States, the 600 / 1,300 / 125 totals, and that a Lookup leaves a Known cell Known (only 其实不认识 takes it back)
 
 ## What is not in this ticket
 
@@ -58,3 +55,8 @@ Vocabulary: **Collection Grid** and **Cell State** in [CONTEXT.md](../../../CONT
   order so a Word stays in the same spot.
 
 ## Comments
+
+- Red first (no `CollectionLibrary`), then green; full suite passes. The grid was also rendered to a PNG in light and dark through a hosting window and looked at: cells, fonts and the three states read correctly.
+- Sections HSK 4 / HSK 5 / 农业词 are collapsible (the served Level starts open), because 1,900 open cells would push the weekly ledger several screens down.
+- The cell sheet reuses `WordLookupSheet` for HSK words (now also listing the Articles that earned the Word a Clean Sighting) and a small Topic sheet with 认识 / 其实不认识.
+- Not seen running: the 300ms ink-in and the 1s glow on the next visit (animation, phone only).

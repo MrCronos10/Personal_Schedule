@@ -17,6 +17,9 @@ struct WordLookupSheet: View {
     /// This Word's row, and only it. Fetching every row to answer a question about one would grow
     /// toward 1,900 as the year went on, and would be a second copy of `VocabularyLibrary`'s lookup.
     @Query private var progress: [WordProgress]
+    /// The Articles this Word was read in without a Lookup, so the Collection Grid can say where a
+    /// Word's progress came from.
+    @Query private var sightings: [CleanSighting]
 
     /// Seeded from `progress` once the sheet appears, then edited locally: a **Word Note** saves as
     /// it is typed, and re-seeding it from a live query on every keystroke would fight the cursor.
@@ -31,6 +34,7 @@ struct WordLookupSheet: View {
         self.word = word
         self.clearedArticles = clearedArticles
         _progress = Query(filter: #Predicate<WordProgress> { $0.word == word })
+        _sightings = Query(filter: #Predicate<CleanSighting> { $0.word == word })
     }
 
     private var entry: HSKEntry? { HSKWordList.entry(for: word) }
@@ -67,6 +71,9 @@ struct WordLookupSheet: View {
                     .padding(.top, 10)
 
                 clearedByThisLookup
+                    .padding(.top, 18)
+
+                earnedIn
                     .padding(.top, 18)
 
                 wordNoteField
@@ -140,6 +147,26 @@ struct WordLookupSheet: View {
                     guard trimmed != (progress.first?.noteText ?? "") else { return }
                     try? VocabularyLibrary(context: context).setNote(newValue, for: word)
                 }
+        }
+    }
+
+    @ViewBuilder
+    private var earnedIn: some View {
+        let titles = sightings.compactMap { $0.article?.title }
+        if !titles.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("读过没查的文章")
+                    .font(Theme.label)
+                    .tracking(1.4)
+                    .foregroundStyle(Theme.muted)
+                ForEach(titles, id: \.self) { title in
+                    Text(verbatim: title)
+                        .font(Theme.serif(15))
+                        .foregroundStyle(Theme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

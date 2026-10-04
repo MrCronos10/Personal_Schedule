@@ -2001,6 +2001,16 @@
           }
         }
       }
+    },
+    "读过没查的文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read without a lookup"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

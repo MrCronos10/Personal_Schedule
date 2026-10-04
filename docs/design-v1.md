@@ -109,8 +109,8 @@ Progress is where "achievement feels fun" lives. The design is a dense grid of
 田字格 cells, one per Word in the Word List, in three states:
 
 - **Not met** — empty cream cell, grid red lines, no character inside.
-- **Seen** — character written in **faded ink** (looked up at least once but
-  not Known). The grid feels alive weeks before anything is Known.
+- **Seen** — character written in **faded ink** (met in an Article, by a Lookup
+  or a Clean Sighting, but not Known). The grid feels alive weeks before anything is Known.
 - **Known** — character in full **ink black**, brush-stroked.
 
 Layout:
