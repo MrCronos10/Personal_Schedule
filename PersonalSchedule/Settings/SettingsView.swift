@@ -17,6 +17,11 @@ struct SettingsView: View {
     @State private var renameText = ""
     @State private var routineError: LocalizedStringKey?
     @State private var settingTargetFor: Category?
+    /// What the API key field is currently showing. Not bound to Keychain — the field holds the
+    /// draft, 保存 writes to Keychain, 清除 wipes both. A leaking draft would be the kind of secret
+    /// that lingers in a `@AppStorage` and ends up in a backup.
+    @State private var apiKeyDraft: String = ""
+    @State private var apiKeyIsSet: Bool = CoachSecrets.hasAPIKey
 
     var body: some View {
         @Bindable var language = language
@@ -119,6 +124,8 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.top, 12)
+
+                coachSection
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
@@ -198,6 +205,47 @@ struct SettingsView: View {
     }
 
     /// A Routine row: its title, whether it is paused, and the button that stops or starts it again.
+    /// The **Reading Coach**'s API key, kept in Keychain (ADR 0008). The one-student app does not
+    /// yet have a proxy, so the key lives on the phone and the Settings pane is where it is set.
+    @ViewBuilder
+    private var coachSection: some View {
+        SectionCaption(title: "读伴")
+        VStack(alignment: .leading, spacing: 10) {
+            Text("读伴需要一个 Anthropic API key。它只存在手机里（Keychain），不会随 iCloud 备份。")
+                .font(Theme.meta)
+                .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+            SecureField(apiKeyIsSet ? "key 已保存，输入新的覆盖" : "sk-ant-…", text: $apiKeyDraft)
+                .font(.system(size: 14, design: .monospaced))
+                .foregroundStyle(Theme.ink)
+                .padding(.horizontal, 10).padding(.vertical, 8)
+                .background(Theme.paper)
+                .overlay(RoundedRectangle(cornerRadius: Theme.controlRadius).stroke(Theme.rule))
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+            HStack(spacing: 8) {
+                Button("保存") {
+                    if CoachSecrets.save(apiKey: apiKeyDraft) {
+                        apiKeyIsSet = CoachSecrets.hasAPIKey
+                        apiKeyDraft = ""
+                    }
+                }
+                .buttonStyle(RedButtonStyle())
+                .disabled(apiKeyDraft.trimmingCharacters(in: .whitespaces).isEmpty)
+                if apiKeyIsSet {
+                    Button("清除") {
+                        CoachSecrets.remove()
+                        apiKeyIsSet = false
+                        apiKeyDraft = ""
+                    }
+                    .buttonStyle(MiniButtonStyle())
+                }
+                Spacer()
+            }
+        }
+        .padding(.top, 10)
+    }
+
     /// Routines are paused, never deleted (CONTEXT.md), so there is no delete here.
     private func routineRow(_ routine: Action) -> some View {
         let isPaused: Bool = routine.isPaused

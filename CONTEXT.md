@@ -136,6 +136,22 @@ _Avoid_: Learned, mastered, Known (that word belongs to the HSK Level number)
 A term the student added to the **Topic List** themselves — a word they met with a supplier, in a factory visit, or in a lab report. It raises the Topic List's denominator by one, and is archived rather than deleted, so the Topic meter never falls because of tidying up. A term from the bundled list is never archived or edited.
 _Avoid_: My word, local word, user-added word
 
+**Reading Coach**:
+读伴: a chat sheet opened from inside an **Article** that answers the student's questions about *that* Article. Short, specific replies, with pinyin for every Chinese word it introduces. It never marks a **Word** or **Topic Word** anything, never counts messages, never says the student is "due" or should "practice more" (ADR 0008). Lives inside the reader, nowhere else.
+_Avoid_: AI tutor, assistant, chatbot
+
+**Coach Session**:
+The thread of questions and answers for one **Article**: everything the student asked the **Reading Coach** about *that* Article, in order, with the language they chose for each message. Pinned to the Article, so a reread next week opens the same thread rather than a fresh page.
+_Avoid_: Chat, conversation, history
+
+**Coach Message**:
+One line in a **Coach Session**: either the student's question or the Coach's reply, with when it was saved and which language mode was in use. Deleted when the student clears the thread; never evidence of anything, so losing it costs the **Known** count nothing.
+_Avoid_: Message, chat line, log entry
+
+**Coach Language**:
+Which language the student wants this one Coach Message answered in: both (a short 中文 line and a short English line), 中文 only, or English only. Picked per message, so a question typed in Chinese can still ask for the English answer.
+_Avoid_: Translation setting, Coach mode
+
 **Word**:
 One entry in a **Word List**, together with what the student has done about it: its **Clean Sightings**, whether it is **Known**, and when. Chinese words outside HSK 4 and 5 are still split out of an Article and can still be looked up, but they carry no state and count toward nothing.
 _Avoid_: Term, vocab item, character

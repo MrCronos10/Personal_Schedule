@@ -37,6 +37,8 @@ struct ArticleReaderView: View {
     @State private var shownAt: Date?
     @State private var tickTarget: TickTarget?
     @State private var isChoosingAction = false
+    /// Whether the **Reading Coach** sheet is open. See ADR 0008.
+    @State private var isAsking = false
 
     var body: some View {
         ScrollView {
@@ -56,6 +58,21 @@ struct ArticleReaderView: View {
                         Text(verbatim: importedDayText)
                     }
                     Spacer()
+                    Button {
+                        isAsking = true
+                    } label: {
+                        // 问 is the one place the Coach sits inside the reader. Keeps the Article
+                        // the home; a floating button or a new tab would move the Coach to
+                        // somewhere the Article is no longer the subject (ADR 0008).
+                        Text("问")
+                            .font(Theme.serif(16, .black))
+                            .foregroundStyle(Theme.red)
+                            .padding(.horizontal, 10).padding(.vertical, 4)
+                            .overlay(RoundedRectangle(cornerRadius: Theme.controlRadius).stroke(Theme.red))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("问读伴"))
+
                     // One control for the whole Article, and only one: a speaker on every sentence
                     // would break the screen's own rule of keeping controls out of the way of the
                     // text, so this is the single place reading aloud lives.
@@ -175,6 +192,9 @@ struct ArticleReaderView: View {
         .sheet(item: $lookedUpWord) { looked in
             WordLookupSheet(word: looked.text, clearedArticles: looked.clearedArticles)
                 .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $isAsking) {
+            CoachSheetView(article: article)
         }
     }
 
