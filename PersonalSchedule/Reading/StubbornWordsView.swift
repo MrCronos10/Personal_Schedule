@@ -35,7 +35,9 @@ struct StubbornWordsView: View {
                 } else {
                     VStack(spacing: 0) {
                         ForEach(words, id: \.entry.word) { stubborn in
-                            row(stubborn)
+                            StubbornWordRow(stubborn: stubborn) {
+                                openedWord = LookedUpWord(text: stubborn.entry.word)
+                            }
                         }
                     }
                     .card()
@@ -61,10 +63,28 @@ struct StubbornWordsView: View {
         words = (try? VocabularyLibrary(context: context).stubbornWords()) ?? []
     }
 
-    private func row(_ stubborn: VocabularyLibrary.StubbornWord) -> some View {
-        Button {
-            openedWord = LookedUpWord(text: stubborn.entry.word)
-        } label: {
+    /// No Stubborn Words is good news, not a blank screen — the quiet voice the rest of the app uses.
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("没有难词")
+                .font(Theme.serif(16))
+                .foregroundStyle(Theme.muted)
+            Text("在两篇及以上的文章里查过、还没记住的词会出现在这里。")
+                .font(Theme.meta)
+                .foregroundStyle(Theme.muted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+/// One row of 难词, here and on the 词 tab's shelf: the Word, what it means, and in how many Articles
+/// it has been looked up. Tapping it is the caller's business.
+struct StubbornWordRow: View {
+    let stubborn: VocabularyLibrary.StubbornWord
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: stubborn.entry.word)
@@ -89,19 +109,6 @@ struct StubbornWordsView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-    }
-
-    /// No Stubborn Words is good news, not a blank screen — the quiet voice the rest of the app uses.
-    private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("没有难词")
-                .font(Theme.serif(16))
-                .foregroundStyle(Theme.muted)
-            Text("在两篇及以上的文章里查过、还没记住的词会出现在这里。")
-                .font(Theme.meta)
-                .foregroundStyle(Theme.muted)
-                .fixedSize(horizontal: false, vertical: true)
-        }
     }
 }
 

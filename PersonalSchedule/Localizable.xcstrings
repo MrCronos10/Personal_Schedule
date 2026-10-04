@@ -2031,6 +2031,26 @@
           }
         }
       }
+    },
+    "全部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        }
+      }
+    },
+    "HSK": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HSK"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

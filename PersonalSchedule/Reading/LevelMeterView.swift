@@ -11,16 +11,33 @@ struct LevelMeterView: View {
     let five: LevelProgress
     /// The Levels whose **Passed** stamp should land right now (ticket 08). Both can be present at
     /// once — HSK 4 and HSK 5 can cross Passed in the same `refresh()` — and each is a moment, not a
-    /// standing state: `ReadingView` removes a Level a couple of seconds after adding it.
+    /// standing state: `VocabularyView` removes a Level a couple of seconds after adding it.
     var justPassedLevels: Set<HSKLevel> = []
+    /// The Collection Grid cells of each Level, for the sliver under the bar.
+    var fourCells: [CollectionCell] = []
+    var fiveCells: [CollectionCell] = []
+    /// Tapping a card opens Progress at that Level's section.
+    var onOpen: (CollectionSection) -> Void = { _ in }
 
     private var served: HSKLevel { VocabularyLibrary.servedLevel(four: four) }
 
     var body: some View {
-        VStack(spacing: 14) {
-            row(four)
-            row(five)
+        VStack(spacing: 10) {
+            levelCard(four, cells: fourCells, section: .four)
+            levelCard(five, cells: fiveCells, section: .five)
         }
+    }
+
+    private func levelCard(_ progress: LevelProgress, cells: [CollectionCell], section: CollectionSection) -> some View {
+        Button { onOpen(section) } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                row(progress)
+                // The first twenty cells of the Level's grid section, in list order.
+                CollectionSliver(cells: Array(cells.prefix(20)))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
         .card()
     }
 
@@ -41,7 +58,7 @@ struct LevelMeterView: View {
                 }
                 Spacer()
                 Text(verbatim: "\(progress.known) / \(progress.total)")
-                    .font(Theme.meta)
+                    .font(Theme.mono(12))
                     .foregroundStyle(Theme.muted)
                 Text(verbatim: "· \(Int(progress.share * 100))%")
                     .font(Theme.meta)

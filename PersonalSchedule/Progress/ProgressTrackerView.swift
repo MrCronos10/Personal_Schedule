@@ -33,6 +33,7 @@ struct ProgressTrackerView: View {
 /// with any week's data in front of it.
 struct WeekLedger: View {
     @Environment(\.locale) private var locale
+    @Environment(AppRouter.self) private var router: AppRouter?
 
     let week: Week
     let rows: [WeekProgress]
@@ -50,8 +51,18 @@ struct WeekLedger: View {
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
     var body: some View {
-        ScrollView {
-            content
+        ScrollViewReader { proxy in
+            ScrollView {
+                content
+            }
+            .onChange(of: router?.focusedSection) { _, section in
+                guard let section else { return }
+                withAnimation(.easeOut(duration: 0.3)) { proxy.scrollTo(section, anchor: .top) }
+            }
+            .onAppear {
+                guard let section = router?.focusedSection else { return }
+                proxy.scrollTo(section, anchor: .top)
+            }
         }
         .background(BackgroundView())
         .sheet(isPresented: $isShowingRetroactiveDay) {

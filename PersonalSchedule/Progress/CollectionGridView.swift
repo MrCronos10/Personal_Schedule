@@ -7,6 +7,8 @@ import SwiftUI
 /// The state of each cell comes from `CollectionLibrary`; this view only draws it.
 struct CollectionGridView: View {
     @Environment(\.modelContext) private var context
+    /// Set by another screen that wants this grid opened at a section (the 词 cards, the Today sliver).
+    @Environment(AppRouter.self) private var router: AppRouter?
 
     /// Watched so the grid follows what reading, lookups and 认识 change.
     @Query private var progressRows: [WordProgress]
@@ -15,12 +17,10 @@ struct CollectionGridView: View {
     @Query private var topicRows: [TopicWordProgress]
     @Query private var customs: [TopicCustomWord]
 
-    private enum GridSection: Hashable { case four, five, topic }
-
     @State private var four: [CollectionCell] = []
     @State private var five: [CollectionCell] = []
     @State private var topic: [CollectionCell] = []
-    @State private var expanded: Set<GridSection> = []
+    @State private var expanded: Set<CollectionSection> = []
     @State private var hasOpenedASection = false
     @State private var selected: SelectedCell?
     @State private var glowing: Set<String> = []
@@ -56,6 +56,7 @@ struct CollectionGridView: View {
             settleGlow()
         }
         .onChange(of: signature) { refresh() }
+        .onChange(of: router?.focusedSection) { openFocusedSection() }
         .sheet(item: $selected) { cell in
             Group {
                 if cell.isTopic {
@@ -68,10 +69,11 @@ struct CollectionGridView: View {
         }
     }
 
-    private func section(_ id: GridSection, title: Text, cells: [CollectionCell], isTopic: Bool) -> some View {
+    private func section(_ id: CollectionSection, title: Text, cells: [CollectionCell], isTopic: Bool) -> some View {
         let known = cells.filter { $0.state == .known }.count
         let isOpen = expanded.contains(id)
         return VStack(alignment: .leading, spacing: 10) {
+            Color.clear.frame(height: 0).id(id)
             Button {
                 withAnimation(.easeOut(duration: 0.2)) {
                     if isOpen { expanded.remove(id) } else { expanded.insert(id) }
@@ -99,13 +101,18 @@ struct CollectionGridView: View {
                         Button {
                             selected = SelectedCell(word: cell.word, isTopic: isTopic)
                         } label: {
-                            GridCell(cell: cell, isGlowing: glowing.contains(cell.word))
+                            CollectionCellView(cell: cell, isGlowing: glowing.contains(cell.word))
                         }
                         .buttonStyle(.plain)
                     }
                 }
             }
         }
+    }
+
+    private func openFocusedSection() {
+        guard let section = router?.focusedSection else { return }
+        withAnimation(.easeOut(duration: 0.2)) { _ = expanded.insert(section) }
     }
 
     private func refresh() {
@@ -117,6 +124,7 @@ struct CollectionGridView: View {
             hasOpenedASection = true
             let fourKnown = four.filter { $0.state == .known }.count
             expanded = [VocabularyLibrary.servedLevel(four: LevelProgress(level: .four, known: fourKnown)) == .four ? .four : .five]
+            openFocusedSection()
         }
     }
 
@@ -139,9 +147,24 @@ struct CollectionGridView: View {
     }
 }
 
+/// A few cells of a section, for the cards on the 词 tab and the strip on Today.
+struct CollectionSliver: View {
+    let cells: [CollectionCell]
+    var columns = 10
+
+    var body: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 3), count: columns), spacing: 3) {
+            ForEach(cells) { cell in
+                CollectionCellView(cell: cell, isGlowing: false)
+            }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
 /// One 田字格 cell. Not met is empty; seen is the word in faded ink; Known is the word inked in,
 /// over 300ms, so a Word becoming Known while the grid is open is something the student can watch.
-private struct GridCell: View {
+struct CollectionCellView: View {
     let cell: CollectionCell
     let isGlowing: Bool
 

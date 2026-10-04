@@ -1,19 +1,26 @@
 import SwiftData
 import SwiftUI
 
-/// The 词 tab: the Level meter, 今日新词, and the doors to 难词 and 农业词 — everything about words,
-/// apart from the Articles they are met in (those stay on 阅读). ADR 0009.
+/// The 词 tab, as three shelves (ADR 0009): 难词 on top, because it is the do-today list; the HSK
+/// Levels with 今日新词 in the middle, a place to see progress; and 农业词, a topic collection. Each
+/// shelf has its own weight on purpose — they are different jobs, not three tabs of one list.
 struct VocabularyView: View {
     @Environment(\.locale) private var locale
     @Environment(\.modelContext) private var context
 
     /// Watched so the meter and the daily list follow what reading and 今日新词 change.
     @Query private var progressRows: [WordProgress]
+    @Query private var lookupRows: [WordLookup]
+    @Query private var topicRows: [TopicWordProgress]
+    @Environment(AppRouter.self) private var router: AppRouter?
 
     /// One value covering both "a Word was met" and "a Word became Known", so a single tap runs
     /// `refresh()` once rather than twice.
     private var progressSignature: Int {
-        progressRows.count &* 31 &+ progressRows.count { $0.isKnown }
+        var value = progressRows.count &* 31 &+ progressRows.count { $0.isKnown }
+        value = value &* 31 &+ lookupRows.count
+        value = value &* 31 &+ topicRows.count { $0.isKnown }
+        return value
     }
 
     /// Worked out when the tab appears and after a Word is answered, rather than on every render:
@@ -29,6 +36,12 @@ struct VocabularyView: View {
     /// value would mark the first congratulated and then silently lose its stamp before SwiftUI ever
     /// rendered it. Each Level is added once and removed a couple of seconds later on its own.
     @State private var justPassedLevels: Set<HSKLevel> = []
+    @State private var fourCells: [CollectionCell] = []
+    @State private var fiveCells: [CollectionCell] = []
+    @State private var topicCells: [CollectionCell] = []
+    @State private var topicMeter = TopicMeter(known: 0, total: 0)
+    @State private var stubborn: [VocabularyLibrary.StubbornWord] = []
+    @State private var openedWord: LookedUpWord?
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
@@ -39,22 +52,14 @@ struct VocabularyView: View {
                     title
                         .padding(.top, 14)
 
-                    LevelMeterView(four: four, five: five, justPassedLevels: justPassedLevels)
-                        .padding(.top, 16)
-
-                    DailyNewWordsView(words: dailyWords, isServedLevelComplete: servedLevelIsComplete)
-                        .padding(.top, 10)
-
-                    HStack(spacing: 20) {
-                        stubbornWordsLink
-                        topicListLink
-                    }
-                    .padding(.top, 14)
+                    stubbornShelf
+                    levelsShelf
+                    topicShelf
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }
-            .background(Theme.paper)
+            .background(BackgroundView())
             .toolbar(.hidden, for: .navigationBar)
             .task { refresh() }
             .onChange(of: progressSignature) { refresh() }
@@ -65,6 +70,10 @@ struct VocabularyView: View {
                     SpeechPlayer.shared.stop()
                 }
             }
+            .sheet(item: $openedWord) { looked in
+                WordLookupSheet(word: looked.text)
+                    .presentationDetents([.medium])
+            }
         }
     }
 
@@ -73,6 +82,12 @@ struct VocabularyView: View {
         four = (try? library.level(.four)) ?? LevelProgress(level: .four, known: 0)
         five = (try? library.level(.five)) ?? LevelProgress(level: .five, known: 0)
         dailyWords = (try? library.dailyNewWords()) ?? []
+        let collection = CollectionLibrary(context: context)
+        fourCells = (try? collection.cells(for: .four)) ?? []
+        fiveCells = (try? collection.cells(for: .five)) ?? []
+        topicCells = (try? collection.topicCells()) ?? []
+        topicMeter = (try? TopicLibrary(context: context).meter()) ?? TopicMeter(known: 0, total: 0)
+        stubborn = (try? library.stubbornWords()) ?? []
         let served = VocabularyLibrary.servedLevel(four: four)
         let servedProgress = served == .four ? four : five
         servedLevelIsComplete = servedProgress.known >= servedProgress.total
@@ -113,41 +128,114 @@ struct VocabularyView: View {
         }
     }
 
-    /// Always here, whether or not anything is on it: 难词 with nothing on it is good news, and the
-    /// entry point saying so is what makes that visible rather than hidden. No count, no badge — a
-    /// number here would be the queue ADR 0004 turned down.
-    private var stubbornWordsLink: some View {
-        NavigationLink {
-            StubbornWordsView()
-        } label: {
-            HStack(spacing: 4) {
+    // MARK: - Shelves
+
+    /// The do-today shelf. Five at most; the whole list is one tap on. A number on a badge would be
+    /// the queue ADR 0004 turned down, so there is none — an empty shelf says so in words.
+    private var stubbornShelf: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text(verbatim: "难")
+                    .font(Theme.serif(13, .black))
+                    .foregroundStyle(Theme.paper)
+                    .frame(width: 22, height: 22)
+                    .background(Theme.sealRed)
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .accessibilityHidden(true)
                 Text("难词")
-                Image(systemName: "chevron.right")
+                    .font(Theme.title)
+                    .foregroundStyle(Theme.ink)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer()
+                NavigationLink {
+                    StubbornWordsView()
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("全部")
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(Theme.label)
+                    .tracking(1.4)
+                    .foregroundStyle(Theme.muted)
+                }
+                .buttonStyle(.plain)
             }
-            .font(Theme.label)
-            .tracking(1.4)
-            .foregroundStyle(Theme.muted)
+            .padding(.top, 22)
+
+            if stubborn.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("没有难词")
+                        .font(Theme.serif(16))
+                        .foregroundStyle(Theme.muted)
+                    Text("在两篇及以上的文章里查过、还没记住的词会出现在这里。")
+                        .font(Theme.meta)
+                        .foregroundStyle(Theme.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .card()
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(stubborn.prefix(5), id: \.entry.word) { word in
+                        StubbornWordRow(stubborn: word) {
+                            openedWord = LookedUpWord(text: word.entry.word)
+                        }
+                    }
+                }
+                .card()
+            }
         }
-        .buttonStyle(.plain)
     }
 
-    /// The **Topic List** entry point: 农业词 sits beside 难词 rather than at the tab bar's root.
-    /// iPhones show only four tabs plus a "More" bucket, so a sixth top-level tab (as ticket 11
-    /// first placed it) hid 设置 behind "More" and the Reading Coach's API key with it (ADR 0007
-    /// update). The Topic List is a word list, so it belongs where the HSK word lists already are.
-    private var topicListLink: some View {
-        NavigationLink {
-            TopicListView()
-        } label: {
-            HStack(spacing: 4) {
-                Text("农业词")
-                Image(systemName: "chevron.right")
-            }
-            .font(Theme.label)
-            .tracking(1.4)
-            .foregroundStyle(Theme.muted)
+    /// Progress shelf: one card per Level, each opening Progress at its section, and 今日新词 under
+    /// them because it draws from the Served Level.
+    private var levelsShelf: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(verbatim: "HSK")
+                .font(Theme.title)
+                .foregroundStyle(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.top, 26)
+            LevelMeterView(
+                four: four, five: five, justPassedLevels: justPassedLevels,
+                fourCells: fourCells, fiveCells: fiveCells,
+                onOpen: { router?.showProgress(at: $0) }
+            )
+            DailyNewWordsView(words: dailyWords, isServedLevelComplete: servedLevelIsComplete)
         }
-        .buttonStyle(.plain)
+    }
+
+    /// The topic collection. Its card opens the Topic List itself, where words are marked and added;
+    /// the grid for it is on Progress (the Level cards go there directly).
+    private var topicShelf: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("农业词")
+                .font(Theme.title)
+                .foregroundStyle(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+                .padding(.top, 26)
+            NavigationLink {
+                TopicListView()
+            } label: {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("已认识")
+                            .font(Theme.serif(18))
+                            .foregroundStyle(Theme.ink)
+                        Spacer()
+                        Text(verbatim: "\(topicMeter.known) / \(topicMeter.total)")
+                            .font(Theme.mono(12))
+                            .foregroundStyle(Theme.muted)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Theme.muted)
+                    }
+                    CollectionSliver(cells: Array(topicCells.prefix(20)))
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .card()
+        }
     }
 }
 

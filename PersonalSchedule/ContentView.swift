@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The four tabs (ADR 0009). Settings and Notes open from Today; the Reading Coach lives inside an
 /// Article.
-enum AppTab: CaseIterable {
+enum AppTab: CaseIterable, Hashable {
     case today, reading, vocabulary, progress
 
     /// The Chinese text, which is also its translation key.
@@ -28,18 +28,24 @@ enum AppTab: CaseIterable {
 
 struct ContentView: View {
     @Environment(LanguageSetting.self) private var language
+    @State private var router = AppRouter()
 
     var body: some View {
-        TabView {
+        TabView(selection: $router.tab) {
             TodayView()
                 .tabItem { Label(LocalizedStringKey(AppTab.today.title), systemImage: AppTab.today.symbol) }
+                .tag(AppTab.today)
             ReadingView()
                 .tabItem { Label(LocalizedStringKey(AppTab.reading.title), systemImage: AppTab.reading.symbol) }
+                .tag(AppTab.reading)
             VocabularyView()
                 .tabItem { Label(LocalizedStringKey(AppTab.vocabulary.title), systemImage: AppTab.vocabulary.symbol) }
+                .tag(AppTab.vocabulary)
             ProgressTrackerView()
                 .tabItem { Label(LocalizedStringKey(AppTab.progress.title), systemImage: AppTab.progress.symbol) }
+                .tag(AppTab.progress)
         }
+        .environment(router)
         .tint(Theme.red)
         .toolbarBackground(Theme.paper, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
