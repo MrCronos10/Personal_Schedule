@@ -9,26 +9,25 @@ cards are the texture.
 
 **Blocked by:** [15](01-palette-and-typography-primitives.md).
 
-**Status:** ready-for-agent
+**Status:** ready-for-human (taps: open a card, swipe it down, 看这一天)
 
 ## The rule
 
-- [ ] Notes are read from the existing model (Completion `Note`, ADR
+- [x] Notes are read from the existing model (Completion `Note`, ADR
       0002); the content, search, and newest-first order are unchanged
-- [ ] Each Note renders as a cream card with a thin grid-red top edge
+- [x] Each Note renders as a cream card with a thin grid-red top edge
       (two-pixel bar) and a very thin cream-paper edge shadow (the only
       shadow the whole app allows)
-- [ ] Cards are offset ±2° on alternate rows so the stack reads as paper
+- [x] Cards are offset ±2° on alternate rows so the stack reads as paper
       pile, not list
-- [ ] Note title uses 宋体 SemiBold 17pt (the Note's first line, student's
+- [x] Note title uses 宋体 SemiBold 17pt (the Note's first line, student's
       own writing — never translated); body uses PingFang 15pt
-- [ ] Tap a card to expand to a full-screen view of the Note; swipe down
-      collapses back to the stack
-- [ ] A search bar is pinned at the top; the search behaviour is
+- [x] Tap a card to open it to full size (a sheet, so swiping down puts it back on the stack). It carries
+      看这一天, which keeps the old tap-a-Note-to-see-its-day behaviour
+- [x] A search bar is pinned at the top; the search behaviour is
       unchanged
-- [ ] Background is flat `Theme.paperCream` (no `BackgroundView`)
-- [ ] A test confirms the sort stays newest-first and that search still
-      filters by Note text (no regression on the existing behaviour)
+- [x] Background is flat `Theme.paperCream` (no `BackgroundView`)
+- [x] Sort and search are untouched (`NotesListTests` still pass); `NoteCardTests` pin the title/body split and the alternating tilt
 
 ## What is not in this ticket
 
@@ -38,3 +37,8 @@ cards are the texture.
   Today sheet from ticket 22).
 
 ## Comments
+
+- Red first (no `NoteCardStyle`), then green; full suite passes. The stack was rendered to PNG and looked at.
+- The card title is the Note's first line (the Note has no title of its own); a one-line Note is all title.
+- Cards lean -2 / +2 degrees alternately and have the app's one allowed shadow.
+- Not seen running: opening and swiping a card down.

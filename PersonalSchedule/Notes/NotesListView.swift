@@ -12,11 +12,8 @@ struct NotesListView: View {
     @Query(CategoryLibrary.allDescriptor) private var allCategories: [Category]
 
     @State private var searchText = ""
-    /// The day a Note was tapped for. Opened as `TodayView(initialDay:)`, the same sheet the Progress
-    /// Tracker uses for a Missed day, so a Note is followed back to its own Daily Checklist rather than
-    /// a second copy of that screen.
-    @State private var openDay = Day.today()
-    @State private var isShowingDay = false
+    /// The Note opened to full size. Its own sheet follows it back to its day (`NoteDetailView`).
+    @State private var openedNote: Completion?
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
@@ -47,34 +44,37 @@ struct NotesListView: View {
                 Group {
                     if notes.isEmpty {
                         emptyList
+                            .card()
                     } else if shown.isEmpty {
                         noMatches
+                            .card()
                     } else {
-                        VStack(spacing: 0) {
-                            ForEach(shown) { completion in
-                                NoteRow(
+                        VStack(spacing: 16) {
+                            ForEach(Array(shown.enumerated()), id: \.element.persistentModelID) { index, completion in
+                                NoteCard(
                                     completion: completion,
-                                    ink: Theme.categoryInk(
-                                        for: completion.category, among: allCategories
-                                    ),
-                                    onTap: {
-                                        openDay = completion.day
-                                        isShowingDay = true
-                                    }
+                                    ink: Theme.categoryInk(for: completion.category, among: allCategories)
                                 )
+                                .rotationEffect(.degrees(NoteCardStyle.tilt(at: index)))
+                                .onTapGesture { openedNote = completion }
+                                .accessibilityAddTraits(.isButton)
                             }
                         }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 6)
                     }
                 }
-                .card()
                 .padding(.top, 10)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
         }
         .background(Theme.paper)
-        .sheet(isPresented: $isShowingDay) {
-            TodayView(initialDay: openDay, showsShortcuts: false)
+        .sheet(item: $openedNote) { note in
+            NoteDetailView(
+                completion: note,
+                ink: Theme.categoryInk(for: note.category, among: allCategories)
+            )
         }
     }
 
@@ -134,70 +134,6 @@ struct NotesListView: View {
         Text("没有找到")
             .font(Theme.serif(16))
             .foregroundStyle(Theme.muted)
-    }
-}
-
-/// One Note: the day it was written, what it was written under, and the Note itself.
-///
-/// The title is what the Completion copied when it was ticked, so a renamed or moved Action never
-/// rewrites a finished day (ADR 0002). The Category is shown by its **current** name, because
-/// renaming one corrects what it is called rather than making it a different Category — the
-/// Progress Tracker's rows follow a rename the same way.
-struct NoteRow: View {
-    @Environment(\.locale) private var locale
-
-    let completion: Completion
-    let ink: Color
-    let onTap: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 0) {
-                Text(verbatim: dayText)
-                    .foregroundStyle(Theme.muted)
-                    .layoutPriority(1)
-                Text(verbatim: " · ")
-                    .foregroundStyle(Theme.muted)
-                // The student's own writing, and the Category it counted toward: never translated.
-                // The title is free text the student typed, so it is the piece that gives way.
-                // Without this the date and the minutes shrink alongside it and the whole line
-                // turns into ellipses.
-                Text(verbatim: completion.titleWhenTicked)
-                    .foregroundStyle(Theme.ink)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .layoutPriority(-1)
-                if let name = completion.category?.name {
-                    Text(verbatim: "【\(name)】")
-                        .foregroundStyle(ink)
-                }
-                if let minutes = completion.minutes {
-                    Text(verbatim: " · ")
-                        .foregroundStyle(Theme.muted)
-                    Text("\(minutes)分钟")
-                        .foregroundStyle(Theme.muted)
-                        .layoutPriority(1)
-                }
-            }
-            .font(Theme.meta)
-
-            Text(verbatim: completion.note ?? "")
-                .font(Theme.serif(16))
-                .foregroundStyle(Theme.ink)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 11)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Theme.rule).frame(height: 1)
-        }
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
-        .accessibilityAddTraits(.isButton)
-    }
-
-    private var dayText: String {
-        completion.day.date().formatted(.dateTime.month().day().locale(locale))
     }
 }
 

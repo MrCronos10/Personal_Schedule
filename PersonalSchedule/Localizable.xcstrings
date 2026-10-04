@@ -2061,6 +2061,16 @@
           }
         }
       }
+    },
+    "看这一天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open that day"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
