@@ -10,6 +10,12 @@ enum CellState: Equatable, Sendable {
     case known
 }
 
+/// A cell that turned Known, with the Collection Grid section it lives in.
+struct RecentCell: Equatable, Sendable {
+    let cell: CollectionCell
+    let section: CollectionSection
+}
+
 struct CollectionCell: Equatable, Identifiable, Sendable {
     let word: String
     let state: CellState
@@ -42,6 +48,31 @@ struct CollectionLibrary {
         return try TopicLibrary(context: context).allWords().map {
             CollectionCell(word: $0.word, state: known.contains($0.word) ? .known : .notMet)
         }
+    }
+
+    /// The newest `limit` Known cells across both HSK Levels and the Topic List, oldest first, so the
+    /// strip on Today reads left to right and ends on the latest. A Word taken back leaves it.
+    func recentlyKnown(limit: Int = 20) throws -> [RecentCell] {
+        var found: [(day: Int, cell: RecentCell)] = []
+        let progress = try context.fetch(FetchDescriptor<WordProgress>(predicate: #Predicate { $0.isKnown }))
+        for row in progress {
+            guard let entry = HSKWordList.entry(for: row.word) else { continue }
+            found.append((row.knownDayNumber ?? 0, RecentCell(
+                cell: CollectionCell(word: row.word, state: .known),
+                section: entry.level == .four ? .four : .five
+            )))
+        }
+        let topicKnown = try context.fetch(FetchDescriptor<TopicWordProgress>(predicate: #Predicate { $0.isKnown }))
+        let topicWords = Set(try TopicLibrary(context: context).allWords().map(\.word))
+        for row in topicKnown where topicWords.contains(row.word) {
+            found.append((row.knownDayNumber ?? 0, RecentCell(
+                cell: CollectionCell(word: row.word, state: .known), section: .topic
+            )))
+        }
+        return found
+            .sorted { $0.day != $1.day ? $0.day < $1.day : $0.cell.cell.word < $1.cell.cell.word }
+            .suffix(limit)
+            .map(\.cell)
     }
 
     /// The Words that are Known now and were not the last time the grid was looked at: these get

@@ -137,4 +137,43 @@ struct CollectionLibraryTests {
         #expect(fresh == ["b", "c"])
         #expect(CollectionLibrary.freshlyKnown(current: ["a"], lastSeen: ["a", "b"]).isEmpty)
     }
+
+    // MARK: - The Today sliver
+
+    @Test func nothingKnownMeansNothingRecent() throws {
+        #expect(try shelf().collection.recentlyKnown().isEmpty)
+    }
+
+    @Test func recentlyKnownRunsOldestToNewestAcrossEveryList() throws {
+        let shelf = try shelf()
+        try shelf.vocabulary.markKnown("导游", on: Day(number: 20260922))
+        try shelf.topic.markKnown("堆肥", on: Day(number: 20260923))
+        try shelf.vocabulary.markKnown("厕所", on: Day(number: 20260921))
+        try shelf.vocabulary.markKnown("被子", on: Day(number: 20260924))   // HSK 5
+
+        let recent = try shelf.collection.recentlyKnown()
+        #expect(recent.map(\.cell.word) == ["厕所", "导游", "堆肥", "被子"])
+        #expect(recent.map(\.section) == [.four, .four, .topic, .five])
+        #expect(recent.allSatisfy { $0.cell.state == .known })
+    }
+
+    @Test func recentlyKnownKeepsTheNewestTwentyAndNothingElse() throws {
+        let shelf = try shelf()
+        let words = HSKWordList.words(at: .four).prefix(25).map(\.word)
+        for (offset, word) in words.enumerated() {
+            try shelf.vocabulary.markKnown(word, on: Day(number: 20260901 + offset))
+        }
+
+        let recent = try shelf.collection.recentlyKnown(limit: 20)
+        #expect(recent.count == 20)
+        #expect(recent.map(\.cell.word) == Array(words.suffix(20)))
+    }
+
+    @Test func aWordTakenBackLeavesTheSliver() throws {
+        let shelf = try shelf()
+        try shelf.vocabulary.markKnown("厕所", on: Day(number: 20260921))
+        try shelf.vocabulary.markNotKnown("厕所", on: Day(number: 20260922))
+
+        #expect(try shelf.collection.recentlyKnown().isEmpty)
+    }
 }

@@ -2051,6 +2051,16 @@
           }
         }
       }
+    },
+    "最近认识": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently known"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

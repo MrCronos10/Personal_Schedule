@@ -13,26 +13,21 @@ Vocabulary: **Collection Sliver** in [CONTEXT.md](../../../CONTEXT.md).
 [18](04-collection-grid.md),
 [19](05-four-tab-nav.md).
 
-**Status:** ready-for-agent
+**Status:** ready-for-human (tap the strip: it should open Progress at the newest cell's section)
 
 ## The rule
 
-- [ ] The Collection Sliver shows the last ~20 cells the student filled
+- [x] The Collection Sliver shows the last ~20 cells the student filled
       across all **Word Lists** and the **Topic List**, newest on the
       right. Tap opens Progress scrolled to the matching section
-- [ ] The sliver reads from the same `CollectionLibrary` as the full
+- [x] The sliver reads from the same `CollectionLibrary` as the full
       Collection Grid — never a second copy of the rule
-- [ ] The Timetable block is below the sliver (unchanged content, just
-      the new type and colour tokens from ticket 15)
-- [ ] The Daily Checklist is below the Timetable. Outstanding Actions
-      show above ticked ones (unchanged), with a one-pixel faded-ink
-      horizontal rule between rows — the notebook-page rule
-- [ ] A gear button in the top-right opens Settings as a sheet
-- [ ] A "Notes" button in the top-right opens Notes as a sheet
-- [ ] Background is flat `Theme.paperCream` (no `BackgroundView` — Today
+- [x] There is no Timetable in the app yet (no Class model), so there is no block to place; nothing was invented for it
+- [x] The Daily Checklist: outstanding Actions above ticked ones (unchanged), and it already drew a one-pixel `Theme.rule` line between rows, which is the notebook-page rule, so it is left alone
+- [x] A gear button and a notes button beside the title open Settings and Notes as sheets (done in ticket 19)
+- [x] Background is flat `Theme.paperCream` (no `BackgroundView` — Today
       is a chrome screen per the design brief)
-- [ ] A test confirms the Collection Sliver's cells match the newest 20
-      transitions in `CollectionLibrary`, in reverse chronological order
+- [x] `CollectionLibraryTests` pin `recentlyKnown`: oldest to newest across both HSK Levels and the Topic List, the newest twenty, and a Word taken back leaves it
 
 ## What is not in this ticket
 
@@ -44,3 +39,7 @@ Vocabulary: **Collection Sliver** in [CONTEXT.md](../../../CONTEXT.md).
   ticket 25.
 
 ## Comments
+
+- Red first (no `recentlyKnown`), then green; full suite passes. Today was rendered to PNG and looked at.
+- The strip is hidden until something is Known (nothing is owed), and hidden on a Today opened as a sheet from the ledger or a Note.
+- Not seen running: the tap through to Progress.

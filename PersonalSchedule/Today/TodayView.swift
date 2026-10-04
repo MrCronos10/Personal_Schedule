@@ -9,6 +9,12 @@ struct TodayView: View {
     /// The last day this screen saw as today. If the student was on it, the checklist follows to the new day after midnight.
     @State private var lastSeenToday = Day.today()
     @State private var isAddingAction = false
+    @Environment(\.modelContext) private var context
+    @Environment(AppRouter.self) private var router: AppRouter?
+    /// Watched so the strip follows a Word turning Known, wherever that happened.
+    @Query private var wordProgressRows: [WordProgress]
+    @Query private var topicProgressRows: [TopicWordProgress]
+    @State private var recent: [RecentCell] = []
     @State private var isShowingNotes = false
     @State private var isShowingSettings = false
 
@@ -22,6 +28,14 @@ struct TodayView: View {
     /// The 笔记 and 设置 doors belong to the Today tab; a Today opened as a sheet from the ledger or a
     /// Note has them off, so it can't open a Notes list from inside a Notes list.
     private let showsShortcuts: Bool
+
+    private var knownSignature: Int {
+        wordProgressRows.count { $0.isKnown } &* 31 &+ topicProgressRows.count { $0.isKnown }
+    }
+
+    private func refreshRecent() {
+        recent = (try? CollectionLibrary(context: context).recentlyKnown()) ?? []
+    }
 
     private var isToday: Bool { day == Day.today() }
     private var isChinese: Bool { locale.language.languageCode == .chinese }
@@ -75,6 +89,11 @@ struct TodayView: View {
                 }
                 .padding(.top, 14)
 
+                if showsShortcuts && !recent.isEmpty {
+                    CollectionStrip(recent: recent) { router?.showProgress(at: $0) }
+                        .padding(.top, 16)
+                }
+
                 GuidingGoalBanner()
                     .padding(.top, 16)
 
@@ -97,6 +116,8 @@ struct TodayView: View {
         .sheet(isPresented: $isShowingSettings) {
             SheetShell { SettingsView() }
         }
+        .onAppear { refreshRecent() }
+        .onChange(of: knownSignature) { refreshRecent() }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
             followToday()
         }
