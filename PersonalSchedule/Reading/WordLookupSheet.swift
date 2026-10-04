@@ -1,15 +1,36 @@
 import SwiftData
 import SwiftUI
 
-/// What a tapped word means: the word, its pinyin, its English.
+/// What a tapped word means, as a sheet: the word's content on its own ground.
+struct WordLookupSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let word: String
+    var clearedArticles: [String] = []
+
+    var body: some View {
+        // A long gloss at a large Dynamic Type size would otherwise push 我认识这个词 past the bottom
+        // of the sheet, where it can't be reached and the Word can never be marked Known.
+        ScrollView {
+            WordLookupContent(word: word, clearedArticles: clearedArticles, onClose: { dismiss() })
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(24)
+        }
+        .background(Theme.paper)
+    }
+}
+
+/// What a tapped word means: the word, its pinyin, its English. Drawn in a sheet (`WordLookupSheet`)
+/// and inline under a paragraph in the reader, so the two can never come to say different things.
 ///
 /// A word the app doesn't measure — HSK 1-3, a name, a number — gets a quiet line rather than an
 /// error. Nothing has gone wrong; there is simply nothing recorded for it (ADR 0005).
-struct WordLookupSheet: View {
-    @Environment(\.dismiss) private var dismiss
+struct WordLookupContent: View {
     @Environment(\.modelContext) private var context
 
     let word: String
+    /// Closes whatever is showing this: dismisses the sheet, or folds the inline card away.
+    let onClose: () -> Void
     /// The Articles the **Lookup** that opened this sheet just cleared, if any. Handed in rather
     /// than queried: the Lookup deletes them before this sheet can draw.
     let clearedArticles: [String]
@@ -30,9 +51,10 @@ struct WordLookupSheet: View {
     /// shows regardless of which button is underneath it by the time it renders.
     @State private var justMarkedKnown = false
 
-    init(word: String, clearedArticles: [String] = []) {
+    init(word: String, clearedArticles: [String] = [], onClose: @escaping () -> Void) {
         self.word = word
         self.clearedArticles = clearedArticles
+        self.onClose = onClose
         _progress = Query(filter: #Predicate<WordProgress> { $0.word == word })
         _sightings = Query(filter: #Predicate<CleanSighting> { $0.word == word })
     }
@@ -42,9 +64,6 @@ struct WordLookupSheet: View {
     private var isKnown: Bool { progress.first?.isKnown ?? false }
 
     var body: some View {
-        // A long gloss at a large Dynamic Type size would otherwise push 我认识这个词 past the bottom
-        // of the sheet, where it can't be reached and the Word can never be marked Known.
-        ScrollView {
         VStack(alignment: .leading, spacing: 0) {
             // Placed by the word itself rather than only by the pinyin below it, so an unmeasured
             // word — a name, a number, anything outside HSK 4/5 — can still be heard: hearing
@@ -85,7 +104,7 @@ struct WordLookupSheet: View {
                     if isKnown {
                         Button("其实不认识") {
                             try? VocabularyLibrary(context: context).markNotKnown(word)
-                            dismiss()
+                            onClose()
                         }
                         .buttonStyle(MiniButtonStyle())
                     } else {
@@ -105,7 +124,7 @@ struct WordLookupSheet: View {
                 .task(id: justMarkedKnown) {
                     guard justMarkedKnown else { return }
                     try? await Task.sleep(for: .milliseconds(700))
-                    dismiss()
+                    onClose()
                 }
             } else {
                 Text("这个词不在 HSK 4-5 里，不计入掌握。")
@@ -116,10 +135,6 @@ struct WordLookupSheet: View {
                 Spacer(minLength: 16)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .padding(24)
-        }
-        .background(Theme.paper)
         // Seeded once per Word, not on every re-render: `progress` is a live @Query, and re-seeding
         // the draft from it on every keystroke's own save would fight the cursor mid-type.
         .task(id: word) { noteDraft = progress.first?.noteText ?? "" }

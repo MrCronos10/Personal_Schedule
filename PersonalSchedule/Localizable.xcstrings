@@ -2021,6 +2021,16 @@
           }
         }
       }
+    },
+    "读伴 在想…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读伴 is thinking…"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

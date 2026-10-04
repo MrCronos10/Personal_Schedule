@@ -105,3 +105,12 @@ longer-than-needed replies.
   one `CoachMessage` with the joined whole on completion. Cancellation or a
   mid-stream failure rolls back the student's turn, the same as the earlier
   non-streaming version.
+
+## The dock replaces the 问 button (ADR 0009)
+
+The 问 button in the reader's header and the sheet it opened are gone. The Coach now lives in a
+**Coach Dock** at the bottom of the reader: one line when collapsed ("问读伴", or "读伴 在想…" while a
+reply is being written), pulled up or tapped to open the thread over about two fifths of the screen.
+The house rules above are unchanged: still inside an Article and nowhere else, still no streaks and
+nothing due. The thread stays alive while the dock is collapsed, so folding it away never cancels a
+reply that is still streaming in.

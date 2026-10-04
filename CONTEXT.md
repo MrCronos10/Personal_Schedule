@@ -137,7 +137,7 @@ A term the student added to the **Topic List** themselves — a word they met wi
 _Avoid_: My word, local word, user-added word
 
 **Reading Coach**:
-读伴: a chat sheet opened from inside an **Article** that answers the student's questions about *that* Article. Short, specific replies, with pinyin for every Chinese word it introduces. It never marks a **Word** or **Topic Word** anything, never counts messages, never says the student is "due" or should "practice more" (ADR 0008). Lives inside the reader, nowhere else.
+读伴: a chat thread in the **Coach Dock** at the bottom of an **Article** that answers the student's questions about *that* Article. Short, specific replies, with pinyin for every Chinese word it introduces. It never marks a **Word** or **Topic Word** anything, never counts messages, never says the student is "due" or should "practice more" (ADR 0008). Lives inside the reader, nowhere else.
 _Avoid_: AI tutor, assistant, chatbot
 
 **Coach Session**:

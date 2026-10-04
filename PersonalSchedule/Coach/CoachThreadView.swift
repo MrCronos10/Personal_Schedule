@@ -1,16 +1,17 @@
 import SwiftData
 import SwiftUI
 
-/// The 问 sheet opened from inside an **Article**: the student's **Coach Session** on this Article.
+/// The thread inside the **Coach Dock**: the student's **Coach Session** on this Article.
 /// See CONTEXT.md and ADR 0008.
 ///
-/// The sheet lives *inside* the reader rather than as its own tab, so the Article it is about is
-/// always the one on screen behind it. No navigation here; the one way out is to close.
-struct CoachSheetView: View {
+/// It lives *inside* the reader rather than as its own tab, so the Article it is about is always the
+/// one on screen above it. The dock owns opening and closing; this view only holds the conversation.
+struct CoachThreadView: View {
     let article: Article
+    /// True while a reply is being written, so the collapsed dock can say 读伴 is thinking.
+    @Binding var isWriting: Bool
 
     @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
 
     @State private var question = ""
@@ -28,71 +29,52 @@ struct CoachSheetView: View {
     private var apiKey: String? { CoachSecrets.apiKey() }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                contextLine
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 12) {
-                            if messages.isEmpty {
-                                emptyGreeting
-                            } else {
-                                ForEach(messages, id: \.persistentModelID) { message in
-                                    MessageBubble(message: message)
-                                        .id(message.persistentModelID)
-                                }
-                            }
-                            if !streamingText.isEmpty {
-                                StreamingBubble(text: streamingText)
-                                    .id("streaming")
-                            } else if isSending {
-                                Text("…")
-                                    .font(Theme.serif(22))
-                                    .foregroundStyle(Theme.muted)
-                                    .padding(.horizontal, 12)
-                                    .id("streaming")
-                            }
-                            if let errorText {
-                                Text(errorText)
-                                    .font(Theme.meta)
-                                    .foregroundStyle(Theme.error)
-                                    .padding(.horizontal, 12)
+        VStack(spacing: 0) {
+            contextLine
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        if messages.isEmpty {
+                            emptyGreeting
+                        } else {
+                            ForEach(messages, id: \.persistentModelID) { message in
+                                MessageBubble(message: message)
+                                    .id(message.persistentModelID)
                             }
                         }
-                        .padding(.vertical, 12)
-                    }
-                    .onChange(of: messages.count) { _, _ in
-                        scrollToBottom(proxy: proxy)
-                    }
-                    .onChange(of: streamingText) { _, _ in
-                        // Follow the live reply so the newest text stays in view as it writes.
-                        withAnimation(.easeOut(duration: 0.1)) {
-                            proxy.scrollTo("streaming", anchor: .bottom)
+                        if !streamingText.isEmpty {
+                            StreamingBubble(text: streamingText)
+                                .id("streaming")
+                        } else if isSending {
+                            Text("…")
+                                .font(Theme.serif(22))
+                                .foregroundStyle(Theme.muted)
+                                .padding(.horizontal, 12)
+                                .id("streaming")
+                        }
+                        if let errorText {
+                            Text(errorText)
+                                .font(Theme.meta)
+                                .foregroundStyle(Theme.error)
+                                .padding(.horizontal, 12)
                         }
                     }
+                    .padding(.vertical, 12)
                 }
-                composer
-            }
-            .background(Theme.paper)
-            .navigationTitle(isChinese ? "问读伴" : "Ask 读伴")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(isChinese ? "关闭" : "Close") { dismiss() }
+                .onChange(of: messages.count) { _, _ in
+                    scrollToBottom(proxy: proxy)
                 }
-                ToolbarItem(placement: .primaryAction) {
-                    if !messages.isEmpty {
-                        Menu {
-                            Button(role: .destructive) { clearThread() } label: {
-                                Label(isChinese ? "清除对话" : "Clear chat", systemImage: "trash")
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                        }
+                .onChange(of: streamingText) { _, _ in
+                    // Follow the live reply so the newest text stays in view as it writes.
+                    withAnimation(.easeOut(duration: 0.1)) {
+                        proxy.scrollTo("streaming", anchor: .bottom)
                     }
                 }
             }
+            composer
         }
+        .background(Theme.paper)
+        .onChange(of: isSending) { _, sending in isWriting = sending }
         .task { reload() }
     }
 
@@ -101,10 +83,18 @@ struct CoachSheetView: View {
             Text(isChinese ? "关于这篇：" : "About this Article:")
                 .font(Theme.meta)
                 .foregroundStyle(Theme.muted)
-            Text(verbatim: article.title)
-                .font(Theme.serif(16))
-                .foregroundStyle(Theme.ink)
-                .lineLimit(1)
+            HStack {
+                Text(verbatim: article.title)
+                    .font(Theme.serif(16))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                Spacer()
+                if !messages.isEmpty {
+                    Button(isChinese ? "清除对话" : "Clear chat", role: .destructive) { clearThread() }
+                        .font(Theme.meta)
+                        .disabled(isSending)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
