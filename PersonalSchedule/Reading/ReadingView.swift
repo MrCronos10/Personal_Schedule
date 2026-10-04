@@ -72,8 +72,11 @@ struct ReadingView: View {
                 DailyNewWordsView(words: dailyWords, isServedLevelComplete: servedLevelIsComplete)
                     .padding(.top, 10)
 
-                stubbornWordsLink
-                    .padding(.top, 14)
+                HStack(spacing: 20) {
+                    stubbornWordsLink
+                    topicListLink
+                }
+                .padding(.top, 14)
 
                 SectionCaption(title: "我的文章")
 
@@ -172,6 +175,25 @@ struct ReadingView: View {
         } label: {
             HStack(spacing: 4) {
                 Text("难词")
+                Image(systemName: "chevron.right")
+            }
+            .font(Theme.label)
+            .tracking(1.4)
+            .foregroundStyle(Theme.muted)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// The **Topic List** entry point: 农业词 sits beside 难词 rather than at the tab bar's root.
+    /// iPhones show only four tabs plus a "More" bucket, so a sixth top-level tab (as ticket 11
+    /// first placed it) hid 设置 behind "More" and the Reading Coach's API key with it (ADR 0007
+    /// update). The Topic List is a word list, so it belongs where the HSK word lists already are.
+    private var topicListLink: some View {
+        NavigationLink {
+            TopicListView()
+        } label: {
+            HStack(spacing: 4) {
+                Text("农业词")
                 Image(systemName: "chevron.right")
             }
             .font(Theme.label)

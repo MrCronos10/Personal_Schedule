@@ -12,6 +12,16 @@
         }
       }
     },
+    "…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "…"
+          }
+        }
+      }
+    },
     "“%@”会被删除，不能恢复。": {
       "localizations": {
         "en": {
@@ -142,6 +152,26 @@
         }
       }
     },
+    "▍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "▍"
+          }
+        }
+      }
+    },
+    "About this Article:": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About this Article:"
+          }
+        }
+      }
+    },
     "Add": {
       "localizations": {
         "en": {
@@ -162,6 +192,36 @@
         }
       }
     },
+    "Answer in": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answer in"
+          }
+        }
+      }
+    },
+    "Ask 读伴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask 读伴"
+          }
+        }
+      }
+    },
+    "Ask 读伴 anything about this Article.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask 读伴 anything about this Article."
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "en": {
@@ -178,6 +238,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chinese"
+          }
+        }
+      }
+    },
+    "Clear chat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear chat"
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
           }
         }
       }
@@ -222,12 +302,32 @@
         }
       }
     },
+    "key 已保存，输入新的覆盖": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key saved; type a new one to replace it"
+          }
+        }
+      }
+    },
     "mine": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "mine"
+          }
+        }
+      }
+    },
+    "No Anthropic API key yet. Open 设置 and paste one.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Anthropic API key yet. Open 设置 and paste one."
           }
         }
       }
@@ -279,6 +379,36 @@
         }
       }
     },
+    "Send": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send"
+          }
+        }
+      }
+    },
+    "sk-ant-…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sk-ant-…"
+          }
+        }
+      }
+    },
+    "Your question": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your question"
+          }
+        }
+      }
+    },
     "一次": {
       "localizations": {
         "en": {
@@ -305,6 +435,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Don't record it"
+          }
+        }
+      }
+    },
+    "中/EN": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中/EN"
           }
         }
       }
@@ -399,6 +539,16 @@
         }
       }
     },
+    "你的问题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your question"
+          }
+        }
+      }
+    },
     "保存": {
       "localizations": {
         "en": {
@@ -455,6 +605,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Paste an article first"
+          }
+        }
+      }
+    },
+    "关于这篇：": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About this Article:"
+          }
+        }
+      }
+    },
+    "关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
           }
         }
       }
@@ -559,6 +729,16 @@
         }
       }
     },
+    "发送": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send"
+          }
+        }
+      }
+    },
     "取消": {
       "localizations": {
         "en": {
@@ -589,6 +769,26 @@
         }
       }
     },
+    "只中文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chinese only"
+          }
+        }
+      }
+    },
+    "只英文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English only"
+          }
+        }
+      }
+    },
     "名称不能为空": {
       "localizations": {
         "en": {
@@ -605,6 +805,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Next day"
+          }
+        }
+      }
+    },
+    "回答语言": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answer in"
           }
         }
       }
@@ -1201,6 +1411,26 @@
         }
       }
     },
+    "清除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
+    "清除对话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear chat"
+          }
+        }
+      }
+    },
     "目标要大于零": {
       "localizations": {
         "en": {
@@ -1411,6 +1641,46 @@
         }
       }
     },
+    "读伴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读伴"
+          }
+        }
+      }
+    },
+    "读伴 never marks words Known and never says you're behind.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读伴 never marks words Known and never says you're behind."
+          }
+        }
+      }
+    },
+    "读伴不会给你的词打钩，也不会说你哪天没来。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读伴 never marks words Known and never says you're behind."
+          }
+        }
+      }
+    },
+    "读伴需要一个 Anthropic API key。它只存在手机里（Keychain），不会随 iCloud 备份。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读伴 needs an Anthropic API key. It lives on this phone only (Keychain), never in iCloud backups."
+          }
+        }
+      }
+    },
     "读完": {
       "localizations": {
         "en": {
@@ -1447,6 +1717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No articles yet"
+          }
+        }
+      }
+    },
+    "还没有添加 Anthropic API key。打开 设置 粘贴一个。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Anthropic API key yet. Open 设置 and paste one."
           }
         }
       }
@@ -1658,6 +1938,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Guiding goal"
+          }
+        }
+      }
+    },
+    "问": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask"
+          }
+        }
+      }
+    },
+    "问读伴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask 读伴"
+          }
+        }
+      }
+    },
+    "问读伴一个关于这篇文章的问题。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask 读伴 anything about this Article."
           }
         }
       }

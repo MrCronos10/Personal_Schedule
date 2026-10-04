@@ -117,7 +117,7 @@ A fixed set of Chinese words at one HSK level, bundled with the app and never ed
 _Avoid_: Dictionary, vocabulary, deck, syllabus
 
 **Topic List**:
-A second word list sitting beside the HSK **Word Lists**: 125 Chinese terms the student needs for their family's manure-to-organic-fertilizer business in Cambodia, split into six **Topic Groups**. The Topic List has its own meter — how many terms are **Topic Known**, out of 125 (plus any **Custom Topic Words**) — and never mixes with the HSK **Level** numbers (ADR 0007). A term on both lists, such as 农业, keeps independent state in each.
+A second word list sitting beside the HSK **Word Lists**: 125 Chinese terms the student needs for their family's manure-to-organic-fertilizer business in Cambodia, split into six **Topic Groups**. The Topic List has its own meter — how many terms are **Topic Known**, out of 125 (plus any **Custom Topic Words**) — and never mixes with the HSK **Level** numbers (ADR 0007). A term on both lists, such as 农业, keeps independent state in each. Reached from the 阅读 tab (农业词), beside 难词, so vocabulary lives with vocabulary (ADR 0007).
 _Avoid_: Custom word list, second deck, business HSK
 
 **Topic Word**:

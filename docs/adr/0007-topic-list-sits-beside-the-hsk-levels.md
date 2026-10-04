@@ -74,10 +74,24 @@ they put away themselves.
 - The schema grows by two tables: `TopicWordProgress` (one row per Known term)
   and `TopicCustomWord` (one per added term). Both have defaults on every
   field, so turning iCloud on later needs no migration.
-- A new tab, 农业词, sits between 阅读 and 笔记. It is the only place the Topic
-  List is shown.
 - The HSK code is untouched. The two libraries have no coupling; one can be
   rewritten without the other.
 - The student never writes the HSK word 农业 twice: that word has a Topic row
   and an HSK row, each with its own history. Deliberately parallel, so the
   rule they are each measured by stays simple.
+
+## Placement (ticket 14)
+
+Ticket 11 first put 农业词 at the tab bar's root, between 阅读 and 笔记. That
+pushed the app to six top-level tabs, and iPhone's TabView shows only four
+plus a "More" bucket — so both 进度 and 设置 ended up hidden behind "More".
+The Reading Coach's API key field (ADR 0008) lives in 设置, and a student who
+cannot find 设置 cannot enable the Coach, so this read as the Coach being
+broken.
+
+The fix: 农业词 is reachable from a `NavigationLink` inside the 阅读 tab,
+next to 难词. The Topic List is a word list, and the HSK word lists already
+live inside 阅读, so this groups vocabulary with vocabulary. The tab bar is
+back to the original five (今天, 阅读, 笔记, 进度, 设置) with nothing in
+"More". No library or model change was needed; `TopicListView` is unchanged
+and still owns the whole screen it draws.
