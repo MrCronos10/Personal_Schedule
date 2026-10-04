@@ -52,3 +52,4 @@ Vocabulary: **Coach Dock** in [CONTEXT.md](../../../CONTEXT.md).
 - `CoachSheetView` became `CoachThreadView` (no NavigationStack, a 清除对话 button in its context line); the dock keeps it alive at zero height when collapsed so a streaming reply is not cancelled.
 - The progress bar reads full for an Article that fits on the screen (nothing to scroll).
 - Not seen running: dragging the dock, scroll progress, the card dropping in.
+- A Word looked up in this Article gets a darker (faded-ink) underline than an unlooked measured Word; the reader redraws after each tap.

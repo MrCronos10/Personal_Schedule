@@ -229,6 +229,7 @@ struct ArticleReaderView: View {
             inlineLookup = InlineLookup(paragraph: paragraph, word: LookedUpWord(text: word, clearedArticles: cleared))
         }
         try? library.lookUp(word, in: article)
+        paragraphs = render()
         return .handled
     }
 
@@ -312,6 +313,9 @@ struct ArticleReaderView: View {
     private func render() -> [ReaderParagraph] {
         let text = article.text
         let known = knownWords
+        // Words already looked up in this Article get a darker rule: the same "seen" faded ink the
+        // Collection Grid uses, so the two screens speak one language.
+        let lookedUp = Set(((try? VocabularyLibrary(context: context).lookups(in: article)) ?? []).map(\.word))
         return ArticleParagraphs.ranges(in: text).enumerated().map { index, line in
             var out = AttributedString()
             var cursor = line.lowerBound
@@ -324,7 +328,9 @@ struct ArticleReaderView: View {
                 piece.link = WordLink.url(for: word.text)
                 // A Word already Known is not new any more, so it loses its mark.
                 if word.isMeasured && !known.contains(word.text) {
-                    piece.underlineStyle = Text.LineStyle(pattern: .solid, color: Theme.rule)
+                    piece.underlineStyle = Text.LineStyle(
+                        pattern: .solid, color: lookedUp.contains(word.text) ? Theme.muted : Theme.rule
+                    )
                 }
                 out.append(piece)
                 cursor = word.range.upperBound
