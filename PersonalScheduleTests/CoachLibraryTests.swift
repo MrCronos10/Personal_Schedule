@@ -8,16 +8,23 @@ import Testing
 @MainActor
 struct CoachLibraryTests {
     /// Captures the last prompt the library sent, and hands back whatever the test wants to come
-    /// back from the model. No network, no NaturalLanguage calls — the test is the model's reality.
+    /// back from the model. The real client streams Server-Sent Events; the fake yields its chunks
+    /// one at a time so a test can assert what the Library did with each piece as it arrived.
     final class FakeCoachClient: CoachClient, @unchecked Sendable {
         var lastPrompt: CoachPrompt?
-        var reply: String = "好的 (hǎo de) · OK."
+        var chunks: [String] = ["好的 (hǎo de) · OK."]
         var errorToThrow: Error?
 
-        func reply(to prompt: CoachPrompt) async throws -> String {
+        func streamReply(to prompt: CoachPrompt) -> AsyncThrowingStream<String, Error> {
             lastPrompt = prompt
-            if let errorToThrow { throw errorToThrow }
-            return reply
+            return AsyncThrowingStream { continuation in
+                if let errorToThrow {
+                    continuation.finish(throwing: errorToThrow)
+                    return
+                }
+                for chunk in chunks { continuation.yield(chunk) }
+                continuation.finish()
+            }
         }
     }
 
@@ -46,14 +53,26 @@ struct CoachLibraryTests {
     @Test func askingSavesTheQuestionAndTheReply() async throws {
         let setup = try setUp()
         let article = try ArticleLibrary(context: setup.context).add(text: "鸡粪堆肥\n鸡粪和稻壳搅拌。")
-        setup.fake.reply = "鸡粪 (jī fèn) means chicken manure."
+        setup.fake.chunks = ["鸡粪 (jī fèn) ", "means chicken manure."]
         _ = try await setup.library.ask("什么是 鸡粪?", about: article, language: .english)
         let messages = try setup.library.messages(for: article)
         #expect(messages.count == 2)
         #expect(messages[0].role == .user)
         #expect(messages[0].text == "什么是 鸡粪?")
         #expect(messages[1].role == .coach)
-        #expect(messages[1].text.contains("鸡粪"))
+        #expect(messages[1].text == "鸡粪 (jī fèn) means chicken manure.",
+                "chunks must be joined in order into the saved reply")
+    }
+
+    @Test func chunksArriveAtTheViewAsTheyStream() async throws {
+        let setup = try setUp()
+        let article = try ArticleLibrary(context: setup.context).add(text: "示例\n一句话。")
+        setup.fake.chunks = ["你", "好", "。"]
+        var received: [String] = []
+        _ = try await setup.library.ask("打个招呼", about: article, language: .chinese) { chunk in
+            received.append(chunk)
+        }
+        #expect(received == ["你", "好", "。"], "each chunk must reach the view in order")
     }
 
     @Test func anEmptyQuestionIsRefused() async throws {
@@ -152,7 +171,7 @@ struct CoachLibraryTests {
     @Test func theCoachNeverWritesAKnownOrASightingOrALookup() async throws {
         let setup = try setUp()
         let article = try ArticleLibrary(context: setup.context).add(text: "示例\n鸡粪和稻壳。")
-        setup.fake.reply = "鸡粪 (jī fèn) means chicken manure. 稻壳 (dào ké) is rice husk."
+        setup.fake.chunks = ["鸡粪 (jī fèn) means chicken manure. 稻壳 (dào ké) is rice husk."]
         _ = try await setup.library.ask("解释这两个词", about: article, language: .both)
 
         let known = try setup.context.fetch(FetchDescriptor<WordProgress>(predicate: #Predicate { $0.isKnown }))

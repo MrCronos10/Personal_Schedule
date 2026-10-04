@@ -18,6 +18,10 @@ struct CoachSheetView: View {
     @State private var messages: [CoachMessage] = []
     @State private var isSending = false
     @State private var errorText: String?
+    /// What the Coach has streamed back for the question in flight. Grows as chunks arrive; cleared
+    /// once the final message is saved and `reload()` has picked it up, so the live bubble doesn't
+    /// double with the stored one.
+    @State private var streamingText: String = ""
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
@@ -38,11 +42,15 @@ struct CoachSheetView: View {
                                         .id(message.persistentModelID)
                                 }
                             }
-                            if isSending {
+                            if !streamingText.isEmpty {
+                                StreamingBubble(text: streamingText)
+                                    .id("streaming")
+                            } else if isSending {
                                 Text("…")
                                     .font(Theme.serif(22))
                                     .foregroundStyle(Theme.muted)
                                     .padding(.horizontal, 12)
+                                    .id("streaming")
                             }
                             if let errorText {
                                 Text(errorText)
@@ -55,6 +63,12 @@ struct CoachSheetView: View {
                     }
                     .onChange(of: messages.count) { _, _ in
                         scrollToBottom(proxy: proxy)
+                    }
+                    .onChange(of: streamingText) { _, _ in
+                        // Follow the live reply so the newest text stays in view as it writes.
+                        withAnimation(.easeOut(duration: 0.1)) {
+                            proxy.scrollTo("streaming", anchor: .bottom)
+                        }
                     }
                 }
                 composer
@@ -168,15 +182,21 @@ struct CoachSheetView: View {
         self.question = ""
         isSending = true
         errorText = nil
+        streamingText = ""
         let library = CoachLibrary(context: context, client: makeClient())
         Task { @MainActor in
             do {
-                _ = try await library.ask(question, about: article, language: language)
+                _ = try await library.ask(question, about: article, language: language) { chunk in
+                    streamingText += chunk
+                }
                 reload()
             } catch {
                 errorText = error.localizedDescription
                 reload()
             }
+            // Clear the live bubble only after the stored message has been reloaded, so the newest
+            // reply never flickers between the live bubble and the saved one.
+            streamingText = ""
             isSending = false
         }
     }
@@ -192,6 +212,29 @@ struct CoachSheetView: View {
         withAnimation(.easeOut(duration: 0.2)) {
             proxy.scrollTo(last.persistentModelID, anchor: .bottom)
         }
+    }
+}
+
+/// The live Coach reply while it streams in. Mirrors `MessageBubble`'s coach side so it reads as
+/// the same object; a cursor at the end makes the writing visible rather than looking frozen.
+private struct StreamingBubble: View {
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
+                (Text(verbatim: text) + Text("▍").foregroundColor(Theme.muted))
+                    .font(Theme.serif(15))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Theme.cardHigh)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 40)
+        }
+        .padding(.horizontal, 12)
     }
 }
 

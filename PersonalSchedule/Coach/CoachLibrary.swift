@@ -26,9 +26,14 @@ struct CoachLibrary {
     /// Two rows are written: the student's turn, then the Coach's reply, in order. The call throws
     /// if the client fails and the user turn is rolled back — a question that never got an answer
     /// is kept out of the thread rather than kept as a dangling line that will never be answered.
+    ///
+    /// `onChunk` receives each piece of the reply as it streams in, so the sheet can show the reply
+    /// building up live rather than appearing all at once. The final CoachMessage is saved with the
+    /// joined whole; a view that only reloads at the end still sees the complete reply.
     @discardableResult
     func ask(_ question: String, about article: Article, language: CoachLanguage,
-             on day: Day = Day.today()) async throws -> CoachMessage {
+             on day: Day = Day.today(),
+             onChunk: ((String) -> Void)? = nil) async throws -> CoachMessage {
         let trimmed = question.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw CoachLibraryError.emptyQuestion }
 
@@ -39,15 +44,21 @@ struct CoachLibrary {
         let prompt = try buildPrompt(for: article, latest: trimmed, language: language)
 
         do {
-            let reply = try await client.reply(to: prompt)
-            let coachMessage = CoachMessage(role: .coach, text: reply, article: article,
+            var reply = ""
+            for try await chunk in client.streamReply(to: prompt) {
+                reply += chunk
+                onChunk?(chunk)
+            }
+            let trimmedReply = reply.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedReply.isEmpty else { throw CoachClientError.malformedResponse }
+            let coachMessage = CoachMessage(role: .coach, text: trimmedReply, article: article,
                                             language: language, day: day)
             context.insert(coachMessage)
             try context.save()
             return coachMessage
         } catch {
-            // The question never got an answer: drop the user row so the thread doesn't carry an
-            // unanswered line that will stay that way forever.
+            // The question never got an answer, or the answer came back empty: drop the user row so
+            // the thread doesn't carry an unanswered line that will stay that way forever.
             context.delete(userMessage)
             try? context.save()
             throw error

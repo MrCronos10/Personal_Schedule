@@ -81,3 +81,27 @@ library or the sheet.
 - The Coach is only useful when the student is online and has the API key
   set. Both are the student's own problem to notice; the sheet says what the
   blocker is rather than silently refusing to answer.
+
+## Streaming (ticket 13)
+
+The reply streams through Anthropic's Server-Sent Events: the Coach returns
+one chunk of text at a time, the sheet shows them as they arrive, and the
+final whole is saved as one `CoachMessage` when the stream ends. Watching
+text appear is the point — a blank sheet with a spinner for ten seconds
+reads as broken, and a chatbot that only arrives all-at-once encourages
+longer-than-needed replies.
+
+- `CoachClient.streamReply(to:)` returns an `AsyncThrowingStream<String, Error>`.
+  Each yielded string is one piece, in order; the client guarantees nothing
+  about chunk size.
+- `AnthropicCoachClient` posts with `stream: true` and uses
+  `URLSession.bytes(for:).lines`, pulling `data:` lines from the SSE stream
+  and decoding each as one event. Only `content_block_delta` with a
+  `text_delta` contributes to the reply; `message_start`, `ping` and
+  `message_stop` are ignored.
+- The parser is pulled out as `AnthropicCoachClient.textDelta(from:)` so a
+  unit test can hand it one line at a time with no URLSession involved.
+- `CoachLibrary.ask(…, onChunk:)` forwards each chunk to the sheet and saves
+  one `CoachMessage` with the joined whole on completion. Cancellation or a
+  mid-stream failure rolls back the student's turn, the same as the earlier
+  non-streaming version.

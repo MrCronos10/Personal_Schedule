@@ -50,11 +50,12 @@ struct ArticleView: Equatable, Sendable {
 /// What the Coach uses to talk to a model. One method, so a test fake and the real Anthropic client
 /// share a shape. See ADR 0008.
 ///
-/// `nonisolated` is deliberate: the Coach's library runs on the main actor but the request itself
-/// can be awaited from a background task without round-tripping to main, which keeps the UI free
-/// while a reply arrives.
+/// Streams rather than returns one whole reply: the student sees text appear as the model writes
+/// it, instead of waiting on a blank sheet. Each yielded value is one piece of the reply, in order;
+/// joining them is the whole reply. The library both saves the joined whole and hands each piece
+/// to the sheet as it arrives.
 protocol CoachClient: Sendable {
-    func reply(to prompt: CoachPrompt) async throws -> String
+    func streamReply(to prompt: CoachPrompt) -> AsyncThrowingStream<String, Error>
 }
 
 enum CoachClientError: LocalizedError, Equatable {
@@ -98,54 +99,101 @@ struct AnthropicCoachClient: CoachClient {
         self.urlSession = urlSession
     }
 
-    func reply(to prompt: CoachPrompt) async throws -> String {
-        guard !apiKey.isEmpty else { throw CoachClientError.missingAPIKey }
+    func streamReply(to prompt: CoachPrompt) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            guard !apiKey.isEmpty else {
+                continuation.finish(throwing: CoachClientError.missingAPIKey)
+                return
+            }
+            let request: URLRequest
+            do {
+                request = try buildRequest(for: prompt)
+            } catch {
+                continuation.finish(throwing: CoachClientError.transport(error.localizedDescription))
+                return
+            }
+            let task = Task { [urlSession] in
+                do {
+                    let (bytes, response) = try await urlSession.bytes(for: request)
+                    guard let http = response as? HTTPURLResponse else {
+                        throw CoachClientError.malformedResponse
+                    }
+                    guard (200..<300).contains(http.statusCode) else {
+                        // On an error status Anthropic sends a short JSON body. Reading the body
+                        // off the byte stream itself keeps this to one request.
+                        var buffer = Data()
+                        for try await byte in bytes { buffer.append(byte) }
+                        throw CoachClientError.api(status: http.statusCode,
+                                                   body: String(data: buffer, encoding: .utf8) ?? "")
+                    }
+                    var sawAnyText = false
+                    for try await line in bytes.lines {
+                        // Server-Sent Events: event names and empty lines are structure; the data
+                        // lines carry one JSON object each (see Anthropic's streaming docs).
+                        guard line.hasPrefix("data:") else { continue }
+                        let payload = line.dropFirst("data:".count).trimmingCharacters(in: .whitespaces)
+                        guard !payload.isEmpty else { continue }
+                        if let text = Self.textDelta(from: payload), !text.isEmpty {
+                            sawAnyText = true
+                            continuation.yield(text)
+                        }
+                    }
+                    if sawAnyText {
+                        continuation.finish()
+                    } else {
+                        continuation.finish(throwing: CoachClientError.malformedResponse)
+                    }
+                } catch let error as CoachClientError {
+                    continuation.finish(throwing: error)
+                } catch is CancellationError {
+                    continuation.finish(throwing: CancellationError())
+                } catch {
+                    continuation.finish(throwing: CoachClientError.transport(error.localizedDescription))
+                }
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
 
+    private func buildRequest(for prompt: CoachPrompt) throws -> URLRequest {
         let body = AnthropicRequest(
             model: Self.model,
             maxTokens: Self.maxTokens,
+            stream: true,
             system: CoachPromptBuilder.systemPrompt(for: prompt),
             messages: prompt.history.map { AnthropicRequest.Message(role: $0.role.rawValue, content: $0.text) }
         )
-
         var request = URLRequest(url: Self.endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue(Self.anthropicVersion, forHTTPHeaderField: "anthropic-version")
         request.httpBody = try JSONEncoder().encode(body)
+        return request
+    }
 
-        let data: Data, response: URLResponse
-        do {
-            (data, response) = try await urlSession.data(for: request)
-        } catch {
-            throw CoachClientError.transport(error.localizedDescription)
-        }
-        guard let http = response as? HTTPURLResponse else { throw CoachClientError.malformedResponse }
-        guard (200..<300).contains(http.statusCode) else {
-            throw CoachClientError.api(status: http.statusCode,
-                                       body: String(data: data, encoding: .utf8) ?? "")
-        }
-        let decoded: AnthropicResponse
-        do {
-            decoded = try JSONDecoder().decode(AnthropicResponse.self, from: data)
-        } catch {
-            throw CoachClientError.malformedResponse
-        }
-        let text = decoded.content.compactMap { $0.text }.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { throw CoachClientError.malformedResponse }
-        return text
+    /// Pulls one text piece out of an SSE `data:` line, or nil for every other event the stream
+    /// carries (message_start, content_block_start, ping, message_stop…). Separate so a unit test
+    /// can hand it a known payload and assert the result without any URLSession at all.
+    static func textDelta(from payload: String) -> String? {
+        guard let data = payload.data(using: .utf8) else { return nil }
+        guard let event = try? JSONDecoder().decode(SSEEvent.self, from: data) else { return nil }
+        guard event.type == "content_block_delta" else { return nil }
+        guard event.delta?.type == "text_delta" else { return nil }
+        return event.delta?.text
     }
 
     private struct AnthropicRequest: Encodable {
         let model: String
         let maxTokens: Int
+        let stream: Bool
         let system: String
         let messages: [Message]
 
         enum CodingKeys: String, CodingKey {
             case model
             case maxTokens = "max_tokens"
+            case stream
             case system
             case messages
         }
@@ -156,10 +204,11 @@ struct AnthropicCoachClient: CoachClient {
         }
     }
 
-    private struct AnthropicResponse: Decodable {
-        let content: [Block]
-        struct Block: Decodable {
-            let type: String
+    struct SSEEvent: Decodable {
+        let type: String
+        let delta: Delta?
+        struct Delta: Decodable {
+            let type: String?
             let text: String?
         }
     }
