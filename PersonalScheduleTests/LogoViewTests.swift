@@ -19,4 +19,13 @@ struct LogoViewTests {
         #expect(dark.size == CGSize(width: 128, height: 128))
         #expect(light.pngData() != dark.pngData())
     }
+
+    /// The dashed cross and the 日 chop show only above 40 pt (brief: "At ≤ 40 pt drop the dashed
+    /// cross and the chop"). At small sizes the mark is just 读 in its box.
+    @Test func detailsShowOnlyAboveFortyPoints() {
+        #expect(LogoView.showsDetails(at: 128))
+        #expect(LogoView.showsDetails(at: 41))
+        #expect(!LogoView.showsDetails(at: 40))
+        #expect(!LogoView.showsDetails(at: 24))
+    }
 }
