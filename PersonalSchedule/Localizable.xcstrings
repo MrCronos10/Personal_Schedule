@@ -2185,6 +2185,16 @@
           }
         }
       }
+    },
+    "个快认识了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nearly known"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

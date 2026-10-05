@@ -287,12 +287,32 @@ struct VocabularyLibrary {
         return try distinctSightingArticleCount(of: word) == Self.sightingsForKnown - 1
     }
 
-    /// The near-Known Words among the HSK 4/5 Words in `text`, in one pass — what the reader asks for
-    /// once to mark the Article it is drawing, rather than testing each Word on screen.
-    func nearKnownWords(in text: String) throws -> Set<String> {
+    /// The near-Known Words among `words` — what the reader asks for once to mark the Article it is
+    /// drawing. Takes the Words it already has (from the reader's cached segmentation) and resolves
+    /// them in two grouped fetches, the shape `bank` uses: asking the store per Word would be hundreds
+    /// of queries on a hot redraw path.
+    func nearKnownWords(among words: [String]) throws -> Set<String> {
+        let wanted = Array(Set(words))
+        guard !wanted.isEmpty else { return [] }
+
+        let known = Set(
+            try context.fetch(
+                FetchDescriptor<WordProgress>(
+                    predicate: #Predicate { wanted.contains($0.word) && $0.isKnown }
+                )
+            ).map(\.word)
+        )
+        let sightingsByWord = Dictionary(
+            grouping: try context.fetch(
+                FetchDescriptor<CleanSighting>(predicate: #Predicate { wanted.contains($0.word) })
+            ),
+            by: \.word
+        )
+
         var result: Set<String> = []
-        for entry in Self.hskWords(in: text) where try isNearKnown(entry.word) {
-            result.insert(entry.word)
+        for word in wanted where !known.contains(word) {
+            let articles = Set((sightingsByWord[word] ?? []).compactMap { $0.article?.persistentModelID })
+            if articles.count == Self.sightingsForKnown - 1 { result.insert(word) }
         }
         return result
     }

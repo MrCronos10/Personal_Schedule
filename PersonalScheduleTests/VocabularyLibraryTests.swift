@@ -228,12 +228,14 @@ struct VocabularyLibraryTests {
         #expect(try !library().isNearKnown("厕所"))
     }
 
-    /// The reader asks once for all the near-Known Words in the Article it is drawing.
-    @Test func nearKnownWordsInAnArticleAreReturnedTogether() throws {
+    /// The reader asks once for all the near-Known Words among the measured Words it already holds.
+    /// Built from an explicit Word list, not a sentence read by eye (AGENTS.md).
+    @Test func nearKnownWordsAmongAListAreReturnedTogether() throws {
         let shelf = try library()
         try giveSightings(2, of: "厕所", in: shelf)   // near Known
         try giveSightings(1, of: "被子", in: shelf)   // only one
-        let near = try shelf.nearKnownWords(in: "厕所很干净，被子很软。")
+        // Both are measured; only the one with two sightings is near Known.
+        let near = try shelf.nearKnownWords(among: ["厕所", "被子"])
         #expect(near == ["厕所"])
     }
 

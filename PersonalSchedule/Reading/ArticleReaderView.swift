@@ -34,6 +34,9 @@ struct ArticleReaderView: View {
     /// tokenizer over a whole 微信 article each time a tap wrote a row and invalidated the query.
     @State private var segmented: [SegmentedWord] = []
     @State private var paragraphs: [ReaderParagraph] = []
+    /// How many Words in the Article are one Clean Sighting from Known, from `nearKnownWords(in:)`.
+    /// Shown in the meta row and marked with red dots in the text; the screen never recomputes the rule.
+    @State private var nearKnownCount = 0
     /// What the last 读完 moved, shown quietly under the button. Ticket 17 replaces this with the
     /// Tick sheet; the line stays, because it is the only place the student is told what changed.
     @State private var banked: VocabularyLibrary.BankResult?
@@ -57,12 +60,19 @@ struct ArticleReaderView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: 6) {
-                    HStack(spacing: 0) {
-                        if let source = article.source {
-                            Text(verbatim: source)
-                            Text(verbatim: " · ")
-                        }
-                        Text(verbatim: importedDayText)
+                    if let source = article.source {
+                        Text(verbatim: source)
+                            .font(Theme.label)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(Theme.cardHigh)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
+                    Text(verbatim: importedDayText)
+                    if nearKnownCount > 0 {
+                        // Ties to the red dots in the text: these are the Words the next clean reading banks.
+                        (Text(verbatim: "· \(nearKnownCount) ") + Text("个快认识了"))
+                            .foregroundStyle(Theme.red)
                     }
                     Spacer()
                     // One control for the whole Article, and only one: a speaker on every sentence
@@ -72,7 +82,7 @@ struct ArticleReaderView: View {
                 }
                 .font(Theme.meta)
                 .foregroundStyle(Theme.muted)
-                .padding(.top, 6)
+                .padding(.top, 8)
 
                 VStack(alignment: .leading, spacing: 14) {
                     ForEach(paragraphs) { paragraph in
@@ -341,7 +351,13 @@ struct ArticleReaderView: View {
         let known = knownWords
         // Words already looked up in this Article get a darker rule: the same "seen" faded ink the
         // Collection Grid uses, so the two screens speak one language.
-        let lookedUp = Set(((try? VocabularyLibrary(context: context).lookups(in: article)) ?? []).map(\.word))
+        let lib = VocabularyLibrary(context: context)
+        let lookedUp = Set(((try? lib.lookups(in: article)) ?? []).map(\.word))
+        // Near-Known Words (one Clean Sighting away) carry red dots. The rule lives in the library; the
+        // screen passes the Words it already has from `segmented`, so the tokenizer never re-runs here.
+        let measuredWords = segmented.compactMap { $0.entry?.word }
+        let near = (try? lib.nearKnownWords(among: measuredWords)) ?? []
+        nearKnownCount = near.count
         // Words and paragraphs both run in text order, so one moving index serves every paragraph
         // instead of scanning all the words again for each.
         var next = 0
@@ -358,11 +374,17 @@ struct ArticleReaderView: View {
                 var piece = AttributedString(word.text)
                 piece.foregroundColor = Theme.ink
                 piece.link = WordLink.url(for: word.text)
-                // A Word already Known is not new any more, so it loses its mark.
+                // A Word already Known is not new any more, so it loses its mark. Otherwise: a looked-up
+                // Word gets a faded dotted rule, a near-Known Word red dots (one sighting away), and
+                // every other measured Word the plain grey rule.
                 if word.isMeasured && !known.contains(word.text) {
-                    piece.underlineStyle = Text.LineStyle(
-                        pattern: .solid, color: lookedUp.contains(word.text) ? Theme.muted : Theme.rule
-                    )
+                    if lookedUp.contains(word.text) {
+                        piece.underlineStyle = Text.LineStyle(pattern: .dot, color: Theme.muted)
+                    } else if near.contains(word.text) {
+                        piece.underlineStyle = Text.LineStyle(pattern: .dot, color: Theme.red)
+                    } else {
+                        piece.underlineStyle = Text.LineStyle(pattern: .solid, color: Theme.rule)
+                    }
                 }
                 out.append(piece)
                 cursor = word.range.upperBound
