@@ -95,28 +95,25 @@ struct LevelMeterView: View {
     }
 }
 
-/// 今日新词: ten unmet Words of the **Served Level**, offered once a day.
+/// 今日新词: ten unmet Words of the **Served Level**, offered once a day as a swipe deck — swipe right
+/// for 认识, left for 不认识, tap to flip between the Word and its meaning.
 ///
 /// No streak, no count of what is due, no mark for a day skipped. A day not opened leaves nothing
-/// behind (ADR 0004).
+/// behind (ADR 0004). The deck only ever calls the existing 认识 / 不认识 rules (`markKnown` /
+/// `setAside`); it adds no new one.
 struct DailyNewWordsView: View {
-    @Environment(\.modelContext) private var context
-
     let words: [HSKEntry]
     /// Whether every Word of the **Served Level** is **Known**. It separates the two empty states:
     /// nothing left to learn, or nothing offerable today because what is left is inside its
     /// thirty-day wait (ADR 0006). Saying "都见过了" for the second would be untrue.
     var isServedLevelComplete: Bool = false
-    /// Words answered in this sitting, so the rows settle instead of vanishing under the finger.
-    @State private var answered: [String: Bool] = [:]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("今日新词")
                 .font(Theme.label)
                 .tracking(1.4)
                 .foregroundStyle(Theme.red)
-                .padding(.bottom, 8)
 
             if words.isEmpty {
                 // No count of what is waiting and no date it comes back: a Set Aside Word is never
@@ -124,76 +121,161 @@ struct DailyNewWordsView: View {
                 Text(isServedLevelComplete ? "这一级的词都见过了" : "今天没有新词")
                     .font(Theme.serif(16))
                     .foregroundStyle(Theme.muted)
-            } else if words.allSatisfy({ answered[$0.word] != nil }) {
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .card()
+            } else {
+                DailyNewWordsDeck(words: words)
+            }
+        }
+    }
+}
+
+/// The swipe deck itself: one card at a time off the top of the day's Words.
+private struct DailyNewWordsDeck: View {
+    @Environment(\.modelContext) private var context
+    let words: [HSKEntry]
+
+    /// The session's own fixed list, seeded once. Answering a Word changes what `dailyNewWords` would
+    /// return, so indexing the live `words` would skip cards; the deck works from this snapshot and
+    /// finishes when it is spent.
+    @State private var queue: [HSKEntry] = []
+    @State private var index = 0
+    @State private var drag: CGSize = .zero
+    @State private var flipped = false
+    /// True during a card's fly-off, so a second swipe or action can't answer the same Word twice.
+    @State private var isAnimating = false
+    /// Bumped on every 认识, to fire the one success haptic a mastery moment gets elsewhere.
+    @State private var knownCount = 0
+
+    /// How far a card must travel before the swipe counts as an answer.
+    private let threshold: CGFloat = 110
+
+    var body: some View {
+        Group {
+            if queue.isEmpty || index >= queue.count {
                 Text("今天的新词看完了")
                     .font(Theme.serif(16))
                     .foregroundStyle(Theme.muted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .card()
             } else {
-                ForEach(words, id: \.word) { entry in
-                    row(entry)
-                }
+                deck
             }
         }
-        .card()
+        .onAppear { if queue.isEmpty { queue = words } }
+        .sensoryFeedback(.success, trigger: knownCount)
     }
 
-    @ViewBuilder
-    private func row(_ entry: HSKEntry) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: entry.word)
-                    .font(Theme.serif(19))
-                    .foregroundStyle(Theme.ink)
-                // Pinyin and English come from the bundled list: they are the content, not screen
-                // text, so they are never translated.
-                Text(verbatim: "\(entry.pinyin) · \(entry.english)")
-                    .font(Theme.meta)
-                    .foregroundStyle(Theme.muted)
-                    .fixedSize(horizontal: false, vertical: true)
+    private var deck: some View {
+        ZStack {
+            // The next Word peeks behind the top one, so the deck reads as a stack — but shows only its
+            // character, never its meaning, or every card after the first would give its answer away.
+            if index + 1 < queue.count {
+                card(queue[index + 1], isTop: false)
+                    .scaleEffect(0.96)
+                    .offset(y: 10)
+                    .opacity(0.5)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Before deciding 认识 or 不认识 is exactly the moment a student most needs to hear an
-            // unfamiliar Word, not after.
-            SpeakerButton(text: entry.word)
-                .foregroundStyle(Theme.muted)
-
-            if let known = answered[entry.word] {
-                // `answered` only ever gains an entry from a tap in this sitting — a Word already
-                // Known before today never reaches this row at all (`dailyNewWords` excludes it) — so
-                // `known == true` here always means "just now", safe to stamp without a second flag.
-                if known {
-                    RedSealStamp(character: "记")
-                }
-                Chip(
-                    text: known ? "认识" : "不认识",
-                    ink: known ? Theme.onDone : Theme.muted,
-                    ground: known ? Theme.done : Theme.cardHigh
+            card(queue[index], isTop: true)
+                .offset(drag)
+                .rotationEffect(.degrees(Double(drag.width / 22)))
+                .gesture(
+                    DragGesture()
+                        .onChanged { if !isAnimating { drag = $0.translation } }
+                        .onEnded { ended($0.translation.width) }
                 )
-            } else {
-                HStack(spacing: 6) {
-                    Button("不认识") {
-                        // Settle the row only if it was really written: a row that says 不认识 with
-                        // nothing recorded is the silent failure 读完 goes out of its way to avoid.
-                        if (try? VocabularyLibrary(context: context)
-                            .setAside(entry.word)) != nil {
-                            answered[entry.word] = false
-                        }
-                    }
-                    .buttonStyle(MiniButtonStyle())
-                    Button("认识") {
-                        if (try? VocabularyLibrary(context: context).markKnown(entry.word)) != nil {
-                            answered[entry.word] = true
-                        }
-                    }
-                    .buttonStyle(MiniButtonStyle())
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: index)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: queue[index].word))
+        // The meaning is read here, since a VoiceOver user can't do the visual flip to see it.
+        .accessibilityValue(Text(verbatim: "\(queue[index].pinyin) · \(queue[index].english)"))
+        // Swipe is inaccessible on its own, so VoiceOver answers through named actions.
+        .accessibilityAction(named: Text("认识")) { answer(known: true) }
+        .accessibilityAction(named: Text("不认识")) { answer(known: false) }
+    }
+
+    private func card(_ entry: HSKEntry, isTop: Bool) -> some View {
+        VStack(spacing: 12) {
+            Text(verbatim: entry.word)
+                .font(Theme.serif(34, .black))
+                .foregroundStyle(Theme.ink)
+            // Only the top card, once flipped, shows the meaning.
+            if isTop {
+                if flipped {
+                    // Pinyin and English are the bundled content, not screen text: never translated.
+                    Text(verbatim: "\(entry.pinyin) · \(entry.english)")
+                        .font(Theme.body)
+                        .foregroundStyle(Theme.muted)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Text("点一下看意思")
+                        .font(Theme.meta)
+                        .foregroundStyle(Theme.muted)
                 }
+                SpeakerButton(text: entry.word)
+                    .foregroundStyle(Theme.muted)
             }
         }
-        .padding(.vertical, 9)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Theme.rule).frame(height: 1)
+        .padding(24)
+        .frame(maxWidth: .infinity, minHeight: 180)
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius))
+        .overlay(alignment: .topLeading) { hint("认识", Theme.bamboo, show: isTop && drag.width > 24) }
+        .overlay(alignment: .topTrailing) { hint("不认识", Theme.muted, show: isTop && drag.width < -24) }
+        .contentShape(Rectangle())
+        .onTapGesture { if isTop && !isAnimating { withAnimation(.easeOut(duration: 0.15)) { flipped.toggle() } } }
+    }
+
+    /// The 认识 / 不认识 label that fades in on the side the card is being pushed toward.
+    private func hint(_ text: LocalizedStringKey, _ ink: Color, show: Bool) -> some View {
+        Text(text)
+            .font(Theme.label)
+            .tracking(1.4)
+            .foregroundStyle(ink)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(ink))
+            .padding(14)
+            .opacity(show ? 1 : 0)
+    }
+
+    private func ended(_ width: CGFloat) {
+        guard !isAnimating else { return }
+        if width > threshold {
+            answer(known: true)
+        } else if width < -threshold {
+            answer(known: false)
+        } else {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { drag = .zero }
         }
-        .oneShotSuccessHaptic(when: answered[entry.word] == true)
+    }
+
+    /// Record the answer with the existing rule, then advance. Guarded against a double answer during
+    /// the fly-off, and only advances if it was really written — a card that flies off with nothing
+    /// recorded is the silent failure 读完 avoids.
+    private func answer(known: Bool) {
+        guard !isAnimating, index < queue.count else { return }
+        let entry = queue[index]
+        let library = VocabularyLibrary(context: context)
+        let wrote = known
+            ? ((try? library.markKnown(entry.word)) != nil)
+            : ((try? library.setAside(entry.word)) != nil)
+        guard wrote else {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { drag = .zero }
+            return
+        }
+        isAnimating = true
+        if known { knownCount += 1 }
+        withAnimation(.easeOut(duration: 0.2)) {
+            drag = CGSize(width: known ? 600 : -600, height: 0)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            index += 1
+            drag = .zero
+            flipped = false
+            isAnimating = false
+        }
     }
 }

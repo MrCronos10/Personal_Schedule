@@ -2205,6 +2205,16 @@
           }
         }
       }
+    },
+    "点一下看意思": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to see the meaning"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -59,7 +59,7 @@ struct VocabularyView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }
-            .background(PaperGridBackground())
+            .background(BambooBackground())
             .toolbar(.hidden, for: .navigationBar)
             .task { refresh() }
             .onChange(of: progressSignature) { refresh() }
