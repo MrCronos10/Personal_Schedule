@@ -71,7 +71,7 @@ struct WeekLedger: View {
             .onChange(of: router?.focusToken) { scrollToRequestedSection(proxy, animated: true) }
             .onAppear { scrollToRequestedSection(proxy, animated: false) }
         }
-        .background(BackgroundView())
+        .background(PaperGridBackground())
         .sheet(isPresented: $isShowingRetroactiveDay) {
             TodayView(initialDay: retroactiveDay, showsShortcuts: false)
         }

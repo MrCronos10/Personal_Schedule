@@ -154,7 +154,7 @@ struct ArticleReaderView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             CoachDock(article: article)
         }
-        .background(BackgroundView())
+        .background(PaperGridBackground())
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.paper, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)

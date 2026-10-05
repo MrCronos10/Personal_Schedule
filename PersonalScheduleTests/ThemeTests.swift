@@ -48,8 +48,9 @@ struct ThemeTests {
 
     /// Every named accessor is wired to the right `Token`, in both schemes. Without this a mis-wire
     /// such as `static let card = Token.cardHigh.color` would pass every other test and ship the wrong
-    /// surface colour. The list is exhaustive against the accessors, so a new token added without an
-    /// accessor is a visible omission here.
+    /// surface colour. The list is exhaustive against the UI-role accessors; texture-only tokens such
+    /// as `gridLine` have no `Theme.` accessor (read raw by their one ground) and so are absent here,
+    /// still covered by `everyTokenResolvesInBothSchemes`.
     @Test func namedAccessorsAreWiredToTheirTokens() {
         let wiring: [(Color, Theme.Token)] = [
             (Theme.paper, .paper), (Theme.card, .card), (Theme.cardHigh, .cardHigh),
@@ -63,6 +64,14 @@ struct ThemeTests {
             #expect(hex(color, in: .light) == token.light, "\(token) accessor is mis-wired (light)")
             #expect(hex(color, in: .dark) == token.dark, "\(token) accessor is mis-wired (dark)")
         }
+    }
+
+    /// The 田字格 line is defined as gridRed on cream and lantern cream on night ink, so its token is
+    /// derived from `red` and `ink` rather than copying their hex. This guards that: retuning red or
+    /// ink moves the grid line with them instead of leaving a stale duplicate behind.
+    @Test func gridLineTracksGridRedAndLanternCream() {
+        #expect(Theme.Token.gridLine.light == Theme.Token.red.light)
+        #expect(Theme.Token.gridLine.dark == Theme.Token.ink.dark)
     }
 
     /// The named accessors are the token source resolved by trait collection: paper stays warm and ink

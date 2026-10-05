@@ -23,6 +23,9 @@ enum Theme {
         case paper, card, cardHigh
         // Ink and lines
         case ink, muted, red, onRed, sealRed, rule, late, error
+        // Texture: the 田字格 line (gridRed on cream, lantern cream on night ink). Read raw by its
+        // one ground (`PaperGridBackground`), never a general UI role — so it has no `Theme.` accessor.
+        case gridLine
         // Done / mastery — `bamboo` is the brief's "done only" green
         case bamboo, done, onDone
         // v2 additions: Seal Book / Progress accents and the per-screen grounds
@@ -42,6 +45,7 @@ enum Theme {
             case .rule: 0xDEC8BA
             case .late: 0x794A07
             case .error: 0xBA1A1A
+            case .gridLine: Self.red.light      // the 田字格 line is gridRed on cream — derived, never a copy
             case .bamboo: 0x4F6B38
             case .done: 0xDCE8CF
             case .onDone: 0x3E5A2C
@@ -67,6 +71,7 @@ enum Theme {
             case .rule: 0x4D443C
             case .late: 0xD4A257
             case .error: 0xFF8A80
+            case .gridLine: Self.ink.dark       // lantern cream on night ink — derived from ink, never a copy
             case .bamboo: 0x7FA060
             case .done: 0x2F4A36
             case .onDone: 0xB5D8A0
