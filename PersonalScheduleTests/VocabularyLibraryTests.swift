@@ -194,6 +194,49 @@ struct VocabularyLibraryTests {
         #expect(try shelf.cleanSightings(of: "厕所").isEmpty)
     }
 
+    // MARK: - Near Known (the reader's two red dots)
+
+    /// A Word one Clean Sighting short of Known: not Known, seen cleanly in exactly two Articles. The
+    /// reader marks these with two red dots; the rule lives here so the screen never recomputes it.
+    @Test func aWordWithTwoCleanSightingsIsNearKnown() throws {
+        let shelf = try library()
+        try giveSightings(2, of: "厕所", in: shelf)
+        #expect(try shelf.isNearKnown("厕所"))
+    }
+
+    @Test func oneCleanSightingIsNotYetNearKnown() throws {
+        let shelf = try library()
+        try giveSightings(1, of: "厕所", in: shelf)
+        #expect(try !shelf.isNearKnown("厕所"))
+    }
+
+    /// Three sightings makes the Word Known, which is past Near Known, not at it.
+    @Test func aKnownWordIsNotNearKnown() throws {
+        let shelf = try library()
+        try giveSightings(3, of: "厕所", in: shelf)
+        #expect(try !shelf.isNearKnown("厕所"))
+    }
+
+    @Test func aWordMarkedKnownByHandIsNotNearKnown() throws {
+        let shelf = try library()
+        try giveSightings(2, of: "厕所", in: shelf)
+        try shelf.markKnown("厕所", on: Day(number: 20260921))
+        #expect(try !shelf.isNearKnown("厕所"))
+    }
+
+    @Test func aWordNeverMetIsNotNearKnown() throws {
+        #expect(try !library().isNearKnown("厕所"))
+    }
+
+    /// The reader asks once for all the near-Known Words in the Article it is drawing.
+    @Test func nearKnownWordsInAnArticleAreReturnedTogether() throws {
+        let shelf = try library()
+        try giveSightings(2, of: "厕所", in: shelf)   // near Known
+        try giveSightings(1, of: "被子", in: shelf)   // only one
+        let near = try shelf.nearKnownWords(in: "厕所很干净，被子很软。")
+        #expect(near == ["厕所"])
+    }
+
     @Test func aWordNeverMetHasNoRow() throws {
         #expect(try library().progress(for: "厕所") == nil)
     }

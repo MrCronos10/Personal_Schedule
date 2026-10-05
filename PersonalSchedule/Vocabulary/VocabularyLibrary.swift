@@ -276,6 +276,33 @@ struct VocabularyLibrary {
     /// Three different Articles, none of them looked up. See ADR 0004 for why three.
     static let sightingsForKnown = 3
 
+    // MARK: - Near Known
+
+    /// A Word one Clean Sighting short of **Known**: not Known, and seen cleanly in exactly
+    /// `sightingsForKnown - 1` different Articles. The reader marks these with two red dots so the
+    /// student can see which Word the next clean reading will bank. This is a hint drawn from the
+    /// evidence, never a change to it — marking it counts nothing (ADR 0004).
+    func isNearKnown(_ word: String) throws -> Bool {
+        if let progress = try progress(for: word), progress.isKnown { return false }
+        return try distinctSightingArticleCount(of: word) == Self.sightingsForKnown - 1
+    }
+
+    /// The near-Known Words among the HSK 4/5 Words in `text`, in one pass — what the reader asks for
+    /// once to mark the Article it is drawing, rather than testing each Word on screen.
+    func nearKnownWords(in text: String) throws -> Set<String> {
+        var result: Set<String> = []
+        for entry in Self.hskWords(in: text) where try isNearKnown(entry.word) {
+            result.insert(entry.word)
+        }
+        return result
+    }
+
+    /// How many distinct Articles a Word has been seen cleanly in — its count, by Article, matching how
+    /// `bank` decides Known (two rows from one Article are one Article's worth of evidence).
+    private func distinctSightingArticleCount(of word: String) throws -> Int {
+        Set(try cleanSightings(of: word).compactMap { $0.article?.persistentModelID }).count
+    }
+
     /// How many Words a Note names before it gives up and says "…". A Note is a reminder of the
     /// sitting, not an inventory of it.
     static let wordsNamedInNote = 8
