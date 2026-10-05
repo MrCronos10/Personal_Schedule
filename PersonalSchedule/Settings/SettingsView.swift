@@ -188,9 +188,9 @@ struct SettingsView: View {
             }
             .card()
             .padding(.top, 10)
-            // The typeface is the one thing in the app that is someone else's work, and its licence
-            // asks to be credited.
-            Text("字体：Noto Serif SC（SIL 开源字体许可）")
+            // The typefaces are the one thing in the app that is someone else's work, and their
+            // licences ask to be credited. Ma Shan Zheng is the brush face (ticket 04).
+            Text("字体：Noto Serif SC、Ma Shan Zheng（均为 SIL 开源字体许可）")
                 .font(Theme.meta)
                 .foregroundStyle(Theme.muted)
                 .padding(.top, 10)

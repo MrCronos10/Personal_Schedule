@@ -7,6 +7,7 @@ import SwiftUI
 /// a **Completion** carries a Note. See CONTEXT.md.
 struct NotesListView: View {
     @Environment(\.locale) private var locale
+    @Environment(\.dismiss) private var dismiss
 
     @Query(CompletionLibrary.allDescriptor) private var completions: [Completion]
     @Query(CategoryLibrary.allDescriptor) private var allCategories: [Category]
@@ -44,7 +45,6 @@ struct NotesListView: View {
                 Group {
                     if notes.isEmpty {
                         emptyList
-                            .card()
                     } else if shown.isEmpty {
                         noMatches
                             .card()
@@ -118,15 +118,14 @@ struct NotesListView: View {
     }
 
     private var emptyList: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("还没有笔记")
-                .font(Theme.serif(16))
-                .foregroundStyle(Theme.muted)
-            Text("完成一个计划时可以写一条笔记，新遇到的词就记在这里。")
-                .font(Theme.meta)
-                .foregroundStyle(Theme.muted)
-                .fixedSize(horizontal: false, vertical: true)
-        }
+        // Notes are written when a plan is completed, not from here, so the one action is to go back
+        // to Today and do one.
+        EmptyState(
+            character: "记",
+            message: "完成一个计划时可以写一条笔记，新遇到的词就记在这里。",
+            actionTitle: "去今天",
+            action: { dismiss() }
+        )
     }
 
     /// The search text is left alone, so it can be corrected instead of retyped.

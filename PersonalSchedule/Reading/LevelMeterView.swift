@@ -186,34 +186,41 @@ private struct DailyNewWordsDeck: View {
                 )
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: index)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text(verbatim: queue[index].word))
-        // The meaning is read here, since a VoiceOver user can't do the visual flip to see it.
-        .accessibilityValue(Text(verbatim: "\(queue[index].pinyin) · \(queue[index].english)"))
-        // Swipe is inaccessible on its own, so VoiceOver answers through named actions.
-        .accessibilityAction(named: Text("认识")) { answer(known: true) }
-        .accessibilityAction(named: Text("不认识")) { answer(known: false) }
     }
 
     private func card(_ entry: HSKEntry, isTop: Bool) -> some View {
         VStack(spacing: 12) {
-            Text(verbatim: entry.word)
-                .font(Theme.serif(34, .black))
-                .foregroundStyle(Theme.ink)
-            // Only the top card, once flipped, shows the meaning.
-            if isTop {
-                if flipped {
-                    // Pinyin and English are the bundled content, not screen text: never translated.
-                    Text(verbatim: "\(entry.pinyin) · \(entry.english)")
-                        .font(Theme.body)
-                        .foregroundStyle(Theme.muted)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    Text("点一下看意思")
-                        .font(Theme.meta)
-                        .foregroundStyle(Theme.muted)
+            // The character and its meaning are one VoiceOver element carrying the answer actions and
+            // (since the flip can't be seen) the meaning as its value; the speaker stays its own
+            // element so it can still be used to hear the Word.
+            VStack(spacing: 12) {
+                Text(verbatim: entry.word)
+                    .font(Theme.serif(34, .black))
+                    .foregroundStyle(Theme.ink)
+                // Only the top card, once flipped, shows the meaning.
+                if isTop {
+                    if flipped {
+                        // Pinyin and English are the bundled content, not screen text: never translated.
+                        Text(verbatim: "\(entry.pinyin) · \(entry.english)")
+                            .font(Theme.body)
+                            .foregroundStyle(Theme.muted)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("点一下看意思")
+                            .font(Theme.meta)
+                            .foregroundStyle(Theme.muted)
+                    }
                 }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityHidden(!isTop)
+            .accessibilityLabel(Text(verbatim: entry.word))
+            .accessibilityValue(Text(verbatim: "\(entry.pinyin) · \(entry.english)"))
+            .accessibilityAction(named: Text("认识")) { if isTop { answer(known: true) } }
+            .accessibilityAction(named: Text("不认识")) { if isTop { answer(known: false) } }
+
+            if isTop {
                 SpeakerButton(text: entry.word)
                     .foregroundStyle(Theme.muted)
             }
@@ -222,8 +229,9 @@ private struct DailyNewWordsDeck: View {
         .frame(maxWidth: .infinity, minHeight: 180)
         .background(Theme.card)
         .clipShape(RoundedRectangle(cornerRadius: Theme.cardRadius))
-        .overlay(alignment: .topLeading) { hint("认识", Theme.bamboo, show: isTop && drag.width > 24) }
-        .overlay(alignment: .topTrailing) { hint("不认识", Theme.muted, show: isTop && drag.width < -24) }
+        // The hint appears on the side the card is pushed toward: 认识 right, 不认识 left.
+        .overlay(alignment: .topTrailing) { hint("认识", Theme.bamboo, show: isTop && drag.width > 24) }
+        .overlay(alignment: .topLeading) { hint("不认识", Theme.muted, show: isTop && drag.width < -24) }
         .contentShape(Rectangle())
         .onTapGesture { if isTop && !isAnimating { withAnimation(.easeOut(duration: 0.15)) { flipped.toggle() } } }
     }

@@ -2215,6 +2215,26 @@
           }
         }
       }
+    },
+    "去今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to Today"
+          }
+        }
+      }
+    },
+    "字体：Noto Serif SC、Ma Shan Zheng（均为 SIL 开源字体许可）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fonts: Noto Serif SC, Ma Shan Zheng (both SIL Open Font License)"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
