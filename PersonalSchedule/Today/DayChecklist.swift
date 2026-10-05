@@ -127,7 +127,7 @@ struct DayChecklist: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(Theme.bambooGreen)
+                    .foregroundStyle(Theme.bamboo)
                 Text("今天 — 完成")
                     .font(Theme.title)
                     .foregroundStyle(Theme.ink)

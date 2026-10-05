@@ -15,7 +15,10 @@ struct BackgroundView: View {
     var body: some View {
         Canvas { context, size in
             let cell = Self.cellSize
-            let line = scheme == .dark ? Theme.Palette.lanternCream : Theme.Palette.gridRed
+            // Grid line: gridRed on cream, lantern cream on night ink. Read from the token source
+            // (ticket 02 finalises this as a proper token read when BackgroundView becomes
+            // PaperGridBackground); the resolved colours are unchanged.
+            let line = scheme == .dark ? Color(hex: Theme.Token.ink.dark) : Color(hex: Theme.Token.red.light)
             let shading = GraphicsContext.Shading.color(line.opacity(Self.gridOpacity(for: scheme)))
             var solid = Path()
             var dashed = Path()
