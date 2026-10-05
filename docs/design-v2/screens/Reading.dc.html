@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Article reader</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&amp;family=Noto+Sans+SC:wght@400;500;700&amp;family=Ma+Shan+Zheng&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#8B2A1F}a:hover{color:#C8382E}
+.paper{background-color:#FBF7EE;background-image:linear-gradient(rgba(200,56,46,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(200,56,46,.06) 1px,transparent 1px);background-size:88px 88px;background-position:-1px 40px}
+.seen{border-bottom:1.5px dotted #8E867A}
+.near{position:relative}
+.near::after{content:"• •";position:absolute;left:0;right:0;bottom:-11px;text-align:center;font-size:9px;letter-spacing:1px;color:#C8382E;line-height:1}
+</style>
+</helmet>
+<div class="paper" style="width: 390px; height: 844px; position: relative; overflow: hidden; color: #1C1A17; font-family: 'Noto Sans SC', sans-serif">
+
+  <div style="padding: 54px 12px 0; display: flex; align-items: center; gap: 4px">
+    <a href="Today.dc.html" aria-label="返回" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: #1C1A17"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></a>
+    <div style="flex: 1; text-align: center; font-size: 13px; color: #6B655C">阅读 · <span style="font-family: 'IBM Plex Mono', monospace">06:42</span></div>
+    <button aria-label="朗读全文" style="width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; color: #1C1A17"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10z"></path><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"></path></svg></button>
+  </div>
+
+  <div style="padding: 8px 22px 0">
+    <span style="font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #8B2A1F; background: #F4E3DA; padding: 3px 8px; border-radius: 4px">茶馆菜单 · 拍照导入</span>
+    <h1 style="margin: 12px 0 6px; font-family: 'Noto Serif SC', serif; font-weight: 900; font-size: 26px; line-height: 1.3">老街茶馆的秋季新茶</h1>
+    <div style="display: flex; gap: 14px; font-size: 12px; color: #6B655C"><span><b style="font-family: 'IBM Plex Mono', monospace; color: #1C1A17">312</b> 字</span><span>可读度 <b style="font-family: 'IBM Plex Mono', monospace; color: #1C1A17">86%</b></span><span><b style="font-family: 'IBM Plex Mono', monospace; color: #C8382E">4</b> 个快认识了</span></div>
+    <div style="margin-top: 14px; height: 3px; background: #EADFC8; border-radius: 2px"><div style="width: 42%; height: 3px; background: #C8382E; border-radius: 2px"></div></div>
+  </div>
+
+  <div style="padding: 18px 22px 0; font-size: 18px; line-height: 2.05; letter-spacing: .5px">
+    <p style="margin: 0 0 6px">秋天到了，老街茶馆换上了新的菜单。店里的<span class="near">环境</span>很安静，墙上挂着老照片，窗外是一排桂花树。</p>
+    <p style="margin: 0">今年的新茶<span class="seen">价格</span>不贵，一壶只要三十八元。老板说，茶叶都是早上从山上采下来的，非常<span style="background: #F4E3DA; box-shadow: 0 0 0 3px #F4E3DA; border-radius: 3px; border-bottom: 2px solid #C8382E">新鲜</span>。</p>
+
+    <div style="margin: 10px -6px 8px; background: #FFFDF7; border: 1px solid #E4D8C0; border-top: 3px solid #C8382E; border-radius: 12px; padding: 12px 14px; box-shadow: 0 8px 22px rgba(28,26,23,.10); font-size: 14px; line-height: 1.5; letter-spacing: 0">
+      <div style="display: flex; align-items: baseline; gap: 10px">
+        <span style="font-family: 'Noto Serif SC', serif; font-weight: 900; font-size: 24px">新鲜</span>
+        <span style="font-size: 15px; color: #8B2A1F">xīnxiān</span>
+        <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6B655C">HSK 4</span>
+      </div>
+      <div style="margin-top: 2px">fresh (food, air); new, novel</div>
+      <div style="display: flex; gap: 8px; margin-top: 10px">
+        <button style="min-height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #E4D8C0; background: #FAF6EC; font: inherit; font-size: 13px; color: #1C1A17; display: flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h4l5 4V6L8 10z"></path><path d="M16.5 9a4 4 0 0 1 0 6"></path></svg>听</button>
+        <button style="min-height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #E4D8C0; background: #FAF6EC; font: inherit; font-size: 13px; color: #1C1A17">写词记</button>
+        <span style="margin-left: auto; align-self: center; font-size: 11px; color: #6B655C">查过 · 干净阅读从零开始</span>
+      </div>
+    </div>
+
+    <p style="margin: 0">如果你不知道点什么，可以问服务员。她会<span class="near">推荐</span>最受欢迎的桂花乌龙，还会告诉你怎么泡才好喝。</p>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; background: #FAF6EC; border-top: 1px solid #E4D8C0; border-radius: 22px 22px 0 0; box-shadow: 0 -10px 30px rgba(28,26,23,.08); padding: 8px 16px 30px">
+    <div style="width: 40px; height: 5px; border-radius: 3px; background: #D9CDB4; margin: 0 auto 10px"></div>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <button style="flex: 1; min-height: 48px; border-radius: 24px; border: 1px solid #E4D8C0; background: #FFFDF7; display: flex; align-items: center; gap: 10px; padding: 0 8px; font: inherit; color: #6B655C; font-size: 15px; text-align: left">
+        <span style="width: 32px; height: 32px; background: #8B2A1F; border-radius: 4px; color: #FAF6EC; font-family: 'Ma Shan Zheng', serif; font-size: 22px; display: flex; align-items: center; justify-content: center; transform: rotate(-4deg)">伴</span>
+        问读伴：“泡” 在这里是什么意思？
+      </button>
+      <a href="Celebrate.dc.html" style="min-height: 48px; padding: 0 20px; border-radius: 24px; background: #C8382E; color: #FAF6EC; font-weight: 700; font-size: 16px; text-decoration: none; display: flex; align-items: center; box-shadow: 0 6px 16px rgba(200,56,46,.3)">读完</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

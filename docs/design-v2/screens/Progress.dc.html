@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Progress collection grid</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&amp;family=Noto+Sans+SC:wght@400;500;700&amp;family=Ma+Shan+Zheng&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#8B2A1F}a:hover{color:#C8382E}
+.paper{background-color:#FBF7EE;background-image:linear-gradient(rgba(200,56,46,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(200,56,46,.06) 1px,transparent 1px);background-size:88px 88px}
+.c{position:relative;aspect-ratio:1;border:1px solid rgba(200,56,46,.42);background:#FFFDF7;display:flex;align-items:center;justify-content:center;font-family:'Ma Shan Zheng',serif;font-size:21px;line-height:1;padding:0;color:#1C1A17}
+.c::before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed rgba(200,56,46,.25)}
+.c::after{content:"";position:absolute;top:50%;left:0;right:0;border-top:1px dashed rgba(200,56,46,.25)}
+.c span{position:relative;z-index:1}
+.c.empty span{visibility:hidden}
+.c.seen span{color:#B3AB9E}
+.c.fresh{border:1.5px solid #C8382E;box-shadow:0 0 0 3px rgba(200,56,46,.22)}
+</style>
+</helmet>
+<div class="paper" style="width: 390px; height: 844px; position: relative; overflow: hidden; color: #1C1A17; font-family: 'Noto Sans SC', sans-serif">
+
+  <div style="background: #1C1A17; color: #FAF6EC; padding: 58px 16px 18px; border-radius: 0 0 24px 24px">
+    <div style="display: flex; align-items: center">
+      <span style="flex: 1; font-family: 'Noto Serif SC', serif; font-weight: 900; font-size: 28px">进度</span>
+      <a href="Seals.dc.html" style="min-height: 40px; padding: 0 14px; border-radius: 20px; border: 1.5px solid #B08A2E; color: #E8D29A; text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700"><span style="width: 18px; height: 18px; background: #C8382E; border-radius: 2px; transform: rotate(-6deg)"></span>印章册 · <span style="font-family: 'IBM Plex Mono', monospace">7</span></a>
+    </div>
+    <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+      <div><div style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 24px; color: #A9C78F">+6</div><div style="font-size: 12px; color: #CFC6B4">今天认识</div></div>
+      <div><div style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 24px">42<span style="font-size: 13px; color: #CFC6B4"> 分</span></div><div style="font-size: 12px; color: #CFC6B4">今天阅读</div></div>
+      <div><div style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 24px">162</div><div style="font-size: 12px; color: #CFC6B4">一共认识</div></div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 16px 0">
+    <div role="tablist" style="display: flex; background: #EFE6D2; border-radius: 12px; padding: 3px">
+      <button role="tab" aria-selected="true" style="flex: 1; min-height: 40px; border: 0; border-radius: 9px; background: #FFFDF7; font: inherit; font-size: 14px; font-weight: 700; color: #1C1A17; box-shadow: 0 1px 3px rgba(28,26,23,.12)">HSK 4</button>
+      <button role="tab" aria-selected="false" style="flex: 1; min-height: 40px; border: 0; border-radius: 9px; background: transparent; font: inherit; font-size: 14px; color: #6B655C">HSK 5</button>
+      <button role="tab" aria-selected="false" style="flex: 1; min-height: 40px; border: 0; border-radius: 9px; background: transparent; font: inherit; font-size: 14px; color: #6B655C">农业词</button>
+    </div>
+
+    <div style="margin-top: 14px; display: flex; align-items: baseline; gap: 8px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 22px">128</span><span style="font-family: 'IBM Plex Mono', monospace; color: #6B655C">/ 600</span>
+      <span style="margin-left: auto; font-size: 12px; color: #6B655C">再认识 <b style="font-family: 'IBM Plex Mono', monospace; color: #8B2A1F">352</b> 个就过关</span>
+    </div>
+    <div style="margin-top: 8px; height: 8px; border-radius: 4px; background: #EFE6D2; position: relative">
+      <div style="width: 21%; height: 8px; border-radius: 4px; background: #1C1A17"></div>
+      <div style="position: absolute; left: 80%; top: -4px; width: 2px; height: 16px; background: #B08A2E"></div>
+    </div>
+    <div style="margin-top: 10px; display: flex; gap: 14px; font-size: 11px; color: #6B655C">
+      <span style="display: flex; align-items: center; gap: 4px"><i style="width: 10px; height: 10px; border: 1px solid #C8382E; background: #FFFDF7"></i>未遇见</span>
+      <span style="display: flex; align-items: center; gap: 4px"><i style="width: 10px; height: 10px; background: #CFC8BB"></i>见过</span>
+      <span style="display: flex; align-items: center; gap: 4px"><i style="width: 10px; height: 10px; background: #1C1A17"></i>认识</span>
+      <span style="display: flex; align-items: center; gap: 4px"><i style="width: 10px; height: 10px; border: 1.5px solid #C8382E; box-shadow: 0 0 0 2px rgba(200,56,46,.25)"></i>刚上墨</span>
+    </div>
+
+    <div style="margin-top: 12px; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px">
+      <sc-for list="{{cells}}" as="cell" hint-placeholder-count="64">
+        <button class="{{cell.cls}}" aria-label="{{cell.label}}"><span>{{cell.ch}}</span></button>
+      </sc-for>
+    </div>
+  </div>
+
+  <nav style="position: absolute; left: 0; right: 0; bottom: 0; height: 83px; background: #FAF6EC; border-top: 1px solid #E4D8C0; display: flex; padding-top: 6px; box-sizing: border-box">
+    <a href="Today.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; color: #6B655C; font-size: 11px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>今天</a>
+    <a href="Reading.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; color: #6B655C; font-size: 11px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"></path><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"></path></svg>阅读</a>
+    <a href="Words.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; color: #6B655C; font-size: 11px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M12 4v16M4 12h16" stroke-dasharray="2 2"></path></svg>词</a>
+    <a href="Progress.dc.html" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; text-decoration: none; color: #C8382E; font-size: 11px; font-weight: 700"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6.5" height="6.5" rx="1"></rect><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"></rect><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"></rect><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"></rect></svg>进度</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const chars = '安按保抱包报比毕表部材参差尝成诚吃抽出词打大戴当导道地调动堵锻对发方放份丰否复富感干刚高公功购估鼓顾故关观管广规国果过害寒好合后环价质推荐静新境';
+    const pattern = 'kkskekseskekkeseksekkeeskekesekeeskekeeskeeekseeefefeeseeekeseee';
+    const names = { k: 'c', s: 'c seen', e: 'c empty', f: 'c fresh' };
+    const labels = { k: '认识', s: '见过', e: '未遇见', f: '刚认识' };
+    const cells = [];
+    for (let i = 0; i < 64; i++) {
+      const st = pattern[i] || 'e';
+      cells.push({ ch: chars[i] || '字', cls: names[st], label: labels[st] });
+    }
+    return { cells };
+  }
+}
+</script>
+</body>
+</html>
