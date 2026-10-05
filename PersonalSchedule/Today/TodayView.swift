@@ -1,7 +1,8 @@
 import SwiftData
 import SwiftUI
 
-/// The 今天 tab: the Daily Checklist for the chosen day, with ◀ ▶ to move between days.
+/// The 今天 tab: a Dawn header, the day's Today card (Routine ring, reading progress, goal stamp slot),
+/// the 最近认识 sliver, and the Daily Checklist. ◀ ▶ move between days; a floating + adds an Action.
 struct TodayView: View {
     @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
@@ -13,7 +14,9 @@ struct TodayView: View {
     @Environment(AppRouter.self) private var router: AppRouter?
     @State private var recent: [RecentCell] = []
     @AppStorage(ReadingPreferences.goalKey) private var readingGoal = ReadingPreferences.defaultGoal
-    /// The day's reading has reached the goal; the seal stays on the header for the rest of the day.
+    /// Today's characters read, the same count the Reading Session banks (ArticleLibrary.charactersRead).
+    @State private var charactersToday = 0
+    /// The day's reading has reached the goal; the seal stays in the card for the rest of the day.
     @State private var goalReached = false
     /// True only on the visit where the seal is first stamped: it lands with a haptic, once.
     @State private var stampJustLanded = false
@@ -31,9 +34,9 @@ struct TodayView: View {
     /// Note has them off, so it can't open a Notes list from inside a Notes list.
     private let showsShortcuts: Bool
 
-    /// Only the Today tab itself shows the strip and the seal; a Today opened as a sheet from the
-    /// ledger or a Note must not spend the day's stamp on a screen the student is not looking at, and
-    /// neither may the tab while another tab is showing.
+    /// Only the Today tab itself shows the card and the seal; a Today opened as a sheet from the ledger
+    /// or a Note must not spend the day's stamp on a screen the student is not looking at, and neither
+    /// may the tab while another tab is showing.
     private func refreshForTab() {
         guard showsShortcuts, router?.tab ?? .today == .today else { return }
         refreshRecent()
@@ -43,10 +46,10 @@ struct TodayView: View {
     /// Whether today's reading has reached the goal, and whether the seal is due to land right now.
     private func refreshGoal() {
         let today = Day.today()
-        let characters = (try? ArticleLibrary(context: context).charactersRead(on: today)) ?? 0
-        goalReached = characters >= readingGoal
+        charactersToday = (try? ArticleLibrary(context: context).charactersRead(on: today)) ?? 0
+        goalReached = charactersToday >= readingGoal
         var celebrations = Celebrations(defaults: .standard)
-        if celebrations.readingGoalStampIsDue(charactersToday: characters, goal: readingGoal, on: today) {
+        if celebrations.readingGoalStampIsDue(charactersToday: charactersToday, goal: readingGoal, on: today) {
             celebrations.markReadingGoalStamped(on: today)
             stampJustLanded = true
             Task {
@@ -63,68 +66,26 @@ struct TodayView: View {
 
     private var isToday: Bool { day == Day.today() }
     private var isChinese: Bool { locale.language.languageCode == .chinese }
+    private var showsTodayExtras: Bool { showsShortcuts && isToday }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 6) {
-                    Text(day.date().formatted(.dateTime.month().day().weekday(.abbreviated).locale(locale)))
-                        .font(.system(size: 13))
-                        .tracking(1)
-                        .foregroundStyle(Theme.muted)
-                    Spacer()
-                    if !isToday {
-                        Button("今天") { day = Day.today() }
-                            .buttonStyle(MiniButtonStyle())
-                    }
-                    Button { day = day.adding(days: -1) } label: {
-                        Image(systemName: "chevron.left")
-                    }
-                    .buttonStyle(MiniButtonStyle())
-                    .accessibilityLabel(Text("前一天"))
-                    Button { day = day.adding(days: 1) } label: {
-                        Image(systemName: "chevron.right")
-                    }
-                    .buttonStyle(MiniButtonStyle())
-                    .accessibilityLabel(Text("后一天"))
-                    Button { isAddingAction = true } label: {
-                        Image(systemName: "plus")
-                    }
-                    .buttonStyle(RedButtonStyle())
-                    .accessibilityLabel(Text("新计划"))
-                }
-                .padding(.top, 12)
+                dawnBlock
 
-                HStack(alignment: .top) {
-                    dayTitle
-                    if showsShortcuts && goalReached && isToday {
-                        RedSealStamp(character: "读", ground: Theme.sealRed, animated: stampJustLanded)
-                            .padding(.leading, 8)
-                            .accessibilityHidden(true)
-                    }
-                    Spacer()
-                    if showsShortcuts {
-                        Button { isShowingNotes = true } label: {
-                            Image(systemName: "note.text")
-                        }
-                        .buttonStyle(MiniButtonStyle())
-                        .accessibilityLabel(Text("笔记"))
-                        Button { isShowingSettings = true } label: {
-                            Image(systemName: "gearshape")
-                        }
-                        .buttonStyle(MiniButtonStyle())
-                        .accessibilityLabel(Text("设置"))
-                    }
+                if showsTodayExtras {
+                    TodayCard(
+                        day: day, today: Day.today(),
+                        charactersRead: charactersToday, goal: readingGoal,
+                        goalReached: goalReached, stampJustLanded: stampJustLanded
+                    )
+                    .padding(.top, 16)
                 }
-                .padding(.top, 14)
 
                 if showsShortcuts && !recent.isEmpty {
                     CollectionStrip(recent: recent) { router?.showProgress(at: $0) }
-                        .padding(.top, 16)
+                        .padding(.top, 18)
                 }
-
-                GuidingGoalBanner()
-                    .padding(.top, 16)
 
                 SectionCaption(title: isToday ? "今天的计划" : "这一天的计划")
 
@@ -133,9 +94,25 @@ struct TodayView: View {
                     .padding(.top, 10)
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 24)
+            // Clears the floating + so the last checklist row's tick box stays tappable.
+            .padding(.bottom, 88)
         }
         .background(Theme.paper)
+        // Adding an Action applies to any day, including a Today opened as a sheet from the ledger.
+        .overlay(alignment: .bottomTrailing) {
+            Button { isAddingAction = true } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(Theme.onRed)
+                    .frame(width: 56, height: 56)
+                    .background(Theme.red)
+                    .clipShape(Circle())
+                    .shadow(color: Theme.red.opacity(0.35), radius: 10, y: 6)
+            }
+            .accessibilityLabel(Text("新计划"))
+            .padding(.trailing, 16)
+            .padding(.bottom, 16)
+        }
         .sheet(isPresented: $isAddingAction) {
             ActionFormView(day: day)
         }
@@ -158,6 +135,81 @@ struct TodayView: View {
             if phase == .active {
                 followToday()
             }
+        }
+    }
+
+    /// The top of the screen: the Dawn ground, the date and doors, the boxed 今天 title with the goal,
+    /// and (on today) the Today card. The dawn scrolls with this block rather than staying behind the
+    /// whole screen, so it is a header ground and not a wash behind the checklist.
+    private var dawnBlock: some View {
+        ZStack(alignment: .top) {
+            if showsTodayExtras {
+                DawnHeader()
+                    .padding(.horizontal, -16)   // full-bleed past the screen's 16 pt gutter
+            }
+            VStack(alignment: .leading, spacing: 0) {
+                headerRow
+                    .padding(.top, 12)
+                titleAndGoal
+                    .padding(.top, 14)
+            }
+        }
+    }
+
+    private var headerRow: some View {
+        HStack(spacing: 8) {
+            Text(day.date().formatted(.dateTime.month().day().weekday(.abbreviated).locale(locale)))
+                .font(.system(size: 13))
+                .tracking(1)
+                .foregroundStyle(Theme.muted)
+            Spacer()
+            if !isToday {
+                Button("今天") { day = Day.today() }
+                    .buttonStyle(MiniButtonStyle())
+            }
+            Button { day = day.adding(days: -1) } label: { Image(systemName: "chevron.left") }
+                .buttonStyle(MiniButtonStyle())
+                .accessibilityLabel(Text("前一天"))
+            Button { day = day.adding(days: 1) } label: { Image(systemName: "chevron.right") }
+                .buttonStyle(MiniButtonStyle())
+                .accessibilityLabel(Text("后一天"))
+            if showsShortcuts {
+                roundDoor("note.text", label: "笔记") { isShowingNotes = true }
+                roundDoor("gearshape", label: "设置") { isShowingSettings = true }
+            }
+        }
+    }
+
+    /// A round door button (笔记, 设置) on a translucent cream disc, as in the Dawn header.
+    private func roundDoor(_ systemName: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 17))
+                .foregroundStyle(Theme.ink)
+                .frame(width: 40, height: 40)
+                .background(Theme.paper.opacity(0.85))
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Theme.rule))
+        }
+        .accessibilityLabel(Text(label))
+    }
+
+    /// The boxed 今天 title with the year's goal below it. The goal is kept to the left so it clears the
+    /// Dawn sun in the top-right corner.
+    private var titleAndGoal: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack { dayTitle; Spacer(minLength: 0) }
+            VStack(alignment: .leading, spacing: 3) {
+                Text("长期目标")
+                    .font(Theme.label)
+                    .tracking(1.2)
+                    .foregroundStyle(Theme.red)
+                Text("说一口流利的中文，能和中国人真正地聊天。")
+                    .font(Theme.meta)
+                    .foregroundStyle(Theme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: 250, alignment: .leading)
         }
     }
 

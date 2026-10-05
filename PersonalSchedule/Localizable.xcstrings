@@ -203,6 +203,7 @@
       }
     },
     "Ask 读伴": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -253,6 +254,7 @@
       }
     },
     "Close": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -288,6 +290,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Group"
+          }
+        }
+      }
+    },
+    "HSK": {
+      "extractionState": "stale",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HSK"
           }
         }
       }
@@ -469,6 +482,16 @@
         }
       }
     },
+    "今天 — 完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today — done"
+          }
+        }
+      }
+    },
     "今天没有新词": {
       "localizations": {
         "en": {
@@ -609,6 +632,26 @@
         }
       }
     },
+    "全部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        }
+      }
+    },
+    "关于": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
+          }
+        }
+      }
+    },
     "关于这篇：": {
       "localizations": {
         "en": {
@@ -635,6 +678,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Actually, I don't"
+          }
+        }
+      }
+    },
+    "最近认识": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently known"
           }
         }
       }
@@ -829,6 +882,26 @@
         }
       }
     },
+    "字体：Noto Serif SC（SIL 开源字体许可）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type: Noto Serif SC (SIL Open Font License)"
+          }
+        }
+      }
+    },
+    "字号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text size"
+          }
+        }
+      }
+    },
     "完": {
       "localizations": {
         "en": {
@@ -865,6 +938,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Import an article"
+          }
+        }
+      }
+    },
+    "展开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show"
           }
         }
       }
@@ -1291,6 +1374,16 @@
         }
       }
     },
+    "每天读 %lld 字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read %lld characters a day"
+          }
+        }
+      }
+    },
     "没有已归档的分类": {
       "localizations": {
         "en": {
@@ -1431,12 +1524,32 @@
         }
       }
     },
+    "版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
     "目标要大于零": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Enter more than zero"
+          }
+        }
+      }
+    },
+    "看这一天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open that day"
           }
         }
       }
@@ -1551,6 +1664,16 @@
         }
       }
     },
+    "词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Words"
+          }
+        }
+      }
+    },
     "语言": {
       "localizations": {
         "en": {
@@ -1661,6 +1784,16 @@
         }
       }
     },
+    "读伴 在想…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读伴 is thinking…"
+          }
+        }
+      }
+    },
     "读伴不会给你的词打钩，也不会说你哪天没来。": {
       "localizations": {
         "en": {
@@ -1687,6 +1820,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Finished reading"
+          }
+        }
+      }
+    },
+    "读过没查的文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read without a lookup"
           }
         }
       }
@@ -1943,6 +2086,7 @@
       }
     },
     "问": {
+      "extractionState": "stale",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2002,142 +2146,42 @@
         }
       }
     },
-    "读过没查的文章": {
+    "今日阅读": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Read without a lookup"
+            "value": "Reading today"
           }
         }
       }
     },
-    "词": {
+    "再读": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Words"
+            "value": "more"
           }
         }
       }
     },
-    "读伴 在想…": {
+    "字": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "读伴 is thinking…"
+            "value": "chars"
           }
         }
       }
     },
-    "全部": {
+    "今日常规": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "All"
-          }
-        }
-      }
-    },
-    "HSK": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HSK"
-          }
-        }
-      }
-    },
-    "最近认识": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recently known"
-          }
-        }
-      }
-    },
-    "看这一天": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open that day"
-          }
-        }
-      }
-    },
-    "每天读 %lld 字": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Read %lld characters a day"
-          }
-        }
-      }
-    },
-    "字号": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text size"
-          }
-        }
-      }
-    },
-    "关于": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "About"
-          }
-        }
-      }
-    },
-    "版本": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Version"
-          }
-        }
-      }
-    },
-    "字体：Noto Serif SC（SIL 开源字体许可）": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Type: Noto Serif SC (SIL Open Font License)"
-          }
-        }
-      }
-    },
-    "今天 — 完成": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Today — done"
-          }
-        }
-      }
-    },
-    "展开": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show"
+            "value": "Daily routines"
           }
         }
       }
