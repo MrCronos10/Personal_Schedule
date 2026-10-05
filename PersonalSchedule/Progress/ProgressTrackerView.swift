@@ -80,11 +80,10 @@ struct WeekLedger: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
                 if showsCollection {
-                    progressTitle
-                        .padding(.top, 12)
+                    nightBandHeader
 
                     CollectionGridView()
-                        .padding(.top, 16)
+                        .padding(.top, 20)
 
                     Text(verbatim: weekRange)
                         .font(.system(size: 13))
@@ -135,17 +134,27 @@ struct WeekLedger: View {
         .padding(.bottom, 24)
     }
 
-    /// 进度 in 田字格 boxes: the Collection Grid is what the tab is about.
-    @ViewBuilder
-    private var progressTitle: some View {
-        if isChinese {
-            TianZiGeTitle(text: "进度")
-        } else {
-            Text("进度")
-                .font(Theme.serif(38, .black))
-                .foregroundStyle(Theme.ink)
-                .accessibilityAddTraits(.isHeader)
-        }
+    /// The Night Band: the 进度 title on an ink header with rounded bottom corners, over the 田字格
+    /// paper. The stats row and the brass-outlined 印章册 button wait together on their sources and on
+    /// ticket 08 (the Seal Book the button opens); the rule-bearing grid below is unchanged. Uses the
+    /// shared `NightBand.cornerRadius` so it stays in step with the ground primitive.
+    private var nightBandHeader: some View {
+        Text("进度")
+            .font(Theme.serif(28, .black))
+            .foregroundStyle(Theme.onRed)
+            .accessibilityAddTraits(.isHeader)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 20)
+            .background(Theme.nightBand)
+            .clipShape(
+                UnevenRoundedRectangle(
+                    bottomLeadingRadius: NightBand.cornerRadius,
+                    bottomTrailingRadius: NightBand.cornerRadius
+                )
+            )
+            .padding(.horizontal, -16)   // full-bleed past the content gutter
     }
 
     /// 本周 in 田字格 boxes, the same practice-book heading the 今天 tab uses. It says which week this is,
