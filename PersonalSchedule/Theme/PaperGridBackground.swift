@@ -22,24 +22,9 @@ struct PaperGridBackground: View {
             // value in each mode (gridRed on cream, lantern cream on night ink).
             let line = Color(hex: scheme == .dark ? Theme.Token.gridLine.dark : Theme.Token.gridLine.light)
             let shading = GraphicsContext.Shading.color(line.opacity(Self.gridOpacity(for: scheme)))
-            var solid = Path()
-            var dashed = Path()
-            var x: CGFloat = 0
-            while x <= size.width {
-                solid.move(to: CGPoint(x: x, y: 0))
-                solid.addLine(to: CGPoint(x: x, y: size.height))
-                dashed.move(to: CGPoint(x: x + cell / 2, y: 0))
-                dashed.addLine(to: CGPoint(x: x + cell / 2, y: size.height))
-                x += cell
-            }
-            var y: CGFloat = 0
-            while y <= size.height {
-                solid.move(to: CGPoint(x: 0, y: y))
-                solid.addLine(to: CGPoint(x: size.width, y: y))
-                dashed.move(to: CGPoint(x: 0, y: y + cell / 2))
-                dashed.addLine(to: CGPoint(x: size.width, y: y + cell / 2))
-                y += cell
-            }
+            // Solid cells, with a dashed cross through each (the 田字格 guide lines).
+            let solid = Path.grid(spacing: cell, in: size)
+            let dashed = Path.grid(spacing: cell, offset: cell / 2, in: size)
             context.stroke(solid, with: shading, lineWidth: 1)
             context.stroke(dashed, with: shading, style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
         }

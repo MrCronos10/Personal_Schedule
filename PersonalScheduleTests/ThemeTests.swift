@@ -58,6 +58,7 @@ struct ThemeTests {
             (Theme.sealRed, .sealRed), (Theme.rule, .rule), (Theme.late, .late), (Theme.error, .error),
             (Theme.bamboo, .bamboo), (Theme.done, .done), (Theme.onDone, .onDone),
             (Theme.brass, .brass), (Theme.lacquer, .lacquer), (Theme.bambooPaper, .bambooPaper),
+            (Theme.nightBand, .nightBand),
             (Theme.dawnHill1, .dawnHill1), (Theme.dawnHill2, .dawnHill2), (Theme.dawnHill3, .dawnHill3),
         ]
         for (color, token) in wiring {

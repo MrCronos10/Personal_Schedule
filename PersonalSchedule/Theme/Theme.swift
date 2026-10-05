@@ -29,7 +29,7 @@ enum Theme {
         // Done / mastery — `bamboo` is the brief's "done only" green
         case bamboo, done, onDone
         // v2 additions: Seal Book / Progress accents and the per-screen grounds
-        case brass, lacquer, bambooPaper
+        case brass, lacquer, bambooPaper, nightBand
         case dawnHill1, dawnHill2, dawnHill3
 
         var light: UInt32 {
@@ -52,6 +52,7 @@ enum Theme {
             case .brass: 0xB08A2E
             case .lacquer: 0x2A1F1A
             case .bambooPaper: 0xF1F1E4
+            case .nightBand: 0x1C1A17           // ink-black as a surface — its own role, independent of text `ink`
             case .dawnHill1: 0xF6EDDA
             case .dawnHill2: 0xEBDDC0
             case .dawnHill3: 0xF1E6CF
@@ -78,6 +79,7 @@ enum Theme {
             case .brass: 0xC9A44A
             case .lacquer: 0x2A1F1A           // deliberately mode-invariant: one lacquer ground
             case .bambooPaper: 0x1F211A
+            case .nightBand: 0x2A2622         // proposal: a touch lifted from dark paper so the band reads
             // Dawn hills at night are proposals (brief: "dark equivalents") — judged on the phone.
             case .dawnHill1: 0x2A2622
             case .dawnHill2: 0x322C25
@@ -134,6 +136,8 @@ enum Theme {
     static let lacquer = Token.lacquer.color
     /// Bamboo paper: the 词 ground. Dark value is a proposal — checked on the phone.
     static let bambooPaper = Token.bambooPaper.color
+    /// Night band: the 进度 header surface — ink in light mode, a lifted dark at night (proposal).
+    static let nightBand = Token.nightBand.color
     /// The three layered hills of the 今天 Dawn header, far to near. Dark values are proposals.
     static let dawnHill1 = Token.dawnHill1.color
     static let dawnHill2 = Token.dawnHill2.color
