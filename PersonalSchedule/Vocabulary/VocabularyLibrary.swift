@@ -185,6 +185,9 @@ struct VocabularyLibrary {
     struct BankResult: Equatable {
         /// Words that reached three **Clean Sightings** and are now **Known**.
         var newlyKnown = 0
+        /// Which Words those were, in reading order — so the 读完 screen can ink their 田字格 cells.
+        /// Not persisted: it lives only in the result of the 读完 that just happened.
+        var newlyKnownWords: [String] = []
         /// Words that gained a sighting without reaching three yet. A Word the student already
         /// knows is not counted: it has not moved toward anything.
         var advanced = 0
@@ -257,6 +260,7 @@ struct VocabularyLibrary {
                 progress.isKnown = true
                 progress.knownDayNumber = day.number
                 result.newlyKnown += 1
+                result.newlyKnownWords.append(entry.word)
             } else if !wasKnown {
                 result.advanced += 1
             }

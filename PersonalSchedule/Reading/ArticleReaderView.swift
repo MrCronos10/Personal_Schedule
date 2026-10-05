@@ -125,7 +125,16 @@ struct ArticleReaderView: View {
                             .font(Theme.meta)
                             .foregroundStyle(Theme.error)
                     } else if let banked {
-                        bankedLine(banked)
+                        VStack(spacing: 14) {
+                            bankedLine(banked)
+                            // The Words that just became Known, inking into their cells one after
+                            // another. Only when there are some, so a reading that moved nothing shows
+                            // no empty row (never a row of zeros).
+                            if !banked.newlyKnownWords.isEmpty {
+                                InkingCells(words: banked.newlyKnownWords)
+                                    .id(banked.newlyKnownWords)
+                            }
+                        }
                     }
                 }
                 .padding(.top, 28)
@@ -400,6 +409,66 @@ struct ArticleReaderView: View {
         var piece = AttributedString(text)
         piece.foregroundColor = Theme.ink
         return piece
+    }
+}
+
+/// The 刚刚上墨 row on 读完: the Words that just became Known, inking into 田字格 cells one after
+/// another (120 ms apart). Reduce Motion shows them at once with a fade. No sound; the stamp carries
+/// the one light haptic.
+private struct InkingCells: View {
+    let words: [String]
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var inked = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("刚刚上墨")
+                .font(Theme.label)
+                .tracking(1.4)
+                .foregroundStyle(Theme.red)
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.fixed(44), spacing: 6), count: 6),
+                alignment: .leading,
+                spacing: 6
+            ) {
+                ForEach(Array(words.enumerated()), id: \.offset) { index, word in
+                    cell(word)
+                        .opacity(index < inked ? 1 : 0)
+                        .scaleEffect(index < inked ? 1 : 0.6)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // A cancellable task: if the reader is dismissed mid-stagger, the pending reveals are dropped
+        // rather than writing into torn-down state.
+        .task {
+            guard !reduceMotion else {
+                withAnimation(.easeOut(duration: 0.3)) { inked = words.count }
+                return
+            }
+            for index in words.indices {
+                try? await Task.sleep(for: .milliseconds(120))
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { inked = index + 1 }
+            }
+        }
+    }
+
+    private func cell(_ word: String) -> some View {
+        // Sized by character count like the Collection Grid, so a 3-4 character Word stays legible.
+        let size: CGFloat = switch word.count {
+        case 1: 20
+        case 2: 15
+        default: 12
+        }
+        return Text(verbatim: word)
+            .font(Theme.serif(size, .black))
+            .minimumScaleFactor(0.5)
+            .lineLimit(1)
+            .padding(2)
+            .foregroundStyle(Theme.ink)
+            .frame(width: 44, height: 44)
+            .background(Rectangle().fill(Theme.card.opacity(0.9)))
+            .overlay(Rectangle().stroke(Theme.red.opacity(0.55), lineWidth: 0.75))
     }
 }
 

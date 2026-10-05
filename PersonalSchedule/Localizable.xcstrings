@@ -2195,6 +2195,16 @@
           }
         }
       }
+    },
+    "刚刚上墨": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Just inked"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

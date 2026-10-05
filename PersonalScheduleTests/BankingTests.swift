@@ -42,6 +42,30 @@ struct BankingTests {
         )
     }
 
+    // MARK: - The words that became Known (the 读完 inking cells)
+
+    /// The result names the Words that became Known this reading, so the 读完 screen can ink their
+    /// 田字格 cells. The count and the list agree.
+    @Test func aBankNamesTheWordsThatBecameKnown() throws {
+        let shelf = try shelf()
+        var last = VocabularyLibrary.BankResult()
+        for id in 1...3 {
+            let article = try shelf.articles.add(text: text(id, ["厕所"]))
+            last = try shelf.vocabulary.bank(article, on: day)
+        }
+        #expect(last.newlyKnown == 1)
+        #expect(last.newlyKnownWords == ["厕所"])
+    }
+
+    /// A reading that makes nothing Known names no Words, so the screen inks no cells.
+    @Test func aBankThatMakesNothingKnownNamesNoWords() throws {
+        let shelf = try shelf()
+        let article = try shelf.articles.add(text: text(1, ["厕所"]))
+        let result = try shelf.vocabulary.bank(article, on: day)
+        #expect(result.newlyKnown == 0)
+        #expect(result.newlyKnownWords.isEmpty)
+    }
+
     // MARK: - A Clean Sighting remembers its Article
 
     /// A Word can say *where* it was earned, not merely how often. Its sightings are its count, so
