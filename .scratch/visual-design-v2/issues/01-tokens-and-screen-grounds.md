@@ -4,7 +4,7 @@
 
 **What it covers:** the v2 token set in `Theme.swift` (`docs/design-v2/brief.md`, Colour table), the per-screen grounds as reusable flat-shape SwiftUI views, and the bundled brush font.
 
-**Status:** split
+**Status:** split — all four sub-tickets built and `ready-for-human`.
 
 ## Sub-tickets and order
 
@@ -19,11 +19,11 @@ Frontier: sub-tickets 01 and 04 can start immediately; 02 and 03 unlock once 01 
 
 ## Rules that must hold across all four (from the brief and AGENTS.md)
 
-- [ ] Every colour in views comes from a `Theme` token; no stray hex or `.primary`/`.secondary` (grep the diff).
-- [ ] Each token has a light and a dark value; a test asserts none is missing.
-- [ ] `bamboo` is only used for done states (grep the diff and say so).
-- [ ] Grounds take no image assets and no gradients.
-- [ ] Fonts live in `PersonalSchedule/Fonts/` with their licence; the generator-in-bundle mistake from AGENTS.md is not repeated.
+- [x] Every colour in views comes from a `Theme` token; no stray hex or `.primary`/`.secondary` (grep the diff).
+- [x] Each token has a light and a dark value; a test asserts none is missing (`everyTokenResolvesInBothSchemes` over `Token.allCases`).
+- [x] `bamboo` is only used for done states (grep the diff and say so).
+- [x] Grounds take no image assets and no gradients.
+- [x] Fonts live in `PersonalSchedule/Fonts/` with their licence; the generator-in-bundle mistake from AGENTS.md is not repeated.
 
 ## Decisions (from the grilling session, 2026-10-05)
 

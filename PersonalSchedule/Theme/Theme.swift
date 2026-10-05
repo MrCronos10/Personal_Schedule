@@ -160,6 +160,12 @@ enum Theme {
         .custom(weight.rawValue, size: size)
     }
 
+    /// The brush face (Ma Shan Zheng, bundled). For seal characters and headline grid cells only —
+    /// running text and word-list cells stay Noto Serif SC, which reads better at small sizes.
+    static func brush(_ size: CGFloat) -> Font {
+        .custom("MaShanZheng-Regular", size: size)
+    }
+
     /// 28 — the largest heading inside a screen's content.
     static let display = serif(28)
     /// 24/32 — a Category's name, an Article's title.
