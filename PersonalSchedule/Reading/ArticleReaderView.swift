@@ -37,6 +37,9 @@ struct ArticleReaderView: View {
     /// How many Words in the Article are one Clean Sighting from Known, from `nearKnownWords(in:)`.
     /// Shown in the meta row and marked with red dots in the text; the screen never recomputes the rule.
     @State private var nearKnownCount = 0
+    /// Seals this 读完 just earned (ADR 0010), shown as a strip under the result. Empty most of the
+    /// time: a reading earns a seal only now and then, and a reread never does.
+    @State private var newSeals: [Seal] = []
     /// What the last 读完 moved, shown quietly under the button. Ticket 17 replaces this with the
     /// Tick sheet; the line stays, because it is the only place the student is told what changed.
     @State private var banked: VocabularyLibrary.BankResult?
@@ -109,7 +112,13 @@ struct ArticleReaderView: View {
                             let result = try VocabularyLibrary(context: context).bank(article)
                             banked = result
                             bankFailed = false
-                            if !result.wasReread { showReadSeal() }
+                            if !result.wasReread {
+                                showReadSeal()
+                                // The finish time is passed here and nowhere else: 夜读 is about when a
+                                // reading ended, so it cannot be earned by opening the book late.
+                                newSeals = (try? SealLibrary(context: context)
+                                    .evaluate(on: Day.today(), finishedReadingAt: Date())) ?? []
+                            }
                             // A Word that reached Known loses its underline, so redraw.
                             paragraphs = render()
                             offerToTick()
@@ -133,6 +142,10 @@ struct ArticleReaderView: View {
                             if !banked.newlyKnownWords.isEmpty {
                                 InkingCells(words: banked.newlyKnownWords)
                                     .id(banked.newlyKnownWords)
+                            }
+                            // Only when this reading earned one (ticket 08): never an empty strip.
+                            if !newSeals.isEmpty {
+                                NewSealStrip(seals: newSeals)
                             }
                         }
                     }
@@ -170,6 +183,8 @@ struct ArticleReaderView: View {
             }
         }
         .sensoryFeedback(.impact(weight: .light), trigger: readSealCount)
+        // A seal earned is the one medium haptic; no sound.
+        .sensoryFeedback(.impact(weight: .medium), trigger: newSeals) { _, seals in !seals.isEmpty }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             CoachDock(article: article)
         }
@@ -225,6 +240,7 @@ struct ArticleReaderView: View {
             // SwiftUI can reuse this screen for a different Article, which is what the id is for.
             // The last Article's line must not be left sitting under the new one's button.
             banked = nil
+            newSeals = []
             bankFailed = false
             secondsRead = 0
             shownAt = Date()
@@ -469,6 +485,34 @@ private struct InkingCells: View {
             .frame(width: 44, height: 44)
             .background(Rectangle().fill(Theme.card.opacity(0.9)))
             .overlay(Rectangle().stroke(Theme.red.opacity(0.55), lineWidth: 0.75))
+    }
+}
+
+/// The strip on 读完 naming the seal(s) this reading just earned: each stamped on, with its name.
+/// It lives only in the result of the 读完 that just happened; the Seal Book is where they are kept.
+private struct NewSealStrip: View {
+    let seals: [Seal]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("新印章")
+                .font(Theme.label)
+                .tracking(1.4)
+                .foregroundStyle(Theme.red)
+            HStack(spacing: 14) {
+                ForEach(seals) { seal in
+                    HStack(spacing: 8) {
+                        SealMark(seal: seal, size: 40, animated: true)
+                        Text(seal.name)
+                            .font(Theme.serif(15))
+                            .foregroundStyle(Theme.ink)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 }
 

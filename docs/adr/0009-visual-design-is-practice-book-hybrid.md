@@ -29,9 +29,11 @@ pieces that are expensive to change later.
 
 3. **The collection grid is the achievement surface.** Progress shows every
    Word in the HSK and Topic Lists as a 田字格 cell, in three states (empty,
-   seen, Known). There are no streaks, no badges, no ranks. The grid grows
-   because the student read, which is the only thing the app ever says they
-   should do (ADR 0004).
+   seen, Known). There are no streaks, no rank badges, no ranks. The grid
+   grows because the student read, which is the only thing the app ever says
+   they should do (ADR 0004). *Narrowed by [ADR 0010](0010-seal-book-is-permanent-and-never-streaked.md):
+   the one permitted collectible is the Seal, earned once and kept for ever,
+   never a streak or a rank.*
 
 ## Why not the alternatives
 
@@ -46,7 +48,9 @@ pieces that are expensive to change later.
 - **Streaks, badges, or 秀才 → 举人 ranks for "fun."** Rejected on ADR 0004
   grounds: streaks punish a sick day, badges mark the student as behind on a
   metric they didn't ask for, ranks turn reading into a competition with
-  oneself. The collection grid shows growth without any of those.
+  oneself. The collection grid shows growth without any of those. (ADR 0010
+  later admits one narrow exception, the cumulative Seal, which keeps every
+  one of these reasons: nothing counts a run of days and nothing is owed.)
 - **Five tabs with a "More" catch-all.** Rejected: Settings is rarely
   touched (iOS convention: gear icon), Notes is a support surface not a
   destination, Coach is bound to an Article by ADR 0008. Promoting any of

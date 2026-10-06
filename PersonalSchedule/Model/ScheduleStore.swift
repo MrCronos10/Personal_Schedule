@@ -8,6 +8,7 @@ enum ScheduleStore {
         Article.self, WordLookup.self, WordProgress.self, CleanSighting.self, LevelCongratulation.self,
         TopicWordProgress.self, TopicCustomWord.self,
         CoachMessage.self,
+        EarnedSeal.self,
     ])
 
     static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {

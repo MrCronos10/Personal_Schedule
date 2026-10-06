@@ -2235,6 +2235,326 @@
           }
         }
       }
+    },
+    "初读": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First Read"
+          }
+        }
+      }
+    },
+    "十篇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ten Articles"
+          }
+        }
+      }
+    },
+    "五十篇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fifty Articles"
+          }
+        }
+      }
+    },
+    "百篇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Hundred Articles"
+          }
+        }
+      }
+    },
+    "百词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Hundred Words"
+          }
+        }
+      }
+    },
+    "半程": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halfway"
+          }
+        }
+      }
+    },
+    "过关": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passed"
+          }
+        }
+      }
+    },
+    "千字文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Thousand Words"
+          }
+        }
+      }
+    },
+    "夜读": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night Reading"
+          }
+        }
+      }
+    },
+    "问字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask About a Word"
+          }
+        }
+      }
+    },
+    "农家": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Farmer"
+          }
+        }
+      }
+    },
+    "农场主": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Farm Owner"
+          }
+        }
+      }
+    },
+    "百日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Hundred Days"
+          }
+        }
+      }
+    },
+    "第一篇文章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your first Article"
+          }
+        }
+      }
+    },
+    "读完 10 篇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish 10 Articles"
+          }
+        }
+      }
+    },
+    "读完 50 篇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish 50 Articles"
+          }
+        }
+      }
+    },
+    "读完 100 篇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish 100 Articles"
+          }
+        }
+      }
+    },
+    "认识 100 个词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know 100 words"
+          }
+        }
+      }
+    },
+    "HSK 4 认识 300 个": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know 300 words of HSK 4"
+          }
+        }
+      }
+    },
+    "HSK 4 认识五分之四": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know four fifths of HSK 4"
+          }
+        }
+      }
+    },
+    "一共认识 1000 个词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know 1,000 words in all"
+          }
+        }
+      }
+    },
+    "写下第一条词记": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write your first Word Note"
+          }
+        }
+      }
+    },
+    "认识 25 个农业词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know 25 farming words"
+          }
+        }
+      }
+    },
+    "认识全部农业词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know every farming word"
+          }
+        }
+      }
+    },
+    "100 个有完成的日子，不必连续": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100 days with a Completion, not in a row"
+          }
+        }
+      }
+    },
+    "印章册": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seal Book"
+          }
+        }
+      }
+    },
+    "读出来的印章，永远不会失去。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seals earned by reading. They are never lost."
+          }
+        }
+      }
+    },
+    "下一枚": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next seal"
+          }
+        }
+      }
+    },
+    "隐藏印章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hidden seal"
+          }
+        }
+      }
+    },
+    "读着读着，就会出现": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It appears as you read"
+          }
+        }
+      }
+    },
+    "新印章": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New seal"
+          }
+        }
+      }
+    },
+    "晚上十点到凌晨五点读完一篇": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish an Article between 10 pm and 5 am"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

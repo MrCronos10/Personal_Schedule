@@ -203,7 +203,7 @@ The one visual direction the app takes: modern iOS chrome (tab bar, lists, sheet
 _Avoid_: Practice-book look (that was the older, pure direction), scholar's notebook style
 
 **Collection Grid**:
-The Progress screen's main surface: every **Word** on the HSK **Word Lists** and the **Topic List** is one cell in a 田字格, in one of three **Cell States** (not met, seen, Known). It is the only "achievement" surface the app has — no streaks, no badges, no ranks ([ADR 0004](docs/adr/0004-known-is-earned-by-reading-not-by-review.md), [ADR 0009](docs/adr/0009-visual-design-is-practice-book-hybrid.md)). The grid grows because the student read, and that is the whole story.
+The Progress screen's main surface: every **Word** on the HSK **Word Lists** and the **Topic List** is one cell in a 田字格, in one of three **Cell States** (not met, seen, Known). It is the app's main "achievement" surface — no streaks, no rank badges ([ADR 0004](docs/adr/0004-known-is-earned-by-reading-not-by-review.md), [ADR 0009](docs/adr/0009-visual-design-is-practice-book-hybrid.md)); the only other collectible is the **Seal**, kept in the **Seal Book** ([ADR 0010](docs/adr/0010-seal-book-is-permanent-and-never-streaked.md)). The grid grows because the student read, and that is the whole story.
 _Avoid_: Achievement wall, dashboard, trophy case
 
 **Cell State**:
@@ -223,5 +223,13 @@ One section on the **Vocabulary** tab: **难词**, **HSK Levels** (two cards, on
 _Avoid_: Section, tab, list
 
 **Small Celebration**:
-One of four quiet moments the app marks: the brush-stroke **读** seal when a **Reading Session** banks, the cell inking itself when a Word crosses to **Known**, the red seal stamp on **Today** the first time the daily reading goal is hit, and the "今天 — 完成" fold when all today's **Routines** are done. Haptic, never sound; no messages, no points, no banners. What is not celebrated: opening the app, a streak day, a weekly review.
+One of five quiet moments the app marks: the brush-stroke **读** seal when a **Reading Session** banks, the cell inking itself when a Word crosses to **Known**, the red seal stamp on **Today** the first time the daily reading goal is hit, the "今天 — 完成" fold when all today's **Routines** are done, and a **Seal** being earned. Haptic, never sound; no messages, no points, no banners. What is not celebrated: opening the app, a streak day, a weekly review.
 _Avoid_: Reward, achievement toast, confetti, notification
+
+**Seal**:
+A red stamp earned once, for something the student really did — Articles finished, Words **Known**, a first **Word Note**, a reading finished after ten at night, a hundred days with any **Completion**. It is **cumulative only**: kept for ever once earned, never taken away, never time-limited, and never shown as owed. An unearned seal shows its progress and nothing about what is late. A seal's rule reads facts the model already holds, so the only thing stored is the day it was earned. Passing a **Level** earns a seal (过关) and unlocks nothing ([ADR 0005](docs/adr/0005-levels-measure-a-fixed-list-and-never-gate-reading.md)). The one collectible the app permits ([ADR 0010](docs/adr/0010-seal-book-is-permanent-and-never-streaked.md)).
+_Avoid_: Badge, achievement, trophy, streak, rank, points
+
+**Seal Book**:
+印章册, opened from **Progress**: every **Seal** in one place, earned ones stamped with the day, unearned ones as a dashed blank with how far along they are, and a 下一枚 card for the one furthest along. 百日 counts days with any **Completion**, **not in a row** — a gap never resets it. Not a leaderboard and not a streak counter.
+_Avoid_: Trophy case, achievements screen, badge wall

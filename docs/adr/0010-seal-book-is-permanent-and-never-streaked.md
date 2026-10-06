@@ -1,6 +1,6 @@
 # The Seal Book: permanent seals, never streaks
 
-**Status:** proposed — the student has not accepted this yet. Do not build ticket 08 of `visual-design-v2` until this is marked accepted.
+**Status:** accepted by the student, 2026-10-06. Ticket 08 of `visual-design-v2` may be built.
 
 [ADR 0004](0004-known-is-earned-by-reading-not-by-review.md) and [ADR 0009](0009-visual-design-is-practice-book-hybrid.md) rejected badges, ranks and streaks: they punish a sick day, mark the student as behind, and turn reading into a competition. The Collection Grid is the only achievement surface.
 

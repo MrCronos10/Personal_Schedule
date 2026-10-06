@@ -48,6 +48,7 @@ struct WeekLedger: View {
     @State private var handledFocusToken = 0
     @State private var retroactiveDay = Day.today()
     @State private var isShowingRetroactiveDay = false
+    @State private var isShowingSealBook = false
 
     private var isChinese: Bool { locale.language.languageCode == .chinese }
 
@@ -74,6 +75,9 @@ struct WeekLedger: View {
         .background(PaperGridBackground())
         .sheet(isPresented: $isShowingRetroactiveDay) {
             TodayView(initialDay: retroactiveDay, showsShortcuts: false)
+        }
+        .sheet(isPresented: $isShowingSealBook) {
+            SealBookView()
         }
     }
 
@@ -134,15 +138,27 @@ struct WeekLedger: View {
         .padding(.bottom, 24)
     }
 
-    /// The Night Band: the 进度 title on an ink header with rounded bottom corners, over the 田字格
-    /// paper. The stats row and the brass-outlined 印章册 button wait together on their sources and on
-    /// ticket 08 (the Seal Book the button opens); the rule-bearing grid below is unchanged. Uses the
-    /// shared `NightBand.cornerRadius` so it stays in step with the ground primitive.
+    /// The Night Band: the 进度 title and the brass-outlined 印章册 button on an ink header with
+    /// rounded bottom corners, over the 田字格 paper. The stats row waits on live sources; the
+    /// rule-bearing grid below is unchanged. Uses the shared `NightBand.cornerRadius` so it stays in
+    /// step with the ground primitive.
     private var nightBandHeader: some View {
-        Text("进度")
-            .font(Theme.serif(28, .black))
-            .foregroundStyle(Theme.onRed)
-            .accessibilityAddTraits(.isHeader)
+        HStack {
+            Text("进度")
+                .font(Theme.serif(28, .black))
+                .foregroundStyle(Theme.onRed)
+                .accessibilityAddTraits(.isHeader)
+            Spacer()
+            Button { isShowingSealBook = true } label: {
+                Text("印章册")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Theme.brass)
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 44)
+                    .overlay(Capsule().stroke(Theme.brass, lineWidth: 1.5))
+                    .contentShape(Capsule())
+            }
+        }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.top, 16)
