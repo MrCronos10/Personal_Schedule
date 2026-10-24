@@ -1,7 +1,7 @@
 import Foundation
 import Security
 
-/// Where the student's Anthropic API key lives. See ADR 0008.
+/// Where the student's Qwen (Alibaba Model Studio) API key lives. See ADR 0008 and ADR 0011.
 ///
 /// Keychain, not UserDefaults: UserDefaults is unencrypted and backed up to iCloud by default, so a
 /// key stored there is a key that can walk off the phone with a backup file. Keychain is
@@ -12,7 +12,9 @@ import Security
 /// one entry. Reading or writing returns nil / false rather than throwing; the Settings screen can
 /// react without needing to translate a `OSStatus` into a sentence.
 struct CoachSecrets {
-    static let service = "com.kuypav.PersonalSchedule.coach.anthropic-api-key"
+    /// Its own slot, not the old Anthropic one: a leftover Anthropic key must read as "no key yet",
+    /// not be sent to Alibaba and come back as a 401.
+    static let service = "com.kuypav.PersonalSchedule.coach.qwen-api-key"
 
     static func apiKey() -> String? {
         var query = baseQuery()
@@ -42,8 +44,14 @@ struct CoachSecrets {
         return SecItemAdd(attributes as CFDictionary, nil) == errSecSuccess
     }
 
+    /// Where the Anthropic key lived before ADR 0011. Never read; wiped whenever the key is saved or
+    /// cleared, so a billable secret the app no longer uses doesn't stay on the phone for good.
+    static let legacyAnthropicService = "com.kuypav.PersonalSchedule.coach.anthropic-api-key"
+
     @discardableResult
     static func remove() -> Bool {
+        SecItemDelete([kSecClass as String: kSecClassGenericPassword,
+                       kSecAttrService as String: legacyAnthropicService] as CFDictionary)
         let status = SecItemDelete(baseQuery() as CFDictionary)
         return status == errSecSuccess || status == errSecItemNotFound
     }

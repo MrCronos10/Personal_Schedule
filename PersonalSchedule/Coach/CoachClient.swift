@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 /// What the student wants their reply in. See CONTEXT.md.
 ///
@@ -41,13 +42,19 @@ struct CoachTurn: Equatable, Sendable {
     let text: String
 }
 
+/// One message as the chat API receives it: `system`, `user` or `assistant`, and its text.
+struct ChatMessage: Equatable, Sendable, Encodable {
+    let role: String
+    let content: String
+}
+
 struct ArticleView: Equatable, Sendable {
     let title: String
     let source: String?
     let text: String
 }
 
-/// What the Coach uses to talk to a model. One method, so a test fake and the real Anthropic client
+/// What the Coach uses to talk to a model. One method, so a test fake and the real Qwen client
 /// share a shape. See ADR 0008.
 ///
 /// Streams rather than returns one whole reply: the student sees text appear as the model writes
@@ -67,7 +74,7 @@ enum CoachClientError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .missingAPIKey:
-            return "No Anthropic API key is set yet. Add one in 设置."
+            return "No Qwen API key is set yet. Add one in 设置."
         case .transport(let message):
             return "Couldn't reach the model: \(message)"
         case .api(let status, let body):
@@ -78,18 +85,27 @@ enum CoachClientError: LocalizedError, Equatable {
     }
 }
 
-/// The real client: a POST to Anthropic's Messages API, Sonnet 5.5. See ADR 0008 for why Sonnet
-/// and not Haiku or Opus, and why the student's key lives in Keychain and the request goes direct
-/// to Anthropic rather than through a proxy for now.
-struct AnthropicCoachClient: CoachClient {
-    /// The model id. Changed in one place so a swap to Haiku later for a cheaper mode is a one-line
-    /// edit, not a search across the project.
-    static let model = "claude-sonnet-5-5"
-    static let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
-    static let anthropicVersion = "2023-06-01"
-    /// How many tokens the Coach may spend on a reply. A sentence or two of Chinese plus an English
-    /// line is comfortably under this; higher costs more and encourages the model to pad.
-    static let maxTokens = 600
+/// How many tokens one reply cost, read from the stream's last chunk. Logged in debug builds to
+/// check the cache is hitting; never shown and never saved (ADR 0008: no counts on screen).
+struct CoachUsage: Equatable, Sendable {
+    let inputTokens: Int
+    let cachedTokens: Int
+    let outputTokens: Int
+}
+
+/// The real client: a POST to Alibaba Model Studio's OpenAI-compatible chat endpoint
+/// (International, Singapore), `qwen3.7-flash`. See ADR 0011 for why Qwen, and ADR 0008 for why the
+/// student's key lives in Keychain and the request goes direct rather than through a proxy for now.
+///
+/// No cache code: Model Studio caches a repeated prompt start on its own. `CoachPromptBuilder`
+/// keeps that start identical within a Session.
+struct QwenCoachClient: CoachClient {
+    /// The model id. Alibaba renames Flash models roughly every quarter, so it lives in one place.
+    static let model = "qwen3.7-flash"
+    static let endpoint = URL(string: "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions")!
+    /// The ceiling on one reply, the student's choice (ADR 0011). The prompt's "keep answers short"
+    /// keeps ordinary replies well under it; only what the model writes is billed.
+    static let maxTokens = 1000
 
     let apiKey: String
     let urlSession: URLSession
@@ -119,7 +135,7 @@ struct AnthropicCoachClient: CoachClient {
                         throw CoachClientError.malformedResponse
                     }
                     guard (200..<300).contains(http.statusCode) else {
-                        // On an error status Anthropic sends a short JSON body. Reading the body
+                        // On an error status Model Studio sends a short JSON body. Reading the body
                         // off the byte stream itself keeps this to one request.
                         var buffer = Data()
                         for try await byte in bytes { buffer.append(byte) }
@@ -128,15 +144,21 @@ struct AnthropicCoachClient: CoachClient {
                     }
                     var sawAnyText = false
                     for try await line in bytes.lines {
-                        // Server-Sent Events: event names and empty lines are structure; the data
-                        // lines carry one JSON object each (see Anthropic's streaming docs).
+                        // Server-Sent Events: empty lines are structure; the data lines carry one
+                        // JSON object each, and the stream ends with `data: [DONE]`.
                         guard line.hasPrefix("data:") else { continue }
                         let payload = line.dropFirst("data:".count).trimmingCharacters(in: .whitespaces)
                         guard !payload.isEmpty else { continue }
-                        if let text = Self.textDelta(from: payload), !text.isEmpty {
+                        guard let chunk = Self.chunk(from: payload) else { continue }
+                        if let text = Self.textDelta(in: chunk), !text.isEmpty {
                             sawAnyText = true
                             continuation.yield(text)
                         }
+                        #if DEBUG
+                        if let usage = Self.usage(in: chunk) {
+                            Self.log.debug("Coach tokens: input \(usage.inputTokens), cached \(usage.cachedTokens), output \(usage.outputTokens)")
+                        }
+                        #endif
                     }
                     if sawAnyText {
                         continuation.finish()
@@ -156,60 +178,107 @@ struct AnthropicCoachClient: CoachClient {
     }
 
     private func buildRequest(for prompt: CoachPrompt) throws -> URLRequest {
-        let body = AnthropicRequest(
-            model: Self.model,
-            maxTokens: Self.maxTokens,
-            stream: true,
-            system: CoachPromptBuilder.systemPrompt(for: prompt),
-            messages: prompt.history.map { AnthropicRequest.Message(role: $0.role.rawValue, content: $0.text) }
-        )
         var request = URLRequest(url: Self.endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "content-type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue(Self.anthropicVersion, forHTTPHeaderField: "anthropic-version")
-        request.httpBody = try JSONEncoder().encode(body)
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "authorization")
+        request.httpBody = try Self.requestBody(for: prompt)
         return request
     }
 
-    /// Pulls one text piece out of an SSE `data:` line, or nil for every other event the stream
-    /// carries (message_start, content_block_start, ping, message_stop…). Separate so a unit test
-    /// can hand it a known payload and assert the result without any URLSession at all.
-    static func textDelta(from payload: String) -> String? {
-        guard let data = payload.data(using: .utf8) else { return nil }
-        guard let event = try? JSONDecoder().decode(SSEEvent.self, from: data) else { return nil }
-        guard event.type == "content_block_delta" else { return nil }
-        guard event.delta?.type == "text_delta" else { return nil }
-        return event.delta?.text
+    /// The JSON the Coach posts. Separate so a test can read exactly what is sent.
+    static func requestBody(for prompt: CoachPrompt) throws -> Data {
+        try JSONEncoder().encode(ChatRequest(
+            model: model,
+            maxTokens: maxTokens,
+            stream: true,
+            streamOptions: .init(includeUsage: true),
+            enableThinking: false,
+            messages: CoachPromptBuilder.chatMessages(for: prompt)
+        ))
     }
 
-    private struct AnthropicRequest: Encodable {
+    /// Pulls one text piece out of an SSE `data:` line, or nil for every other line the stream
+    /// carries (the finish chunk, the usage chunk, `[DONE]`, anything that isn't JSON). Separate so
+    /// a unit test can hand it a known payload and assert the result without any URLSession at all.
+    static func textDelta(from payload: String) -> String? {
+        chunk(from: payload).flatMap(textDelta(in:))
+    }
+
+    /// The token counts on the stream's usage chunk, or nil for every other line.
+    static func usage(from payload: String) -> CoachUsage? {
+        chunk(from: payload).flatMap(usage(in:))
+    }
+
+    private static func textDelta(in chunk: StreamChunk) -> String? {
+        chunk.choices.first?.delta?.content
+    }
+
+    private static func usage(in chunk: StreamChunk) -> CoachUsage? {
+        guard let usage = chunk.usage else { return nil }
+        return CoachUsage(inputTokens: usage.promptTokens,
+                          cachedTokens: usage.promptTokensDetails?.cachedTokens ?? 0,
+                          outputTokens: usage.completionTokens)
+    }
+
+    private static func chunk(from payload: String) -> StreamChunk? {
+        guard let data = payload.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(StreamChunk.self, from: data)
+    }
+
+    #if DEBUG
+    private static let log = Logger(subsystem: "com.kuypav.PersonalSchedule", category: "Coach")
+    #endif
+
+    private struct ChatRequest: Encodable {
         let model: String
         let maxTokens: Int
         let stream: Bool
-        let system: String
-        let messages: [Message]
+        let streamOptions: StreamOptions
+        /// Off in writing: hidden reasoning is billed and can spend the reply budget before any
+        /// text arrives.
+        let enableThinking: Bool
+        let messages: [ChatMessage]
 
         enum CodingKeys: String, CodingKey {
             case model
             case maxTokens = "max_tokens"
             case stream
-            case system
+            case streamOptions = "stream_options"
+            case enableThinking = "enable_thinking"
             case messages
         }
 
-        struct Message: Encodable {
-            let role: String
-            let content: String
+        struct StreamOptions: Encodable {
+            let includeUsage: Bool
+            enum CodingKeys: String, CodingKey { case includeUsage = "include_usage" }
         }
     }
 
-    struct SSEEvent: Decodable {
-        let type: String
-        let delta: Delta?
+    private struct StreamChunk: Decodable {
+        let choices: [Choice]
+        let usage: Usage?
+
+        struct Choice: Decodable {
+            let delta: Delta?
+        }
         struct Delta: Decodable {
-            let type: String?
-            let text: String?
+            let content: String?
+        }
+        struct Usage: Decodable {
+            let promptTokens: Int
+            let completionTokens: Int
+            let promptTokensDetails: Details?
+
+            enum CodingKeys: String, CodingKey {
+                case promptTokens = "prompt_tokens"
+                case completionTokens = "completion_tokens"
+                case promptTokensDetails = "prompt_tokens_details"
+            }
+        }
+        struct Details: Decodable {
+            let cachedTokens: Int?
+            enum CodingKeys: String, CodingKey { case cachedTokens = "cached_tokens" }
         }
     }
 }
@@ -229,15 +298,6 @@ enum CoachPromptBuilder {
         lines.append("- Never recommend other apps, decks or flashcards.")
         lines.append("- Always include pinyin in parentheses the first time you use a Chinese word in a reply.")
         lines.append("")
-        switch prompt.language {
-        case .both:
-            lines.append("Answer in BOTH languages: a short Chinese line first, then a short English line.")
-        case .chinese:
-            lines.append("Answer in Chinese only. Keep sentences short and use words at HSK 4-5 level where you can.")
-        case .english:
-            lines.append("Answer in English only. Quote Chinese words with pinyin: 发酵 (fā jiào).")
-        }
-        lines.append("")
         lines.append("The Article the student is reading:")
         lines.append("Title: \(prompt.article.title)")
         if let source = prompt.article.source, !source.isEmpty {
@@ -255,5 +315,32 @@ enum CoachPromptBuilder {
                          prompt.topicWordsInArticle.joined(separator: "、"))
         }
         return lines.joined(separator: "\n")
+    }
+
+    /// The messages the client sends, in the order that keeps the cached start stable: the system
+    /// prompt, the earlier turns as they were, then the new question with its language line. The
+    /// language line is added here, at send time, never into a saved Coach Message.
+    static func chatMessages(for prompt: CoachPrompt) -> [ChatMessage] {
+        var messages = [ChatMessage(role: "system", content: systemPrompt(for: prompt))]
+        messages += prompt.history.map { ChatMessage(role: $0.role.rawValue, content: $0.text) }
+        if prompt.history.last?.role == .user, let last = messages.popLast() {
+            messages.append(ChatMessage(role: last.role,
+                                        content: last.content + "\n\n" + languageInstruction(for: prompt.language)))
+        }
+        return messages
+    }
+
+    /// The Coach Language line. Not in the system prompt: it is picked per message, and the system
+    /// prompt must stay byte-for-byte the same within a Session so the provider can cache it
+    /// (ADR 0011).
+    static func languageInstruction(for language: CoachLanguage) -> String {
+        switch language {
+        case .both:
+            return "Answer in BOTH languages: a short Chinese line first, then a short English line."
+        case .chinese:
+            return "Answer in Chinese only. Keep sentences short and use words at HSK 4-5 level where you can."
+        case .english:
+            return "Answer in English only. Quote Chinese words with pinyin: 发酵 (fā jiào)."
+        }
     }
 }

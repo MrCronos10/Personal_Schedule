@@ -109,7 +109,7 @@ struct CoachLibraryTests {
 
     // MARK: - The prompt
 
-    @Test func theWholeThreadIsSentEveryTimeSoTheCoachRemembers() async throws {
+    @Test func aShortThreadIsSentWholeSoTheCoachRemembers() async throws {
         let setup = try setUp()
         let article = try ArticleLibrary(context: setup.context).add(text: "示例\n一句话。")
         _ = try await setup.library.ask("第一问", about: article, language: .both)
@@ -123,6 +123,56 @@ struct CoachLibraryTests {
         #expect(prompt.history[1].role == .assistant)
         #expect(prompt.history.last?.role == .user)
         #expect(prompt.history.last?.text == "第二问")
+    }
+
+    @Test func onlyTheLastSixEarlierTurnsTravelWithANewQuestion() async throws {
+        let setup = try setUp()
+        let article = try ArticleLibrary(context: setup.context).add(text: "示例\n一句话。")
+        for question in ["第一问", "第二问", "第三问", "第四问", "第五问"] {
+            _ = try await setup.library.ask(question, about: article, language: .both)
+        }
+        // Eight earlier turns were saved before the fifth ask (Q1 A1 … Q4 A4). The Coach sees the
+        // last six of them, Q2 to A4, then the new question. ADR 0011.
+        #expect(CoachLibrary.historyLimit == 6)
+        let prompt = try #require(setup.fake.lastPrompt)
+        #expect(prompt.history.count == 7)
+        #expect(prompt.history.first?.role == .user)
+        #expect(prompt.history.first?.text == "第二问")
+        #expect(prompt.history.last?.text == "第五问")
+    }
+
+    @Test func theWindowNeverOpensOnACoachReply() async throws {
+        // A question left unanswered (the app killed mid-reply, so the rollback never ran) breaks
+        // the question/answer rhythm. Seven earlier rows: Q1 A1 Q-orphan Q2 A2 Q3 A3. The last six
+        // would open on A1, a reply to a question the Coach can no longer see.
+        let setup = try setUp()
+        let article = try ArticleLibrary(context: setup.context).add(text: "示例\n一句话。")
+        let start = Date(timeIntervalSince1970: 1_000)
+        let rows: [(CoachMessageRole, String)] = [(.user, "Q1"), (.coach, "A1"), (.user, "Q-orphan"),
+                                                  (.user, "Q2"), (.coach, "A2"), (.user, "Q3"), (.coach, "A3")]
+        for (index, row) in rows.enumerated() {
+            setup.context.insert(CoachMessage(role: row.0, text: row.1, article: article, language: .both,
+                                              day: Day.today(), createdAt: start.addingTimeInterval(Double(index))))
+        }
+        try setup.context.save()
+        #expect(try setup.library.messages(for: article).count == 7)
+
+        _ = try await setup.library.ask("Q4", about: article, language: .both)
+        let prompt = try #require(setup.fake.lastPrompt)
+        #expect(prompt.history.first?.role == .user)
+        #expect(prompt.history.first?.text == "Q-orphan")
+        #expect(prompt.history.last?.text == "Q4")
+    }
+
+    @Test func trimmingThePromptNeverHidesASavedMessage() async throws {
+        let setup = try setUp()
+        let article = try ArticleLibrary(context: setup.context).add(text: "示例\n一句话。")
+        for question in ["第一问", "第二问", "第三问", "第四问", "第五问"] {
+            _ = try await setup.library.ask(question, about: article, language: .both)
+        }
+        let messages = try setup.library.messages(for: article)
+        #expect(messages.count == 10)
+        #expect(messages.first?.text == "第一问")
     }
 
     @Test func theArticlesTitleSourceAndTextTravelWithTheQuestion() async throws {
@@ -186,15 +236,44 @@ struct CoachLibraryTests {
 
     // MARK: - The system prompt
 
-    @Test func theSystemPromptSaysWhichLanguageToAnswerIn() throws {
+    @Test func switchingLanguageLeavesTheSystemPromptIdentical() throws {
+        // The system prompt is the start the provider caches. A per-message value inside it would
+        // break the cache for everything after it. ADR 0011.
         let base = CoachPrompt(history: [CoachTurn(role: .user, text: "hi")],
                                article: ArticleView(title: "t", source: nil, text: "x"),
                                knownInArticle: [], topicWordsInArticle: [], language: .chinese)
-        #expect(CoachPromptBuilder.systemPrompt(for: base).contains("Chinese only"))
-        var p = base; p.language = .english
-        #expect(CoachPromptBuilder.systemPrompt(for: p).contains("English only"))
-        p.language = .both
-        #expect(CoachPromptBuilder.systemPrompt(for: p).contains("BOTH languages"))
+        var english = base; english.language = .english
+        var both = base; both.language = .both
+        let system = CoachPromptBuilder.systemPrompt(for: base)
+        #expect(CoachPromptBuilder.systemPrompt(for: english) == system)
+        #expect(CoachPromptBuilder.systemPrompt(for: both) == system)
+    }
+
+    @Test func theLanguageLineTravelsWithTheNewQuestionOnly() throws {
+        let prompt = CoachPrompt(history: [CoachTurn(role: .user, text: "第一问"),
+                                           CoachTurn(role: .assistant, text: "答"),
+                                           CoachTurn(role: .user, text: "第二问")],
+                                 article: ArticleView(title: "t", source: nil, text: "x"),
+                                 knownInArticle: [], topicWordsInArticle: [], language: .english)
+        let messages = CoachPromptBuilder.chatMessages(for: prompt)
+        #expect(messages.map(\.role) == ["system", "user", "assistant", "user"])
+        #expect(messages[0].content == CoachPromptBuilder.systemPrompt(for: prompt))
+        #expect(messages[1].content == "第一问", "an earlier question is sent as it was asked")
+        #expect(messages[3].content.hasPrefix("第二问"))
+        #expect(messages[3].content.contains("English only"))
+    }
+
+    @Test func theSystemPromptRunsHouseRulesThenArticleThenWordLists() throws {
+        let prompt = CoachPrompt(history: [], article: ArticleView(title: "标题", source: nil, text: "正文"),
+                                 knownInArticle: ["参观"], topicWordsInArticle: ["肥料厂"], language: .both)
+        let system = CoachPromptBuilder.systemPrompt(for: prompt)
+        let rules = try #require(system.range(of: "House rules")).lowerBound
+        let article = try #require(system.range(of: "正文")).lowerBound
+        let known = try #require(system.range(of: "参观")).lowerBound
+        let topic = try #require(system.range(of: "肥料厂")).lowerBound
+        #expect(rules < article)
+        #expect(article < known)
+        #expect(article < topic)
     }
 
     @Test func theSystemPromptCarriesTheHouseRulesFromADR0008() throws {

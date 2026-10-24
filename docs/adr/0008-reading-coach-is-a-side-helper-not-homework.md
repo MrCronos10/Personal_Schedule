@@ -114,3 +114,10 @@ reply is being written), pulled up or tapped to open the thread over about two f
 The house rules above are unchanged: still inside an Article and nowhere else, still no streaks and
 nothing due. The thread stays alive while the dock is collapsed, so folding it away never cancels a
 reply that is still streaming in.
+
+## Superseded: provider and model (ADR 0011)
+
+"Why Sonnet 5.5", the Anthropic client and the streaming details above describe the Coach up to
+October 2026. [ADR 0011](0011-reading-coach-runs-on-qwen-and-sends-a-short-window.md) moves the Coach
+to Alibaba's `qwen3.7-flash`, sends only the last 6 turns, and drops the Anthropic client. The house
+rules in this ADR are unchanged.

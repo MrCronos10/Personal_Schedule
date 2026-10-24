@@ -272,11 +272,11 @@ struct SettingsView: View {
     private var coachSection: some View {
         SectionCaption(title: "读伴")
         VStack(alignment: .leading, spacing: 10) {
-            Text("读伴需要一个 Anthropic API key。它只存在手机里（Keychain），不会随 iCloud 备份。")
+            Text("读伴需要一个通义千问 (Qwen) API key。它只存在手机里（Keychain），不会随 iCloud 备份。")
                 .font(Theme.meta)
                 .foregroundStyle(Theme.muted)
                 .fixedSize(horizontal: false, vertical: true)
-            SecureField(apiKeyIsSet ? "key 已保存，输入新的覆盖" : "sk-ant-…", text: $apiKeyDraft)
+            SecureField(apiKeyIsSet ? "key 已保存，输入新的覆盖" : "sk-…", text: $apiKeyDraft)
                 .font(.system(size: 14, design: .monospaced))
                 .foregroundStyle(Theme.ink)
                 .padding(.horizontal, 10).padding(.vertical, 8)

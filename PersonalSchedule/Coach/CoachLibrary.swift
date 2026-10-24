@@ -12,6 +12,10 @@ struct CoachLibrary {
     let context: ModelContext
     let client: CoachClient
 
+    /// How many earlier turns travel with a new question. The Article is always in the prompt, so
+    /// trimming loses old chat, never the subject. See ADR 0011.
+    static let historyLimit = 6
+
     /// What the Coach has already said about this Article, oldest first. The chat sheet renders
     /// this directly; a new session opens where the last one ended.
     func messages(for article: Article) throws -> [CoachMessage] {
@@ -20,8 +24,8 @@ struct CoachLibrary {
         )).filter { $0.article?.persistentModelID == article.persistentModelID }
     }
 
-    /// Sends a question to the Coach and saves the exchange. The whole thread is sent each time so
-    /// the Coach can answer "what does 'this' mean" with the previous reply still in mind.
+    /// Sends a question to the Coach and saves the exchange. The last `historyLimit` turns are sent
+    /// with it so the Coach can answer "what does 'this' mean" with the previous reply still in mind.
     ///
     /// Two rows are written: the student's turn, then the Coach's reply, in order. The call throws
     /// if the client fails and the user turn is rolled back — a question that never got an answer
@@ -80,15 +84,19 @@ struct CoachLibrary {
     /// change here is one the tests catch.
     func buildPrompt(for article: Article, latest: String, language: CoachLanguage) throws -> CoachPrompt {
         let priorMessages = try messages(for: article)
-        var history: [CoachTurn] = priorMessages.map { message in
+        var earlier: [CoachTurn] = priorMessages.map { message in
             CoachTurn(role: message.role == .user ? .user : .assistant, text: message.text)
         }
-        // The user's turn just saved isn't in the fetched history until the next read, so append it
-        // explicitly. (It was already saved in `ask`, but the prompt is built on the data about to
-        // be sent, not the data in the store.)
-        if history.last?.role != .user || history.last?.text != latest {
-            history.append(CoachTurn(role: .user, text: latest))
+        // `ask` saves the question before building the prompt; it is the new question, not an
+        // earlier turn.
+        if earlier.last == CoachTurn(role: .user, text: latest) {
+            earlier.removeLast()
         }
+        // Only the most recent earlier turns travel, then the new question. Saved messages are
+        // untouched; the sheet still shows the whole Session. A window that would open on a reply
+        // drops it: the question it answered is no longer in view.
+        let window = earlier.suffix(Self.historyLimit).drop { $0.role == .assistant }
+        let history = Array(window) + [CoachTurn(role: .user, text: latest)]
 
         let articleView = ArticleView(title: article.title, source: article.source, text: article.text)
         let hskWords = VocabularyLibrary.hskWords(in: article.text).map(\.word)

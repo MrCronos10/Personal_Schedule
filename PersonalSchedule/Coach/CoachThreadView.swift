@@ -107,8 +107,8 @@ struct CoachThreadView: View {
     private var emptyGreeting: some View {
         VStack(alignment: .leading, spacing: 6) {
             if apiKey == nil {
-                Text(isChinese ? "还没有添加 Anthropic API key。打开 设置 粘贴一个。"
-                              : "No Anthropic API key yet. Open 设置 and paste one.")
+                Text(isChinese ? "还没有添加 Qwen API key。打开 设置 粘贴一个。"
+                              : "No Qwen API key yet. Open 设置 and paste one.")
                     .font(Theme.meta)
                     .foregroundStyle(Theme.late)
             } else {
@@ -159,14 +159,14 @@ struct CoachThreadView: View {
     }
 
     private func makeClient() -> CoachClient {
-        AnthropicCoachClient(apiKey: apiKey ?? "")
+        QwenCoachClient(apiKey: apiKey ?? "")
     }
 
     private func send() {
         let question = self.question.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !question.isEmpty else { return }
         guard apiKey != nil else {
-            errorText = isChinese ? "请先在 设置 里添加 Anthropic API key。" : "Add an Anthropic API key in 设置 first."
+            errorText = isChinese ? "请先在 设置 里添加 Qwen API key。" : "Add a Qwen API key in 设置 first."
             return
         }
         self.question = ""
