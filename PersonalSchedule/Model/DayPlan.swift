@@ -98,7 +98,8 @@ struct DayPlan {
         return !routines.isEmpty && routines.allSatisfy { isTicked($0, on: day) }
     }
 
-    private static func isTicked(_ action: Action, on day: Day) -> Bool {
+    /// Whether the Action has a Completion on that day.
+    static func isTicked(_ action: Action, on day: Day) -> Bool {
         (action.completions ?? []).contains { $0.dayNumber == day.number }
     }
 

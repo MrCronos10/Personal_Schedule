@@ -17,6 +17,9 @@ final class Action {
     var repeatWeekdayMask: Int?
     /// The day a Routine starts repeating. Empty for a One-time Action.
     var startDayNumber: Int?
+    /// Whether the student asked to be reminded at this Action's time. Off by default, for Actions made
+    /// before this existed and new ones alike, so updating the app changes nothing until they choose.
+    var remindsAtTime: Bool = false
 
     @Relationship(deleteRule: .cascade, inverse: \Completion.action)
     var completions: [Completion]? = []

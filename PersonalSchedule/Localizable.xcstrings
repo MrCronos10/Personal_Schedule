@@ -792,6 +792,16 @@
         }
       }
     },
+    "到时间提醒我" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remind me at this time"
+          }
+        }
+      }
+    },
     "回到难词" : {
       "localizations" : {
         "en" : {

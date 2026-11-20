@@ -72,6 +72,10 @@ _Avoid_: Journal, word list, vocabulary
 One reminder each evening that shows the day's Actions not yet ticked off and how close each Category is to its Weekly Target.
 _Avoid_: Daily summary, nightly reminder, review
 
+**Reminder**:
+A notification at one **Action**'s own time, on a day the Action is on the **Daily Checklist** and not yet ticked off, for an Action whose switch the student turned on. It shows the Action's title as the student wrote it, and nothing else. Ticking the Action takes that day's Reminder away. Not the **Evening Check**, which is one look back over the whole day.
+_Avoid_: Alert, nudge, alarm, notification (for this one kind)
+
 **Class**:
 A university lesson that repeats every week at a fixed day and time, between a start date and an end date. It is not an Action: it is never ticked off and never counts as progress.
 _Avoid_: Course, lesson, lecture

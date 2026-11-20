@@ -30,6 +30,8 @@ struct ActionFormView: View {
     @State private var hasTime = false
     @State private var time = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date()) ?? Date()
     @State private var defaultMinutes: Int?
+    /// The reminder switch. Off by default; only offered while the Action has a time.
+    @State private var remindsAtTime = false
     @State private var errorMessage: LocalizedStringKey?
 
     init(day: Day) {
@@ -45,6 +47,7 @@ struct ActionFormView: View {
         // changing an Action's time shouldn't force it out of a Category the student has retired.
         _category = State(initialValue: action.category)
         _defaultMinutes = State(initialValue: action.defaultMinutes)
+        _remindsAtTime = State(initialValue: action.remindsAtTime)
 
         if let repeatDays = action.repeatDays, let startDay = action.startDay {
             _kind = State(initialValue: .routine)
@@ -100,6 +103,7 @@ struct ActionFormView: View {
                     Toggle("有时间", isOn: $hasTime)
                     if hasTime {
                         DatePicker("时间", selection: $time, displayedComponents: .hourAndMinute)
+                        Toggle("到时间提醒我", isOn: $remindsAtTime)
                     }
                     TextField("默认分钟（可选）", value: $defaultMinutes, format: .number)
                         .keyboardType(.numberPad)
@@ -115,6 +119,10 @@ struct ActionFormView: View {
             .scrollContentBackground(.hidden)
             .background(Theme.paper)
             .tint(Theme.red)
+            .onChange(of: remindsAtTime) { _, isOn in
+                // The permission prompt comes the first time a switch is turned on, never at launch.
+                if isOn { Task { await ReminderScheduler.shared.requestPermissionIfNeeded() } }
+            }
             .navigationTitle(Text(editing == nil ? "新计划" : "改计划"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -265,6 +273,7 @@ struct ActionFormView: View {
         }
     }
 
+    /// Saves the form in one go. Whether a hidden switch (no time) stays on is `ActionLibrary`'s rule.
     private func write(category: Category, day: Day, time: TimeOfDay?) throws {
         let library = ActionLibrary(context: context)
         switch (editing, kind) {
@@ -276,7 +285,8 @@ struct ActionFormView: View {
                 repeatDays: repeatDays,
                 startDay: day,
                 time: time,
-                defaultMinutes: defaultMinutes
+                defaultMinutes: defaultMinutes,
+                remindsAtTime: remindsAtTime
             )
         case (let action?, .oneTime):
             try library.updateOneTime(
@@ -285,7 +295,8 @@ struct ActionFormView: View {
                 category: category,
                 day: day,
                 time: time,
-                defaultMinutes: defaultMinutes
+                defaultMinutes: defaultMinutes,
+                remindsAtTime: remindsAtTime
             )
         case (nil, .routine):
             try library.addRoutine(
@@ -294,7 +305,8 @@ struct ActionFormView: View {
                 repeatDays: repeatDays,
                 startDay: day,
                 time: time,
-                defaultMinutes: defaultMinutes
+                defaultMinutes: defaultMinutes,
+                remindsAtTime: remindsAtTime
             )
         case (nil, .oneTime):
             try library.addOneTime(
@@ -302,7 +314,8 @@ struct ActionFormView: View {
                 category: category,
                 day: day,
                 time: time,
-                defaultMinutes: defaultMinutes
+                defaultMinutes: defaultMinutes,
+                remindsAtTime: remindsAtTime
             )
         }
     }

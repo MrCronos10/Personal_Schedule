@@ -1,5 +1,7 @@
 import SwiftData
 import SwiftUI
+import Combine
+import UserNotifications
 
 /// The four tabs (ADR 0009). Settings and Notes open from Today; the Reading Coach lives inside an
 /// Article.
@@ -28,7 +30,15 @@ enum AppTab: CaseIterable, Hashable {
 
 struct ContentView: View {
     @Environment(LanguageSetting.self) private var language
+    @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
     @State private var router = AppRouter()
+
+    init() {
+        // As early as a view can: iOS wants the delegate before launch finishes, or a tap that
+        // cold-launches the app can arrive with nobody listening. Setting it again is harmless.
+        UNUserNotificationCenter.current().delegate = ReminderScheduler.shared
+    }
 
     var body: some View {
         TabView(selection: $router.tab) {
@@ -50,6 +60,20 @@ struct ContentView: View {
         .toolbarBackground(Theme.paper, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .environment(\.locale, language.current.locale)
+        // Reminders: refreshed when the app opens or comes back, and after every save, which covers an
+        // Action or Completion changing anywhere. Tapping one opens 今天.
+        .task {
+            let scheduler = ReminderScheduler.shared
+            scheduler.onOpen = { router.tab = .today }
+            scheduler.refresh(context)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { ReminderScheduler.shared.refresh(context) }
+        }
+        // Saves can be posted from any thread; the scheduler is main-actor only.
+        .onReceive(NotificationCenter.default.publisher(for: ModelContext.didSave).receive(on: RunLoop.main)) { _ in
+            ReminderScheduler.shared.refresh(context)
+        }
     }
 }
 

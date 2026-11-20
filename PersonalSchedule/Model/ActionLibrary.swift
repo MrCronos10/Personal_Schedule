@@ -23,12 +23,14 @@ struct ActionLibrary {
         category: Category,
         day: Day,
         time: TimeOfDay? = nil,
-        defaultMinutes: Int? = nil
+        defaultMinutes: Int? = nil,
+        remindsAtTime: Bool = false
     ) throws -> Action {
         let trimmed = try checked(title: title, category: category, keeping: nil, defaultMinutes: defaultMinutes)
         let action = Action(title: trimmed, plannedDay: day, time: time, defaultMinutes: defaultMinutes)
         context.insert(action)
         action.category = category
+        action.remindsAtTime = Self.reminds(remindsAtTime, at: time)
         try context.saveOrRollBack()
         return action
     }
@@ -42,7 +44,8 @@ struct ActionLibrary {
         repeatDays: RepeatDays,
         startDay: Day,
         time: TimeOfDay? = nil,
-        defaultMinutes: Int? = nil
+        defaultMinutes: Int? = nil,
+        remindsAtTime: Bool = false
     ) throws -> Action {
         let trimmed = try checked(title: title, category: category, keeping: nil, defaultMinutes: defaultMinutes)
         guard !repeatDays.isEmpty else { throw ActionError.noRepeatDays }
@@ -55,6 +58,7 @@ struct ActionLibrary {
         )
         context.insert(action)
         action.category = category
+        action.remindsAtTime = Self.reminds(remindsAtTime, at: time)
         try context.saveOrRollBack()
         return action
     }
@@ -69,7 +73,8 @@ struct ActionLibrary {
         category: Category,
         day: Day,
         time: TimeOfDay?,
-        defaultMinutes: Int?
+        defaultMinutes: Int?,
+        remindsAtTime: Bool? = nil
     ) throws {
         guard !action.isRoutine else { throw ActionError.notAOneTimeAction }
         let trimmed = try checked(
@@ -83,6 +88,7 @@ struct ActionLibrary {
         action.plannedDayNumber = day.number
         action.timeMinutes = time?.minutesSinceMidnight
         action.defaultMinutes = defaultMinutes
+        action.remindsAtTime = Self.reminds(remindsAtTime ?? action.remindsAtTime, at: time)
         try context.saveOrRollBack()
     }
 
@@ -95,7 +101,8 @@ struct ActionLibrary {
         repeatDays: RepeatDays,
         startDay: Day,
         time: TimeOfDay?,
-        defaultMinutes: Int?
+        defaultMinutes: Int?,
+        remindsAtTime: Bool? = nil
     ) throws {
         guard action.isRoutine else { throw ActionError.notARoutine }
         let trimmed = try checked(
@@ -112,7 +119,20 @@ struct ActionLibrary {
         action.plannedDayNumber = startDay.number
         action.timeMinutes = time?.minutesSinceMidnight
         action.defaultMinutes = defaultMinutes
+        action.remindsAtTime = Self.reminds(remindsAtTime ?? action.remindsAtTime, at: time)
         try context.saveOrRollBack()
+    }
+
+    /// Turns an Action's reminder on or off. See `ReminderPlan` for when one fires.
+    func setReminder(_ action: Action, on: Bool) throws {
+        action.remindsAtTime = Self.reminds(on, at: action.time)
+        try context.saveOrRollBack()
+    }
+
+    /// No time, no reminder (spec decision 1). The switch is hidden then, so it is never left on unseen,
+    /// and adding a time later starts it off.
+    private static func reminds(_ wanted: Bool, at time: TimeOfDay?) -> Bool {
+        wanted && time != nil
     }
 
     /// What every Action needs, whether it is being added or changed: a title with something in it, a
