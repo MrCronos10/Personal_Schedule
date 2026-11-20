@@ -802,6 +802,16 @@
         }
       }
     },
+    "去设置打开" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn on in Settings"
+          }
+        }
+      }
+    },
     "回到难词" : {
       "localizations" : {
         "en" : {
@@ -2423,6 +2433,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Choose days"
+          }
+        }
+      }
+    },
+    "通知已关闭" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications are off"
           }
         }
       }

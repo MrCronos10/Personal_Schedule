@@ -52,12 +52,18 @@ final class ReminderScheduler: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    /// Asks iOS for permission if it has never been asked. Called the first time a switch is turned on,
-    /// never at launch (spec decision 6).
-    func requestPermissionIfNeeded() async {
-        let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .notDetermined else { return }
+    /// What iOS says about reminders right now.
+    func permission() async -> ReminderPermission {
+        ReminderPermission(await center.notificationSettings().authorizationStatus)
+    }
+
+    /// Asks iOS for permission if it has never been asked, and says where that leaves things. Called
+    /// the first time a switch is turned on, never at launch (spec decision 6).
+    func requestPermissionIfNeeded() async -> ReminderPermission {
+        let current = await permission()
+        guard current == .notAsked else { return current }
         _ = try? await center.requestAuthorization(options: [.alert, .sound])
+        return await permission()
     }
 
     private func replacePending(_ context: ModelContext, now: Date) async {
@@ -66,9 +72,8 @@ final class ReminderScheduler: NSObject, UNUserNotificationCenterDelegate {
             .filter { $0.hasPrefix(Self.prefix) }
         center.removePendingNotificationRequests(withIdentifiers: ours)
 
-        let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
-        else { return }
+        // Refused: the switches are kept as they were, and their reminders come back once allowed.
+        guard await permission() == .allowed else { return }
 
         // One calendar, read once, for both the day and the minute (Day.swift's own rule), Gregorian
         // whatever the phone's calendar is (ADR 0003).

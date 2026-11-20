@@ -16,6 +16,8 @@ struct ActionFormView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
     @Query(CategoryLibrary.activeDescriptor) private var categories: [Category]
 
     /// The Action being changed, or nothing when planning a new one.
@@ -32,6 +34,9 @@ struct ActionFormView: View {
     @State private var defaultMinutes: Int?
     /// The reminder switch. Off by default; only offered while the Action has a time.
     @State private var remindsAtTime = false
+    /// What iOS says about notifications, checked when the form opens and when the app comes back
+    /// from Settings. Nil until the first check answers.
+    @State private var permission: ReminderPermission?
     @State private var errorMessage: LocalizedStringKey?
 
     init(day: Day) {
@@ -104,6 +109,9 @@ struct ActionFormView: View {
                     if hasTime {
                         DatePicker("时间", selection: $time, displayedComponents: .hourAndMinute)
                         Toggle("到时间提醒我", isOn: $remindsAtTime)
+                        if permission == .refused {
+                            notificationsOff
+                        }
                     }
                     TextField("默认分钟（可选）", value: $defaultMinutes, format: .number)
                         .keyboardType(.numberPad)
@@ -121,7 +129,22 @@ struct ActionFormView: View {
             .tint(Theme.red)
             .onChange(of: remindsAtTime) { _, isOn in
                 // The permission prompt comes the first time a switch is turned on, never at launch.
-                if isOn { Task { await ReminderScheduler.shared.requestPermissionIfNeeded() } }
+                // Refusing that prompt leaves the switch off. Already off in Settings, the switch is
+                // kept on with 通知已关闭 under it, so its reminder comes back once Settings allows it.
+                guard isOn else { return }
+                Task {
+                    let before = await ReminderScheduler.shared.permission()
+                    let answer = await ReminderScheduler.shared.requestPermissionIfNeeded()
+                    permission = answer
+                    if !ReminderPermission.keepsSwitchOn(before: before, after: answer) {
+                        remindsAtTime = false
+                    }
+                }
+            }
+            // On opening, and back from Settings: take the newest answer without a relaunch.
+            .task(id: scenePhase) {
+                guard scenePhase == .active else { return }
+                permission = await ReminderScheduler.shared.permission()
             }
             .navigationTitle(Text(editing == nil ? "新计划" : "改计划"))
             .navigationBarTitleDisplayMode(.inline)
@@ -245,6 +268,22 @@ struct ActionFormView: View {
             return .weekdays
         case .chosen:
             return RepeatDays(chosenDays)
+        }
+    }
+
+    /// Notifications are off for this app: say so, and offer the one place that can change it.
+    private var notificationsOff: some View {
+        HStack {
+            Text("通知已关闭")
+                .font(Theme.meta)
+                .foregroundStyle(Theme.muted)
+            Spacer()
+            Button("去设置打开") {
+                if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                    openURL(url)
+                }
+            }
+            .font(Theme.meta)
         }
     }
 
