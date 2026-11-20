@@ -772,12 +772,32 @@
         }
       }
     },
+    "再看一遍" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Look again"
+          }
+        }
+      }
+    },
     "再读" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "more"
+          }
+        }
+      }
+    },
+    "回到难词" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back to stubborn words"
           }
         }
       }
@@ -2544,6 +2564,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stubborn words"
+          }
+        }
+      }
+    },
+    "难词都看过一遍了" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've looked at every stubborn word"
           }
         }
       }

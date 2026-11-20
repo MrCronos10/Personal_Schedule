@@ -560,6 +560,9 @@ struct VocabularyLibrary {
         /// sitting are not twice the evidence three sittings are, and this mirrors how a **Clean
         /// Sighting** counts one Article regardless of how many times a Word appears in it.
         let articleCount: Int
+        /// The student's own **Word Note**, if they wrote one — shown on the back of a card in the
+        /// **Stubborn Deck**, where a Word that keeps slipping needs it most.
+        var note: String? = nil
     }
 
     /// Every **Word** looked up in more than one **Article** and not yet **Known**, most-defeated
@@ -577,13 +580,25 @@ struct VocabularyLibrary {
                 // A word outside HSK 4/5 was never state to begin with (ADR 0005), and `lookUp`
                 // already refuses to record one; this guard keeps that true here too, defensively.
                 guard let entry = HSKWordList.entry(for: progress.word) else { return nil }
-                return StubbornWord(entry: entry, articleCount: progress.stubbornArticleCount ?? 0)
+                return StubbornWord(
+                    entry: entry,
+                    articleCount: progress.stubbornArticleCount ?? 0,
+                    note: progress.noteText
+                )
             }
             .sorted { lhs, rhs in
                 lhs.articleCount != rhs.articleCount
                     ? lhs.articleCount > rhs.articleCount
                     : lhs.entry.word < rhs.entry.word
             }
+    }
+
+    /// One answer in the **Stubborn Deck** (ADR 0012). 认识 is the hand override ADR 0004 already
+    /// allows, through `markKnown`.
+    func answerInStubbornDeck(_ word: String, known: Bool, on day: Day = Day.today()) throws {
+        if known {
+            try markKnown(word, on: day)
+        }
     }
 
     /// Fills in `stubbornArticleCount` for Words met before this field existed, so a Word already

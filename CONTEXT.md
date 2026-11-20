@@ -164,6 +164,10 @@ _Avoid_: Tap, hint, lookup failure
 A Word looked up in more than one Article and not yet **Known** — the app's own Lookups, read back rather than only spent. Two Lookups inside one Article count as one: it is the Articles that count, the same as a **Clean Sighting**, not the taps.
 _Avoid_: Hard word, weak word, failed word, leech
 
+**Stubborn Deck**:
+Every **Stubborn Word**, most-looked-up first, swiped like **Daily New Words** — opened only by choice, from 再看一遍 on the 难词 screen, which carries no number and is hidden when there are none. 认识 marks the Word **Known**; 不认识 changes nothing, because a Word already looked up in more than one Article gains no evidence from it, and restarting its thirty days would quietly change Daily New Words. Never due, never counted ([ADR 0012](docs/adr/0012-stubborn-deck-is-a-look-again-not-a-review.md)).
+_Avoid_: Review, drill, due, review queue
+
 **Word Note**:
 The student's own free text on one Word: a memory trick, where they first met it, why it keeps slipping. It belongs to the Word, not to a day, so it is never a **Note** and never appears in the **Notes List** — that screen is about what happened on a day, this is about the Word itself.
 _Avoid_: Note, mnemonic, hint, definition

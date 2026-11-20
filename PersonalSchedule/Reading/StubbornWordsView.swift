@@ -4,9 +4,10 @@ import SwiftUI
 /// 难词: the **Words** the student's own history says keep beating them, read back from **Lookups**
 /// that have been recorded since ticket 15 and shown nowhere until this screen.
 ///
-/// Nothing here is due. No count on the tab that opens this, no nag, no "review these" button: a
-/// Word leaves the moment it turns **Known**, and a day this screen is never opened leaves nothing
-/// behind, the same as everywhere else in reading (ADR 0004).
+/// Nothing here is due. No count on the tab that opens this and no nag: a Word leaves the moment it
+/// turns **Known**, and a day this screen is never opened leaves nothing behind, the same as
+/// everywhere else in reading (ADR 0004). 再看一遍 opens the **Stubborn Deck**, by choice only and
+/// with no number on it (ADR 0012).
 struct StubbornWordsView: View {
     @Environment(\.modelContext) private var context
     /// Watched so the list follows a Lookup made anywhere, or a Word turning Known anywhere — not
@@ -18,6 +19,8 @@ struct StubbornWordsView: View {
     /// Reuses `ArticleReaderView`'s `LookedUpWord` rather than a second `Identifiable` wrapper for
     /// the same job — no Article just cleared anything here, so `clearedArticles` stays empty.
     @State private var openedWord: LookedUpWord?
+    /// The Words the Stubborn Deck was opened with, kept for as long as it is open. Set means open.
+    @State private var deckWords: DeckWords?
 
     /// Changes on a new Lookup, a Word turning Known, or a row appearing at all — the three things
     /// `stubbornWords()` can answer differently about. The same hashed-count trick `ReadingView`
@@ -33,6 +36,10 @@ struct StubbornWordsView: View {
                     emptyState
                         .card()
                 } else {
+                    Button("再看一遍") { deckWords = DeckWords(words: words) }
+                        .buttonStyle(RedButtonStyle())
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.bottom, 12)
                     VStack(spacing: 0) {
                         ForEach(words, id: \.entry.word) { stubborn in
                             StubbornWordRow(stubborn: stubborn) {
@@ -57,6 +64,9 @@ struct StubbornWordsView: View {
             WordLookupSheet(word: looked.text)
                 .presentationDetents([.medium])
         }
+        .sheet(item: $deckWords) { deck in
+            StubbornDeckView(words: deck.words)
+        }
     }
 
     private func refresh() {
@@ -73,6 +83,62 @@ struct StubbornWordsView: View {
                 .font(Theme.meta)
                 .foregroundStyle(Theme.muted)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+/// The Stubborn Words a deck was opened with. Identifiable only so it can drive a sheet.
+private struct DeckWords: Identifiable {
+    let id = UUID()
+    let words: [VocabularyLibrary.StubbornWord]
+}
+
+/// The **Stubborn Deck**: every Stubborn Word as of the moment it was opened, most-looked-up first,
+/// swiped like Daily New Words. 认识 marks the Word **Known**; 不认识 changes nothing (ADR 0012).
+private struct StubbornDeckView: View {
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+    let words: [VocabularyLibrary.StubbornWord]
+    /// Each Word's **Word Note**, looked up once rather than searched for on every card.
+    private let notes: [String: String]
+
+    init(words: [VocabularyLibrary.StubbornWord]) {
+        self.words = words
+        self.notes = Dictionary(
+            words.compactMap { stubborn in stubborn.note.map { (stubborn.entry.word, $0) } },
+            uniquingKeysWith: { first, _ in first }
+        )
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                WordSwipeDeck(
+                    words: words.map(\.entry),
+                    note: { notes[$0.word] }
+                ) {
+                    EmptyState(
+                        character: "难",
+                        message: "难词都看过一遍了",
+                        actionTitle: "回到难词",
+                        action: { dismiss() }
+                    )
+                } record: { entry, answer in
+                    (try? VocabularyLibrary(context: context)
+                        .answerInStubbornDeck(entry.word, known: answer == .known)) != nil
+                }
+                .padding(16)
+            }
+            .background(Theme.paper)
+            .navigationTitle(Text("再看一遍"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Theme.paper, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完成") { dismiss() }
+                }
+            }
         }
     }
 }

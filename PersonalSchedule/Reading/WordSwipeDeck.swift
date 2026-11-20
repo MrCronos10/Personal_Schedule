@@ -5,13 +5,16 @@ import SwiftUI
 ///
 /// It holds no rule of its own. Whoever shows it says what an answer does, so more than one screen
 /// can share the deck without sharing a rule.
-struct WordSwipeDeck: View {
+struct WordSwipeDeck<Finished: View>: View {
     /// The two answers a card can be given.
     enum Answer { case known, notKnown }
 
     let words: [HSKEntry]
-    /// The line shown once every card has been answered.
-    let finishedLine: LocalizedStringKey
+    /// The student's own **Word Note** for a Word, shown on the back of its card under the meaning.
+    /// Never translated: it is their writing.
+    var note: (HSKEntry) -> String? = { _ in nil }
+    /// What shows once every card has been answered.
+    @ViewBuilder let finished: () -> Finished
     /// Handles an answer and says whether it was handled, so the card may advance. A card only flies
     /// off when it was; otherwise it springs back. An answer that writes nothing on purpose still
     /// returns `true`; `false` means a write was meant and failed.
@@ -35,11 +38,7 @@ struct WordSwipeDeck: View {
     var body: some View {
         Group {
             if queue.isEmpty || index >= queue.count {
-                Text(finishedLine)
-                    .font(Theme.serif(16))
-                    .foregroundStyle(Theme.muted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .card()
+                finished()
             } else {
                 deck
             }
@@ -88,6 +87,13 @@ struct WordSwipeDeck: View {
                             .foregroundStyle(Theme.muted)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
+                        if let note = note(entry) {
+                            Text(verbatim: note)
+                                .font(Theme.meta)
+                                .foregroundStyle(Theme.ink)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     } else {
                         Text("点一下看意思")
                             .font(Theme.meta)
@@ -98,7 +104,7 @@ struct WordSwipeDeck: View {
             .accessibilityElement(children: .combine)
             .accessibilityHidden(!isTop)
             .accessibilityLabel(Text(verbatim: entry.word))
-            .accessibilityValue(Text(verbatim: "\(entry.pinyin) · \(entry.english)"))
+            .accessibilityValue(Text(verbatim: meaning(of: entry)))
             .accessibilityAction(named: Text("认识")) { if isTop { answer(known: true) } }
             .accessibilityAction(named: Text("不认识")) { if isTop { answer(known: false) } }
 
@@ -116,6 +122,13 @@ struct WordSwipeDeck: View {
         .overlay(alignment: .topLeading) { hint("不认识", Theme.muted, show: isTop && drag.width < -24) }
         .contentShape(Rectangle())
         .onTapGesture { if isTop && !isAnimating { withAnimation(.easeOut(duration: 0.15)) { flipped.toggle() } } }
+    }
+
+    /// The back of a card as one line for VoiceOver, which can't see the flip: meaning, then the Note.
+    private func meaning(of entry: HSKEntry) -> String {
+        let base = "\(entry.pinyin) · \(entry.english)"
+        guard let note = note(entry) else { return base }
+        return "\(base). \(note)"
     }
 
     /// The 认识 / 不认识 label that fades in on the side the card is being pushed toward.

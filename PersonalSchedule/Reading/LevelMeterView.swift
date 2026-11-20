@@ -136,7 +136,13 @@ private struct DailyNewWordsDeck: View {
     let words: [HSKEntry]
 
     var body: some View {
-        WordSwipeDeck(words: words, finishedLine: "今天的新词看完了") { entry, answer in
+        WordSwipeDeck(words: words) {
+            Text("今天的新词看完了")
+                .font(Theme.serif(16))
+                .foregroundStyle(Theme.muted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .card()
+        } record: { entry, answer in
             let library = VocabularyLibrary(context: context)
             switch answer {
             case .known: return (try? library.markKnown(entry.word)) != nil
